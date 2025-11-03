@@ -1,0 +1,39 @@
+# Dependency folders
+node_modules/
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.pid.lock
+
+# Environment files
+.env
+.env.*.local
+env
+
+# Build output
+dist/
+build/
+
+# Coverage reports
+coverage/
+
+# IDE/editor folders
+.vscode/
+.idea/
+*.sw?
+.DS_Store
+Thumbs.db
+
+# Temp folders
+tmp/
+uploads/
+n

@@ -1,5 +1,6 @@
 import React from 'react'
 import Logo from './components/Logo'
+import FinanceTestimonials from './components/FinanceTestimonials'
 
 function Home() {
   return (
@@ -102,11 +103,11 @@ function Home() {
         </h3>
       </div>
 
-
-
-
     </div>
 
+    <div>
+      <FinanceTestimonials/>
+    </div>
 
     
     

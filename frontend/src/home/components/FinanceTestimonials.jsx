@@ -31,17 +31,17 @@ export default function FinanceTestimonialsMarquee({
         }
       `}</style>
 
-      <div className="mx-auto max-w-6xl px-4">
+      <div className="mx-auto max-w-7xl px-4">
         {/* Header */}
         <div className="mb-8 flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-2xl font-black tracking-tight sm:text-3xl text-[#27563C]">{title}</h2>
-            <p className="mt-1 text-sm text-slate-600">{subtitle}</p>
+            <h2 className="text-2xl font-black tracking-tight sm:text-5xl text-[#27563C]">{title}</h2>
+            <p className="mt-1 text-xl sm:text-2xl text-slate-600">{subtitle}</p>
           </div>
           <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-700">
-            <span className="rounded-full bg-lime-100 px-3 py-1 ring-1 ring-inset ring-slate-200 flex justify-center items-center gap-1"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><g fill="none"><circle cx="12" cy="12" r="9" fill="currentColor" opacity="0.16"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 8v5h5"/></g></svg>{'<24h'} delivered</span>
-            <span className="rounded-full bg-slate-100 px-3 py-1 ring-1 ring-inset ring-slate-200 flex justify-center items-center gap-1"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3l4-3l2 3h2"/></g></svg>Vehicle finance</span>
-            <span className="rounded-full bg-slate-100 px-3 py-1 ring-1 ring-inset ring-slate-200 flex justify-center items-center gap-1"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M2 5v14h20V5zm5 12a3 3 0 0 0-3-3v-4a3 3 0 0 0 3-3h10a3 3 0 0 0 3 3v4a3 3 0 0 0-3 3zm5-8c1.1 0 2 1.3 2 3s-.9 3-2 3s-2-1.3-2-3s.9-3 2-3"/></svg>Easy EMIs</span>
+            <span className="rounded-full bg-[#f8eeff] px-3 py-1 ring-1 ring-inset ring-slate-200 flex justify-center items-center gap-1"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><g fill="none"><circle cx="12" cy="12" r="9" fill="currentColor" opacity="0.16"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 8v5h5"/></g></svg>{'<24h'} delivered</span>
+            <span className="rounded-full bg-[#fffbe6] px-3 py-1 ring-1 ring-inset ring-slate-200 flex justify-center items-center gap-1"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3l4-3l2 3h2"/></g></svg>Vehicle finance</span>
+            <span className="rounded-full bg-[#e3f9ff] px-3 py-1 ring-1 ring-inset ring-slate-200 flex justify-center items-center gap-1"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M2 5v14h20V5zm5 12a3 3 0 0 0-3-3v-4a3 3 0 0 0 3-3h10a3 3 0 0 0 3 3v4a3 3 0 0 0-3 3zm5-8c1.1 0 2 1.3 2 3s-.9 3-2 3s-2-1.3-2-3s.9-3 2-3"/></svg>Easy EMIs</span>
           </div>
         </div>
 

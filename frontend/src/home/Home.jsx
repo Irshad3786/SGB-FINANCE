@@ -1,6 +1,7 @@
 import React from 'react'
 import Logo from './components/Logo'
 import FinanceTestimonials from './components/FinanceTestimonials'
+import Footer from './components/Footer'
 
 function Home() {
   return (
@@ -77,7 +78,7 @@ function Home() {
       </linearGradient>
       </defs>
       </svg>
-      
+        
     </div>
     
     </div>
@@ -114,7 +115,9 @@ function Home() {
     </div>
 
     
-    
+    <div>
+      <Footer />
+    </div>
 
     </div>
   )

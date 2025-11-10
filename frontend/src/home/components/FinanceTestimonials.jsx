@@ -171,15 +171,15 @@ function TestimonialCard({ t, cardWidth }) {
 export const demoTestimonials = [
   {
     name: "Rohit Kumar",
-    city: "Chirala",
+    city: "Hyderabad",
     vehicle: "Honda Activa 6G (Used)",
     deliveredUnder24h: true,
     financeType: "Two-wheeler finance",
     message: "Applied in the morning, got approval by evening. Zero paperwork and EMI fits my budget!",
   },
   {
-    name: "Pooja",
-    city: "Bapatla",
+    name: "Pooja Sharma",
+    city: "Pune",
     vehicle: "Royal Enfield Classic 350",
     deliveredUnder24h: true,
     financeType: "Bike loan",

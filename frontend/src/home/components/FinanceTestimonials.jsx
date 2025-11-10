@@ -125,7 +125,7 @@ function TestimonialCard({ t, cardWidth }) {
   return (
     <article
       tabIndex={0}
-      className="h-full shrink-0 rounded-2xl border p-5 shadow-sm outline-none transition-shadow hover:shadow-md focus:shadow-md"
+      className="h-full shrink-0 rounded-2xl border p-5 shadow-sm outline-none transition-shadow hover:shadow-md focus:shadow-md bg-[#F8FFFB]"
       style={{ width: cardWidth }}
       aria-label={`Testimonial from ${t?.name || "customer"}`}
     >
@@ -171,15 +171,15 @@ function TestimonialCard({ t, cardWidth }) {
 export const demoTestimonials = [
   {
     name: "Rohit Kumar",
-    city: "Hyderabad",
+    city: "Chirala",
     vehicle: "Honda Activa 6G (Used)",
     deliveredUnder24h: true,
     financeType: "Two-wheeler finance",
     message: "Applied in the morning, got approval by evening. Zero paperwork and EMI fits my budget!",
   },
   {
-    name: "Pooja Sharma",
-    city: "Pune",
+    name: "Pooja",
+    city: "Bapatla",
     vehicle: "Royal Enfield Classic 350",
     deliveredUnder24h: true,
     financeType: "Bike loan",
@@ -187,15 +187,15 @@ export const demoTestimonials = [
   },
   {
     name: "Mohammed Irfan",
-    city: "Chennai",
+    city: "Vetapalem",
     vehicle: "TVS Jupiter",
     deliveredUnder24h: true,
     financeType: "Vehicle finance",
     message: "Lowest down payment I could find. Whole process done on WhatsApp. Highly recommend!",
   },
   {
-    name: "Sneha Patel",
-    city: "Ahmedabad",
+    name: "Sneha",
+    city: "Parchur",
     vehicle: "Hero Splendor Plus",
     deliveredUnder24h: true,
     financeType: "Used bike loan",

@@ -2,8 +2,10 @@ import React from 'react'
 import Logo from './components/Logo'
 import FinanceTestimonials from './components/FinanceTestimonials'
 import Footer from './components/Footer'
+import { useNavigate } from 'react-router-dom'
 
 function Home() {
+  const navigate = useNavigate()
   return (
     <div>
     <div className='md:px-8 md:pt-6'>
@@ -28,10 +30,12 @@ function Home() {
         </div>
 
         <div className='flex justify-center items-center gap-2 sm:px-5'>
-        <button className='px-4 py-1 bg-[#E0FCED] font-bold border-[2px] border-black rounded-xl text-sm shadow-[1px_3px_4px_0px_rgba(0,_0,_0,_0.1)]'>
-          Login
-        </button>
-        <button className='px-4 py-1 bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] font-bold border-[2px] border-black rounded-xl text-sm shadow-[1px_3px_4px_0px_rgba(0,_0,_0,_0.1)]'>
+        <button type="button"
+          onClick={() => navigate('/login')}
+          className='px-4 py-1 bg-[#E0FCED] font-bold border-[2px] border-black rounded-xl text-sm shadow-[1px_3px_4px_0px_rgba(0,_0,_0,_0.1)]'
+      >
+         Login       </button>
+        <button type="button"  onClick={() => navigate('/signup')} className='px-4 py-1 bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] font-bold border-[2px] border-black rounded-xl text-sm shadow-[1px_3px_4px_0px_rgba(0,_0,_0,_0.1)]'>
           Sign up
         </button>
         </div>

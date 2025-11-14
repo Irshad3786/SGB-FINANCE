@@ -7,13 +7,14 @@ import TopBar from './Topbar';
 function Subadmin() {
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [topTitle, setTopTitle] = useState('Dashboard');
 
   return (
     <div className="flex min-h-screen bg-gray-50">
 
       {/* LEFT SIDEBAR */}
       {!sidebarOpen &&  <div>
-        <Sidebar toggle={setSidebarOpen}  />
+        <Sidebar toggle={setSidebarOpen} onNavigate={setTopTitle} />
       </div>}
       
 
@@ -21,7 +22,7 @@ function Subadmin() {
       <div className="flex-1 flex flex-col">
 
         {/* TOP BAR */}
-        <TopBar topbarData = {setSidebarOpen} data={sidebarOpen} />
+        <TopBar topbarData = {setSidebarOpen} data={sidebarOpen} title={topTitle} />
 
         {/* MAIN CONTENT BELOW TOP BAR */}
         <main className="p-6 flex-1">

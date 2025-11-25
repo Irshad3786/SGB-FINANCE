@@ -15,6 +15,19 @@ function Buy() {
         saleAmount: '',
         dob: '',
         address: '',
+        // additional fields
+        pendingAmount: '',
+        pendingDate: '',
+        isFinanced: false,
+        financeAmount: '',
+        emiDate: '',
+        emiMonths: '',
+        emiAmount: '',
+        // guarantor
+        guarantorName: '',
+        guarantorPhone: '',
+        guarantorAadhaar: '',
+        guarantorAddress: '',
         referralName: '',
         referralPhone: '',
         
@@ -25,6 +38,9 @@ function Buy() {
         aadhaarBack: null,
         profile: null
       })
+
+      const [showPending, setShowPending] = useState(false)
+      const [showGuarantor, setShowGuarantor] = useState(false)
     
       const inputBase = 'w-full pl-10 px-3 py-2 rounded-xl border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a] pr-4 text-sm'
     
@@ -332,6 +348,123 @@ function Buy() {
               </svg>
             </div>
           </div>
+
+          {/* Pending amount toggle */}
+          <div className={`flex items-center gap-2 mt-4 ${showPending ? 'py-8' : ''}`}>
+            <input id="pending" type="checkbox" className="w-4 h-4" checked={showPending} onChange={() => setShowPending(s => !s)} />
+            <label htmlFor="pending" className="text-sm font-semibold text-[#27563C]">Enter Pending Amount</label>
+          </div>
+
+          {showPending && (
+            <>
+              <label className={labelClass}>Pending Amount</label>
+              <div className="relative">
+                <input
+                  name="pendingAmount"
+                  value={form.pendingAmount}
+                  onChange={onChange}
+                  placeholder="Enter pending amount"
+                  className={inputBase}
+                />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="#a6a6a6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M3 10V8a2 2 0 0 1 2-2h2m-4 4c1.333 0 4-.8 4-4m-4 4v4m18-4V8a2 2 0 0 0-2-2h-2m4 4c-1.333 0-4-.8-4-4m4 4v4M7 6h10M3 14v2a2 2 0 0 0 2 2h2m-4-4c1.333 0 4 .8 4 4m0 0h4"/><circle cx="12" cy="12" r="2"/><path d="M15 18h6"/></g></svg>
+                </div>
+              </div>
+
+              <label className={labelClass}>Date of paying</label>
+              <div className="relative">
+                <input
+                  name="pendingDate"
+                  value={form.pendingDate}
+                  onChange={onChange}
+                  type="date"
+                  className={inputBase + ' py-2'}
+                />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M6.94 2c.416 0 .753.324.753.724v1.46c.668-.012 1.417-.012 2.26-.012h4.015c.842 0 1.591 0 2.259.013v-1.46c0-.4.337-.725.753-.725s.753.324.753.724V4.25c1.445.111 2.394.384 3.09 1.055c.698.67.982 1.582 1.097 2.972L22 9H2v-.724c.116-1.39.4-2.302 1.097-2.972s1.645-.944 3.09-1.055V2.724c0-.4.337-.724.753-.724"/><path fill="#a6a6a6" d="M22 14v-2c0-.839-.004-2.335-.017-3H2.01c-.013.665-.01 2.161-.01 3v2c0 3.771 0 5.657 1.172 6.828S6.228 22 10 22h4c3.77 0 5.656 0 6.828-1.172S22 17.772 22 14" opacity="0.5"/><path fill="#a6a6a6" d="M18 17a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-5 4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-5 4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0"/></svg>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Finance toggle */}
+          <div className={`flex items-center gap-2 mt-4 ${form.isFinanced ? 'py-8' : ''}`}>
+            <input id="financed" type="checkbox" className="w-4 h-4" checked={form.isFinanced} onChange={(e)=> setForm(prev=>({...prev, isFinanced: e.target.checked}))} />
+            <label htmlFor="financed" className="text-sm font-semibold text-[#27563C]">is financed ?</label>
+          </div>
+
+          {form.isFinanced && (
+            <>
+              <label className={labelClass}>Finance Amount</label>
+              <div className="relative">
+                <input
+                  name="financeAmount"
+                  value={form.financeAmount}
+                  onChange={onChange}
+                  placeholder="Enter finance amount"
+                  className={inputBase}
+                />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 16 16"><path fill="#a6a6a6" d="M1 4.25C1 3.56 1.56 3 2.25 3h9.5c.69 0 1.25.56 1.25 1.25v5.5c0 .69-.56 1.25-1.25 1.25h-9.5C1.56 11 1 10.44 1 9.75zm3 .25V4H3v.5a.5.5 0 0 1-.5.5H2v1h.5A1.5 1.5 0 0 0 4 4.5M9 7a2 2 0 1 0-4 0a2 2 0 0 0 4 0m2-3h-1v.5A1.5 1.5 0 0 0 11.5 6h.5V5h-.5a.5.5 0 0 1-.5-.5zM4 9.5A1.5 1.5 0 0 0 2.5 8H2v1h.5a.5.5 0 0 1 .5.5v.5h1zm7 .5v-.5a.5.5 0 0 1 .5-.5h.5V8h-.5A1.5 1.5 0 0 0 10 9.5v.5zm-6.5 3a1.5 1.5 0 0 1-1.427-1.036Q3.281 12 3.5 12h8.25A2.25 2.25 0 0 0 14 9.75V5.085A1.5 1.5 0 0 1 15 6.5v3.25A3.25 3.25 0 0 1 11.75 13z"/></svg></div>
+              </div>
+
+              <label className={labelClass}>Emi Date</label>
+              <div className="relative">
+                <input name="emiDate" value={form.emiDate} onChange={onChange} type="date" className={inputBase + ' py-2'} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M6.94 2c.416 0 .753.324.753.724v1.46c.668-.012 1.417-.012 2.26-.012h4.015c.842 0 1.591 0 2.259.013v-1.46c0-.4.337-.725.753-.725s.753.324.753.724V4.25c1.445.111 2.394.384 3.09 1.055c.698.67.982 1.582 1.097 2.972L22 9H2v-.724c.116-1.39.4-2.302 1.097-2.972s1.645-.944 3.09-1.055V2.724c0-.4.337-.724.753-.724"/><path fill="#a6a6a6" d="M22 14v-2c0-.839-.004-2.335-.017-3H2.01c-.013.665-.01 2.161-.01 3v2c0 3.771 0 5.657 1.172 6.828S6.228 22 10 22h4c3.77 0 5.656 0 6.828-1.172S22 17.772 22 14" opacity="0.5"/><path fill="#a6a6a6" d="M18 17a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-5 4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-5 4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0"/></svg></div>
+              </div>
+
+              <label className={labelClass}>Months</label>
+              <div className="relative">
+                <input name="emiMonths" value={form.emiMonths} onChange={onChange} placeholder="Enter months" className={inputBase} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M3 10.5V6q0-.425.288-.712T4 5h3.325q.425 0 .713.288T8.325 6v4.5q0 .425-.287.713t-.713.287H4q-.425 0-.712-.288T3 10.5m7.325 1q-.425 0-.712-.288t-.288-.712V6q0-.425.288-.712T10.325 5h3.35q.425 0 .713.288t.287.712v4.5q0 .425-.288.713t-.712.287zm6.35 0q-.425 0-.712-.288t-.288-.712V6q0-.425.288-.712T16.675 5H20q.425 0 .713.288T21 6v4.5q0 .425-.288.713T20 11.5zM7.325 19H4q-.425 0-.712-.288T3 18v-4.5q0-.425.288-.712T4 12.5h3.325q.425 0 .713.288t.287.712V18q0 .425-.287.713T7.325 19m3 0q-.425 0-.712-.288T9.324 18v-4.5q0-.425.288-.712t.712-.288h3.35q.425 0 .713.288t.287.712V18q0 .425-.288.713t-.712.287zm6.35 0q-.425 0-.712-.288T15.675 18v-4.5q0-.425.288-.712t.712-.288H20q.425 0 .713.288T21 13.5V18q0 .425-.288.713T20 19z"/></svg></div>
+              </div>
+
+              <label className={labelClass}>Emi Amount</label>
+              <div className="relative">
+                <input name="emiAmount" value={form.emiAmount} onChange={onChange} placeholder="Amount" className={inputBase} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M19 5.25H5A1.76 1.76 0 0 0 3.25 7v10A1.76 1.76 0 0 0 5 18.75h14A1.76 1.76 0 0 0 20.75 17V7A1.76 1.76 0 0 0 19 5.25M19.25 7v1.67h-.21a1.5 1.5 0 0 1-.36 0h-.13a2 2 0 0 1-.33-.1h-.12a1.3 1.3 0 0 1-.38-.28a1.58 1.58 0 0 1-.47-1.12a1.5 1.5 0 0 1 .06-.41H19a.25.25 0 0 1 .25.24M5 6.75h1.69a1.5 1.5 0 0 1 .06.41a1.58 1.58 0 0 1-.47 1.12a1.5 1.5 0 0 1-.38.28h-.13a1.1 1.1 0 0 1-.31.1h-.14a1.5 1.5 0 0 1-.36 0h-.21V7A.25.25 0 0 1 5 6.75M4.75 17v-1.67h.21a1.5 1.5 0 0 1 .36 0h.13a1.3 1.3 0 0 1 .33.1h.12a1.5 1.5 0 0 1 .38.28a1.58 1.58 0 0 1 .47 1.12a1.5 1.5 0 0 1-.06.41H5a.25.25 0 0 1-.25-.24m3.47.25a3 3 0 0 0 0-.41a3 3 0 0 0-.91-2.18a2.6 2.6 0 0 0-.49-.39l-.17-.11a3 3 0 0 0-.36-.16l-.2-.08a3.3 3.3 0 0 0-.53-.11a1.6 1.6 0 0 0-.31 0h-.5v-3.59h.85a3 3 0 0 0 .4-.1l.22-.07a2.5 2.5 0 0 0 .44-.2l.16-.09a3.4 3.4 0 0 0 .52-.42a3 3 0 0 0 .91-2.18a3 3 0 0 0 0-.41h7.56a3 3 0 0 0 0 .41a3 3 0 0 0 .91 2.18a3 3 0 0 0 .52.42l.16.09a2.5 2.5 0 0 0 .44.2l.22.07a3 3 0 0 0 .41.09h.84v3.56h-.5a1.6 1.6 0 0 0-.31 0a3.3 3.3 0 0 0-.53.11l-.2.08a3 3 0 0 0-.39.18l-.17.11a2.6 2.6 0 0 0-.49.39a3 3 0 0 0-.91 2.18a3 3 0 0 0 0 .41Zm10.78 0h-1.69a1.5 1.5 0 0 1-.06-.41a1.58 1.58 0 0 1 .47-1.12a1.3 1.3 0 0 1 .38-.28h.12a2 2 0 0 1 .33-.1h.13a1.5 1.5 0 0 1 .36 0h.21V17a.25.25 0 0 1-.25.25"/><path fill="#a6a6a6" d="M12 8.5a3.5 3.5 0 1 0 3.5 3.5A3.5 3.5 0 0 0 12 8.5m0 5.5a2 2 0 1 1 2-2a2 2 0 0 1-2 2"/></svg></div>
+              </div>
+            </>
+          )}
+
+          {/* Guarantor toggle */}
+          <div className={`flex items-center gap-2 mt-4 ${showGuarantor ? 'py-8' : ''}`}>
+            <input id="guarantor" type="checkbox" className="w-4 h-4" checked={showGuarantor} onChange={() => setShowGuarantor(s=>!s)} />
+            <label htmlFor="guarantor" className="text-sm font-semibold text-[#27563C]">add Guarantor</label>
+          </div>
+
+          {showGuarantor && (
+            <>
+              <label className={labelClass}>Guarantor full name</label>
+              <div className="relative">
+                <input name="guarantorName" value={form.guarantorName} onChange={onChange} placeholder="Enter full name" className={inputBase} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M12 12q-1.65 0-2.825-1.175T8 8t1.175-2.825T12 4t2.825 1.175T16 8t-1.175 2.825T12 12m-8 6v-.8q0-.85.438-1.562T5.6 14.55q1.55-.775 3.15-1.162T12 13t3.25.388t3.15 1.162q.725.375 1.163 1.088T20 17.2v.8q0 .825-.587 1.413T18 20H6q-.825 0-1.412-.587T4 18"/></svg></div>
+              </div>
+
+              <label className={labelClass}>Guarantor phone no</label>
+              <div className="relative">
+                <input name="guarantorPhone" value={form.guarantorPhone} onChange={onChange} placeholder="Enter phone no" className={inputBase} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" fill-rule="evenodd" d="m16.1 13.359l.456-.453c.63-.626 1.611-.755 2.417-.317l1.91 1.039c1.227.667 1.498 2.302.539 3.255l-1.42 1.412c-.362.36-.81.622-1.326.67c-1.192.111-3.645.051-6.539-1.643zm-5.91-5.876l.287-.286c.707-.702.774-1.83.157-2.654L9.374 2.86C8.61 1.84 7.135 1.705 6.26 2.575l-1.57 1.56c-.433.432-.723.99-.688 1.61c.065 1.14.453 3.22 2.149 5.776z" clip-rule="evenodd"/><path fill="#a6a6a6" d="M12.063 11.497c-2.946-2.929-1.88-4.008-1.873-4.015l-4.039 4.04c.667 1.004 1.535 2.081 2.664 3.204c1.14 1.134 2.26 1.975 3.322 2.596L16.1 13.36s-1.082 1.076-4.037-1.862" opacity="0.6"/></svg></div>
+              </div>
+
+              <label className={labelClass}>Guarantor aadhaar no</label>
+              <div className="relative">
+                <input name="guarantorAadhaar" value={form.guarantorAadhaar} onChange={onChange} placeholder="Enter aadhaar no" className={inputBase} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 32 32"><path fill="#a6a6a6" d="M5 6C3.355 6 2 7.355 2 9v14c0 1.645 1.355 3 3 3h22c1.645 0 3-1.355 3-3V9c0-1.645-1.355-3-3-3zm0 2h22c.566 0 1 .434 1 1v14c0 .566-.434 1-1 1H5c-.566 0-1-.434-1-1V9c0-.566.434-1 1-1m6 2c-2.2 0-4 1.8-4 4c0 1.113.477 2.117 1.219 2.844A5.04 5.04 0 0 0 6 21h2c0-1.668 1.332-3 3-3s3 1.332 3 3h2a5.04 5.04 0 0 0-2.219-4.156C14.523 16.117 15 15.114 15 14c0-2.2-1.8-4-4-4m7 1v2h8v-2zm-7 1c1.117 0 2 .883 2 2s-.883 2-2 2s-2-.883-2-2s.883-2 2-2m7 3v2h8v-2zm0 4v2h5v-2z"/></svg></div>
+              </div>
+
+              <label className={labelClass}>Address</label>
+              <div className="relative">
+                <textarea name="guarantorAddress" value={form.guarantorAddress} onChange={onChange} placeholder="Enter address" className="w-full pl-10 pr-3 py-2 rounded-md bg-white/90 text-sm outline-none h-20 border border-transparent shadow-inner focus:ring-2 focus:ring-[#bff86a]" />
+                <div className="absolute left-3 top-2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="w-6 h-6" fill="none">
+                <g fill="none">
+                  <path d="m12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.018-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z" />
+                  <path fill="#a6a6a6" d="M20 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm-3 12H7a1 1 0 1 0 0 2h10a1 1 0 1 0 0-2m-7-8H8a2 2 0 0 0-1.995 1.85L6 9v2a2 2 0 0 0 1.85 1.995L8 13h2a2 2 0 0 0 1.995-1.85L12 11V9a2 2 0 0 0-1.85-1.995zm7 4h-3a1 1 0 0 0-.117 1.993L14 13h3a1 1 0 0 0 .117-1.993zm-7-2v2H8V9zm7-2h-3a1 1 0 1 0 0 2h3a1 1 0 1 0 0-2" />
+                </g>
+              </svg></div>
+              </div>
+            </>
+          )}
 
           
         </div>

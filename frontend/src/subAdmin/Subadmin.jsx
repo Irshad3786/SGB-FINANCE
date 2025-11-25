@@ -10,7 +10,7 @@ function Subadmin() {
   const [topTitle, setTopTitle] = useState('Dashboard');
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-white">
 
       {/* LEFT SIDEBAR */}
       {!sidebarOpen &&  <div>

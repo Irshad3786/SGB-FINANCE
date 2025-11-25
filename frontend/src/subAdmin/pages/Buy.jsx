@@ -1,50 +1,50 @@
 import React from 'react'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-function BuySell() {
-  const [role, setRole] = useState('seller')
-  const [showPassword, setShowPassword] = useState(false)
-
-  const [form, setForm] = useState({
-    fullName: '',
-    phone: '',
-    aadhaar: '',
-    vehicleNo: '',
-    chassisNo: '',
-    saleAmount: '',
-    dob: '',
-    address: '',
-    referralName: '',
-    referralPhone: '',
-    password: ''
-  })
-
-  const [files, setFiles] = useState({
-    aadhaarFront: null,
-    aadhaarBack: null,
-    profile: null
-  })
-
-  const inputBase = 'w-full pl-10 px-3 py-2 rounded-xl border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a] pr-10 text-sm'
-
-  function onChange(e) {
-    const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
-  }
-
-  function onFileChange(e, key) {
-    const file = e.target.files[0] || null
-    setFiles(prev => ({ ...prev, [key]: file }))
-  }
-
-  function onSubmit(e) {
-    e.preventDefault()
-    console.log('submit', { role, ...form, files })
-  }
-
-  // unified label class (same as first input label)
-  const labelClass = "text-sm text-[#27563C] font-semibold"
-
+function Buy() {
+    const [role, setRole] = useState('buyer')
+      const [showPassword, setShowPassword] = useState(false)
+        const navigate = useNavigate()
+      const [form, setForm] = useState({
+        fullName: '',
+        phone: '',
+        aadhaar: '',
+        vehicleNo: '',
+        chassisNo: '',
+        saleAmount: '',
+        dob: '',
+        address: '',
+        referralName: '',
+        referralPhone: '',
+        
+      })
+    
+      const [files, setFiles] = useState({
+        aadhaarFront: null,
+        aadhaarBack: null,
+        profile: null
+      })
+    
+      const inputBase = 'w-full pl-10 px-3 py-2 rounded-xl border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a] pr-4 text-sm'
+    
+      function onChange(e) {
+        const { name, value } = e.target
+        setForm(prev => ({ ...prev, [name]: value }))
+      }
+    
+      function onFileChange(e, key) {
+        const file = e.target.files[0] || null
+        setFiles(prev => ({ ...prev, [key]: file }))
+      }
+    
+      function onSubmit(e) {
+        e.preventDefault()
+        console.log('submit', { role, ...form, files })
+      }
+    
+      // unified label class (same as first input label)
+      const labelClass = "text-sm text-[#27563C] font-semibold"
   return (
     <div className="min-h-screen flex items-start justify-center py-8 ">
       <form
@@ -58,7 +58,10 @@ function BuySell() {
           <div className="bg-white rounded-full p-1 shadow-md flex space-x-2">
             <button
               type="button"
-              onClick={() => setRole('seller')}
+              onClick={() => {
+                setRole('seller')
+                navigate('/subadmin/sell')
+            }}
               className={`px-4 py-1.5 rounded-full text-sm font-semibold transition ${
                 role === 'seller'
                   ? 'bg-gradient-to-b from-[#bfff3a] to-[#40ff00] text-black shadow'
@@ -70,7 +73,10 @@ function BuySell() {
 
             <button
               type="button"
-              onClick={() => setRole('buyer')}
+              onClick={() => {
+                setRole('buyer')
+                navigate('/subadmin/buy')
+              }}
               className={`px-4 py-1.5 rounded-full text-sm font-semibold transition ${
                 role === 'buyer'
                   ? 'bg-gradient-to-b from-[#bfff3a] to-[#40ff00] text-black shadow'
@@ -327,48 +333,7 @@ function BuySell() {
             </div>
           </div>
 
-          {/* Password field with same styling and show/hide */}
-          <label className={labelClass}>Password</label>
-          <div className="relative">
-            <input
-              name="password"
-              type={showPassword ? 'text' : 'password'}
-              value={form.password}
-              onChange={onChange}
-              className={inputBase}
-              placeholder="Password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(s => !s)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-600 p-1"
-              aria-label="Toggle password visibility"
-            >
-              {showPassword ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="w-5 h-5" fill="none">
-                  <g fill="none" stroke="#a6a6a6" strokeLinecap="round" strokeWidth="1.5">
-                    <path strokeLinejoin="round" d="M10.73 5.073A11 11 0 0 1 12 5c4.664 0 8.4 2.903 10 7a11.6 11.6 0 0 1-1.555 2.788M6.52 6.519C4.48 7.764 2.9 9.693 2 12c1.6 4.097 5.336 7 10 7a10.44 10.44 0 0 0 5.48-1.52m-7.6-7.6a3 3 0 1 0 4.243 4.243"/>
-                    <path d="m4 4l16 16" />
-                  </g>
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="w-5 h-5" fill="none">
-                  <g fill="#a6a6a6" fillRule="evenodd" clipRule="evenodd">
-                    <path d="M12 8.25a3.75 3.75 0 1 0 0 7.5a3.75 3.75 0 0 0 0-7.5M9.75 12a2.25 2.25 0 1 1 4.5 0a2.25 2.25 0 0 1-4.5 0"/>
-                    <path d="M12 3.25c-4.514 0-7.555 2.704-9.32 4.997l-.031.041c-.4.519-.767.996-1.016 1.56c-.267.605-.383 1.264-.383 2.152s.116 1.547.383 2.152c.25.564.617 1.042 1.016 1.56l.032.041C4.445 18.046 7.486 20.75 12 20.75s7.555-2.704 9.32-4.997l.031-.041c.4-.518.767-.996 1.016-1.56c.267-.605.383-1.264.383-2.152s-.116-1.547-.383-2.152c-.25-.564-.617-1.041-1.016-1.56l-.032-.041C19.555 5.954 16.514 3.25 12 3.25M3.87 9.162C5.498 7.045 8.15 4.75 12 4.75s6.501 2.295 8.13 4.412c.44.57.696.91.865 1.292c.158.358.255.795.255 1.546s-.097 1.188-.255 1.546c-.169.382-.426.722-.864 1.292C18.5 16.955 15.85 19.25 12 19.25s-6.501-2.295-8.13-4.412c-.44-.57-.696-.91-.865-1.292c-.158-.358-.255-.795-.255-1.546s.097-1.188.255-1.546c.169-.382.426-.722.864-1.292"/>
-                  </g>
-                </svg>
-              )}
-            </button>
-
-            {/* <-- REPLACED ICON: use provided lock SVG as left icon */}
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" className="w-5 h-5" fill="none">
-                <path fill="#a6a6a6" d="M12 17a2 2 0 0 0 2-2a2 2 0 0 0-2-2a2 2 0 0 0-2 2a2 2 0 0 0 2 2m6-9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2h1V6a5 5 0 0 1 5-5a5 5 0 0 1 5 5v2zm-6-5a3 3 0 0 0-3 3v2h6V6a3 3 0 0 0-3-3"/>
-              </svg>
-            </div>
-          </div>
-
+          
         </div>
 
         <div className="mt-6 flex justify-center">
@@ -384,4 +349,4 @@ function BuySell() {
   )
 }
 
-export default BuySell
+export default Buy

@@ -72,7 +72,7 @@ export default function Dashboard() {
         </div>
 
         {/* placeholder space for extra content */}
-        <div className="mt-6 min-h-[40vh] border border-dashed border-gray-100 rounded-lg" />
+        
       </div>
     </div>
   )

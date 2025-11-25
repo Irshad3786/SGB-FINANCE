@@ -6,7 +6,8 @@ import Signup from './home/Signup';
 import Subadmin from './subAdmin/Subadmin';
 import Dashboard from './subAdmin/pages/Dashboard';
 import Users from './subAdmin/pages/Users ';
-import BuySell from './subAdmin/pages/BuySell';
+import Sell from './subAdmin/pages/Sell';
+import Buy from './subAdmin/pages/Buy';
 
 
 function App() {
@@ -26,7 +27,8 @@ function App() {
           {/* Right Side Pages  */}
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="users" element={<Users />} />
-          <Route path="buysell" element={<BuySell />} />
+          <Route path="sell" element={<Sell />} />
+          <Route path="buy" element={<Buy />} />
 
         </Route>
         

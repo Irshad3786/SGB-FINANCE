@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 
 function Buy() {
     const [role, setRole] = useState('buyer')
-      const [showPassword, setShowPassword] = useState(false)
+     
         const navigate = useNavigate()
       const [form, setForm] = useState({
         fullName: '',

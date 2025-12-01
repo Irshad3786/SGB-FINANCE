@@ -1,14 +1,24 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 
 function Users () {
   const users = [
-    { id: 1, seller: 'irshad', buyerName: 'raju', vehicle: 'AP39DZ9786', soldAmount: '35000', buyAmount: '35000', date: '30-10-2025' },
-    { id: 2, seller: 'suresh', buyerName: '', vehicle: 'AP39YZ8512', soldAmount: '35000', buyAmount: '', date: '30-10-2025' },
-    { id: 3, seller: 'rahul', buyerName: 'manu', vehicle: 'AP27AZ9865', soldAmount: '35000', buyAmount: '35000', date: '30-10-2025' },
-    { id: 4, seller: 'karthik', buyerName: '', vehicle: 'AP27NN3658', soldAmount: '35000', buyAmount: '', date: '30-10-2025' },
-    { id: 5, seller: 'pradeep', buyerName: 'sai', vehicle: 'AP26VV2654', soldAmount: '35000', buyAmount: '35000', date: '30-10-2025' },
-    { id: 6, seller: 'moulali', buyerName: '', vehicle: 'AP39XX7508', soldAmount: '35000', buyAmount: '', date: '30-10-2025' },
+    { id: 1, seller: 'MOHAMMAD IRSHAD', buyerName: 'RAJU K', vehicle: 'AP39DZ9786', vehicleName: 'Hero Splendor', model: 'Splendor 2020', chassis: 'MBLHAW10655DD40552', soldAmount: '35,000', buyAmount: '35,000', date: '30-10-2025', dob: '13-01-2000', phone: '9182278505', aadhaar: '5014 0694 9073', address: 'Ramapuram road, rosaiah colony Chirala, vetapalem mandal 523155 - Andhra pradesh', financeAmount: '25000', emiAmount: '3500', emiMonths: '15', emiDate: '12-10-2025', guarantorName: 'MOHAMMAD IRSHAD', guarantorPhone: '9182278505', guarantorAadhaar: '5014 0694 9073', guarantorAddress: 'Ramapuram road, rosaiah colony Chirala, vetapalem mandal 523155', referenceName: 'SURESH MAHESH', referencePhone: '9182278505' },
+    { id: 2, seller: 'SURESH', buyerName: '', vehicle: 'AP39YZ8512', vehicleName: 'Bajaj Pulsar', model: 'Pulsar NS200', chassis: 'MBLHAW10655DD11111', soldAmount: '35,000', buyAmount: '', date: '30-10-2025', dob: '02-05-1992', phone: '9123456780', aadhaar: '1234 5678 9012', address: '1-2-3, Some street, City', financeAmount: '', emiAmount: '', emiMonths: '', emiDate: '', guarantorName: '', guarantorPhone: '', guarantorAadhaar: '', guarantorAddress: '', referenceName: 'RAMESH', referencePhone: '9000000000' },
+    { id: 3, seller: 'RAHUL', buyerName: 'MANU', vehicle: 'AP27AZ9865', vehicleName: 'TVS Apache', model: 'Apache RTR 160', chassis: 'MBLHAW10655DD22222', soldAmount: '35,000', buyAmount: '35,000', date: '30-10-2025', dob: '08-08-1996', phone: '9190909090', aadhaar: '2222 3333 4444', address: 'Block 5, Some Area', financeAmount: '20000', emiAmount: '2200', emiMonths: '12', emiDate: '01-11-2025', guarantorName: 'SANTHOS', guarantorPhone: '9191919191', guarantorAadhaar: '3333 4444 5555', guarantorAddress: 'Guarantor address', referenceName: 'KUMAR', referencePhone: '9111111111' },
+    { id: 4, seller: 'KARTHIK', buyerName: '', vehicle: 'AP27NN3658', vehicleName: 'Honda Activa', model: 'Activa 5G', chassis: 'MBLHAW10655DD33333', soldAmount: '35,000', buyAmount: '', date: '30-10-2025', dob: '20-12-1988', phone: '9166666666', aadhaar: '4444 5555 6666', address: 'Some other address', financeAmount: '', emiAmount: '', emiMonths: '', emiDate: '', guarantorName: '', guarantorPhone: '', guarantorAadhaar: '', guarantorAddress: '', referenceName: 'RAJU', referencePhone: '9222222222' },
+    { id: 5, seller: 'PRADEEP', buyerName: 'SAI', vehicle: 'AP26VV2654', vehicleName: 'Royal Enfield', model: 'Classic 350', chassis: 'MBLHAW10655DD44444', soldAmount: '35,000', buyAmount: '35,000', date: '30-10-2025', dob: '01-03-1990', phone: '9155555555', aadhaar: '5555 6666 7777', address: 'Address line here', financeAmount: '15000', emiAmount: '1800', emiMonths: '10', emiDate: '15-12-2025', guarantorName: 'VINOD', guarantorPhone: '9144444444', guarantorAadhaar: '6666 7777 8888', guarantorAddress: 'Guarantor addr', referenceName: 'SURESH MAHESH', referencePhone: '9182278505' },
+    { id: 6, seller: 'MOULALI', buyerName: '', vehicle: 'AP39XX7508', vehicleName: 'Yamaha FZ', model: 'FZ-S V3', chassis: 'MBLHAW10655DD55555', soldAmount: '35,000', buyAmount: '', date: '30-10-2025', dob: '17-07-1994', phone: '9133333333', aadhaar: '7777 8888 9999', address: 'Another address', financeAmount: '', emiAmount: '', emiMonths: '', emiDate: '', guarantorName: '', guarantorPhone: '', guarantorAadhaar: '', guarantorAddress: '', referenceName: '', referencePhone: '' },
   ]
+
+  const [modalUser, setModalUser] = useState(null)
+
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === 'Escape') setModalUser(null)
+    }
+    if (modalUser) window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [modalUser])
 
   return (
     <div className="p-6">
@@ -85,11 +95,9 @@ function Users () {
                   </td>
                   <td className="py-3 px-3">
                     <div className="flex items-center gap-2">
-                      
-                      <button className="p-2 text-gray-700" title="view">
+                      <button onClick={() => setModalUser(u)} className="p-2 text-gray-700" title="view">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="#a6a6a6"/><path fill="#a6a6a6" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5"/></svg>
                       </button>
-                      
                     </div>
                   </td>
                 </tr>
@@ -130,9 +138,7 @@ function Users () {
               </div>
 
               <div className="mt-3 flex items-center justify-end gap-2">
-                
-                <button className="p-2 text-gray-700" title="view"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="#a6a6a6"/><path fill="#a6a6a6" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5"/></svg></button>
-                
+                <button onClick={() => setModalUser(u)} className="p-2 text-gray-700" title="view"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="#a6a6a6"/><path fill="#a6a6a6" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5"/></svg></button>
               </div>
             </div>
           ))}
@@ -145,6 +151,103 @@ function Users () {
           <button className="px-3 py-1 rounded-full bg-gray-100 text-xs">next</button>
         </div>
       </div>
+
+      {/* Modal */}
+      {modalUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setModalUser(null)} />
+          <div className="relative w-[95%] md:w-3/4 lg:w-2/3 bg-white rounded-2xl p-6 shadow-2xl no-scrollbar max-h-[90vh] overflow-auto" style={{WebkitOverflowScrolling: 'touch'}}>
+            <button onClick={() => setModalUser(null)} className="absolute right-4 top-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">✕</button>
+            <h3 className="text-lg font-semibold mb-4">User Details</h3>
+
+            {/* Small CSS to hide scrollbars but keep touch scrolling */}
+            <style>{`.no-scrollbar::-webkit-scrollbar{display:none;} .no-scrollbar{-ms-overflow-style:none; scrollbar-width:none;}`}</style>
+
+            {/* Vehicle details at top */}
+            <div className="mb-4">
+              <div className="w-full bg-[#edeefe] rounded-xl p-4 shadow">
+                <h5 className="text-sm font-semibold mb-2">Vehicle Details</h5>
+                <div className="text-sm text-gray-700 grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div><span className="text-[12px] text-gray-400">Vehicle Name</span><div className="font-medium">{modalUser.vehicleName || '-'}</div></div>
+                  <div><span className="text-[12px] text-gray-400">Vehicle No</span><div className="font-medium">{modalUser.vehicle || '-'}</div></div>
+                  <div><span className="text-[12px] text-gray-400">Chassis No</span><div className="font-medium">{modalUser.chassis || '-'}</div></div>
+                  <div><span className="text-[12px] text-gray-400">Model</span><div className="font-medium">{modalUser.model || '-'}</div></div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#E8FCF0] rounded-xl p-6 relative">
+              {/* vertical divider between seller and buyer on md+ */}
+              <div className="hidden md:block absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gray-300" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="text-center font-semibold mb-4">Seller</h4>
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center">IMG</div>
+                    <div className="w-full bg-white rounded-xl p-4 shadow">
+                      <h5 className="text-sm font-semibold mb-2">Customer Details</h5>
+                      <div className="text-sm text-gray-700 space-y-1">
+                        <div><strong>Name:</strong> {modalUser.seller}</div>
+                        <div><strong>DOB:</strong> {modalUser.dob || '-'}</div>
+                        <div><strong>Phone:</strong> {modalUser.phone || '-'}</div>
+                        <div className="flex items-center gap-2"><strong>Aadhar No:</strong> <span>{modalUser.aadhaar || '-'}</span> <span className="ml-2 text-xs bg-yellow-100 px-2 py-0.5 rounded">view</span></div>
+                        <div><strong>Address:</strong> <div className="text-xs text-gray-600">{modalUser.address || '-'}</div></div>
+                        <div><strong>Sold Amount:</strong> {modalUser.soldAmount}</div>
+                      </div>
+                    </div>
+                    <div className="w-full bg-white rounded-xl p-4 shadow">
+                      <h5 className="text-sm font-semibold mb-2">Reference</h5>
+                      <div className="text-sm text-gray-700">Name: {modalUser.referenceName || '—'}<br/>Phone: {modalUser.referencePhone || '—'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-center font-semibold mb-4">Buyer</h4>
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center">IMG</div>
+                    <div className="w-full bg-white rounded-xl p-4 shadow">
+                      <h5 className="text-sm font-semibold mb-2">Customer Details</h5>
+                      <div className="text-sm text-gray-700 space-y-1">
+                        <div><strong>Name:</strong> {modalUser.buyerName || '-'}</div>
+                        <div><strong>DOB:</strong> {modalUser.dob || '-'}</div>
+                        <div><strong>Phone:</strong> {modalUser.phone || '-'}</div>
+                        <div className="flex items-center gap-2"><strong>Aadhar No:</strong> <span>{modalUser.aadhaar || '-'}</span> <span className="ml-2 text-xs bg-yellow-100 px-2 py-0.5 rounded">view</span></div>
+                        <div><strong>Address:</strong> <div className="text-xs text-gray-600">{modalUser.address || '-'}</div></div>
+                        <div><strong>Buy Amount:</strong> {modalUser.buyAmount || '-'}</div>
+                        {/* vehicle details shown above in Vehicle Details */}
+                      </div>
+                    </div>
+                    <div className="w-full bg-white rounded-xl p-4 shadow">
+                      <h5 className="text-sm font-semibold mb-2">Finance Details</h5>
+                      <div className="text-sm text-gray-700 space-y-1">
+                        <div><strong>Finance Amount:</strong> {modalUser.financeAmount || '-'}</div>
+                        <div><strong>EMI Amount:</strong> {modalUser.emiAmount || '-'}</div>
+                        <div><strong>EMI Months:</strong> {modalUser.emiMonths || '15'}</div>
+                        <div><strong>EMI Date:</strong> {modalUser.emiDate || '-'}</div>
+                      </div>
+                    </div>
+                    <div className="w-full bg-white rounded-xl p-4 shadow">
+                      <h5 className="text-sm font-semibold mb-2">Reference</h5>
+                      <div className="text-sm text-gray-700">Name: {modalUser.referenceName || '—'}<br/>Phone: {modalUser.referencePhone || '—'}</div>
+                    </div>
+                    <div className="w-full bg-white rounded-xl p-4 shadow">
+                      <h5 className="text-sm font-semibold mb-2">Guarantor Details</h5>
+                      <div className="text-sm text-gray-700 space-y-1">
+                        <div><strong>Name:</strong> {modalUser.guarantorName || '-'}</div>
+                        <div><strong>Phone:</strong> {modalUser.guarantorPhone || '-'}</div>
+                        <div className="flex items-center gap-2"><strong>Aadhar No:</strong> <span>{modalUser.guarantorAadhaar || '-'}</span> <span className="ml-2 text-xs bg-yellow-100 px-2 py-0.5 rounded">view</span></div>
+                        <div><strong>Address:</strong> <div className="text-xs text-gray-600">{modalUser.guarantorAddress || '-'}</div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

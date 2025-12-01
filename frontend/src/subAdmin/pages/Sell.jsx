@@ -4,13 +4,14 @@ import { useNavigate } from 'react-router-dom'
 
 function Sell() {
   const [role, setRole] = useState('seller')
-  const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
 
   const [form, setForm] = useState({
     fullName: '',
     phone: '',
     aadhaar: '',
+    vehicleName: '',
+    model: '',
     vehicleNo: '',
     chassisNo: '',
     saleAmount: '',
@@ -145,6 +146,32 @@ function Sell() {
             />
             <div className="absolute left-3 top-11 -translate-y-1/2 text-gray-400">
               <svg xmlns="http://www.w3.org/2000/svg" width="15" height="22" viewBox="0 0 17 24"><path fill="#a6a6a6" d="M8.632 15.526a2.11 2.11 0 0 0-2.106 2.105v4.305a2.106 2.106 0 0 0 4.212 0v-.043v.002v-4.263a2.11 2.11 0 0 0-2.104-2.106z"/><path fill="#a6a6a6" d="M16.263 2.631H12.21C11.719 1.094 10.303 0 8.631 0S5.544 1.094 5.06 2.604l-.007.027h-4a1.053 1.053 0 0 0 0 2.106h4.053c.268.899.85 1.635 1.615 2.096l.016.009c-2.871.867-4.929 3.48-4.947 6.577v5.528a1.753 1.753 0 0 0 1.736 1.737h1.422v-3a3.737 3.737 0 1 1 7.474 0v3h1.421a1.75 1.75 0 0 0 1.738-1.737v-5.474a6.855 6.855 0 0 0-4.899-6.567l-.048-.012a3.65 3.65 0 0 0 1.625-2.08l.007-.026h4.053a1.056 1.056 0 0 0 1.053-1.053a1.15 1.15 0 0 0-1.104-1.105h-.002zM8.631 5.84a2.106 2.106 0 1 1 2.106-2.106l.001.06c0 1.13-.916 2.046-2.046 2.046l-.063-.001h.003z"/></svg>
+            </div>
+          </div>
+          <div className='relative'>
+            <label className={labelClass}>vehicle name</label>
+            <input
+              name="vehicleName"
+              value={form.vehicleName}
+              onChange={onChange}
+              placeholder="Enter vehicle name"
+              className={inputBase}
+            />
+            <div className="absolute left-3 top-11 -translate-y-1/2 text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M10.7 11H8.95h3.75zM5 19q-2.075 0-3.537-1.463T0 14t1.463-3.537T5 9h11.6l-2-2H12q-.425 0-.712-.288T11 6t.288-.712T12 5h2.575q.4 0 .763.15t.637.425L19.45 9.05q1.95.15 3.25 1.575T24 14q0 2.075-1.463 3.538T19 19t-3.537-1.463T14 14q0-.45.063-.888t.237-.862l-2.45 2.45q-.15.15-.337.225t-.388.075H9.9q-.35 1.75-1.725 2.875T5 19m14-2q1.25 0 2.125-.875T22 14t-.875-2.125T19 11t-2.125.875T16 14t.875 2.125T19 17M5 17q.95 0 1.713-.55T7.8 15H6q-.425 0-.712-.288T5 14t.288-.712T6 13h1.8q-.325-.9-1.088-1.45T5 11q-1.25 0-2.125.875T2 14t.875 2.125T5 17m4.95-4h.75l2-2H8.95q.375.425.625.925T9.95 13"/></svg>
+            </div>
+          </div>
+          <div className='relative'>
+            <label className={labelClass}>model</label>
+            <input
+              name="model"
+              value={form.model}
+              onChange={onChange}
+              placeholder="Enter model"
+              className={inputBase}
+            />
+            <div className="absolute left-3 top-11 -translate-y-1/2 text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 640 640"><path fill="#a6a6a6" d="M224 64c17.7 0 32 14.3 32 32v32h128V96c0-17.7 14.3-32 32-32s32 14.3 32 32v32h32c35.3 0 64 28.7 64 64v288c0 35.3-28.7 64-64 64H160c-35.3 0-64-28.7-64-64V192c0-35.3 28.7-64 64-64h32V96c0-17.7 14.3-32 32-32m0 256c-17.7 0-32 14.3-32 32v64c0 17.7 14.3 32 32 32h64c17.7 0 32-14.3 32-32v-64c0-17.7-14.3-32-32-32z"/></svg>
             </div>
           </div>
           

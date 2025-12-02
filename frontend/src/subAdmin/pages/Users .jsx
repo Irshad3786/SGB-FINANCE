@@ -14,6 +14,8 @@ function Users () {
   const [modalUser, setModalUser] = useState(null)
   const [users, setUsers] = useState(initialUsers) // useState for users so edits persist
   const [editOpen, setEditOpen] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
+  const [filters, setFilters] = useState({ from: '', to: '', status: 'all' })
 
   useEffect(() => {
     function onKey(e) {
@@ -39,8 +41,8 @@ function Users () {
       `}</style>
 
       <div className="md:flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 border font-semibold rounded-lg shadow hover:shadow-md transition-shadow bg-white text-base">
+          <div className="flex items-center gap-3">
+          <button onClick={() => setShowFilters(s => !s)} aria-expanded={showFilters} className="flex items-center gap-2 px-4 py-2 border font-semibold rounded-lg shadow hover:shadow-md transition-shadow bg-white text-base">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="w-5 h-5">
               <path fill="#a6a6a6" fillRule="evenodd" d="M5 3h14L8.816 13.184a2.7 2.7 0 0 0-.778-1.086c-.228-.198-.547-.377-1.183-.736l-2.913-1.64c-.949-.533-1.423-.8-1.682-1.23C2 8.061 2 7.541 2 6.503v-.69c0-1.326 0-1.99.44-2.402C2.878 3 3.585 3 5 3" clipRule="evenodd"/>
               <path fill="#a6a6a6" d="M22 6.504v-.69c0-1.326 0-1.99-.44-2.402C21.122 3 20.415 3 19 3L8.815 13.184q.075.193.121.403c.064.285.064.619.064 1.286v2.67c0 .909 0 1.364.252 1.718c.252.355.7.53 1.594.88c1.879.734 2.818 1.101 3.486.683S15 19.452 15 17.542v-2.67c0-.666 0-1 .063-1.285a2.68 2.68 0 0 1 .9-1.49c.227-.197.545-.376 1.182-.735l2.913-1.64c.948-.533 1.423-.8 1.682-1.23c.26-.43.26-.95.26-1.988" opacity="0.5"/>
@@ -48,6 +50,8 @@ function Users () {
             select filter
           </button>
         </div>
+
+        
 
         <div className="w-full max-w-sm py-4">
           <label htmlFor="user-search" className="sr-only">Search users</label>
@@ -63,13 +67,50 @@ function Users () {
               type="search"
               name="search"
               placeholder="Search users..."
-              className="w-full pl-10 pr-3 py-3 rounded-3xl border border-transparent bg-white/90 text-xs focus:outline-none focus:ring-2 focus:ring-[#bff86a] shadow-[0px_4px_10px_-3px_rgba(0,_0,_0,_0.7)]"
+              className="w-full pl-10 pr-3 py-3 rounded-3xl border border-transparent bg-white/90 text-xs focus:outline-none focus:ring-2 focus:ring-[#bff86a] shadow-[1px_2px_9px_-4px_rgba(0,_0,_0,_0.7)]"
             />
           </div>
         </div>
+
+
+        
       </div>
 
-      <div className="bg-white rounded-2xl shadow p-4 md:p-6 overflow-hidden">
+
+      {/* Filter panel (visible after clicking select filter) */}
+        {showFilters && (
+          <div className="mt-2 mb-4 md:mt-0  w-full md:w-fit bg-[#f0f0fa] rounded-lg p-3 shadow flex flex-col md:flex-row items-center gap-3">
+            <div className="flex items-center gap-2 text-xs text-gray-700">
+              <span className="shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 16 16"><path fill="#a6a6a6" d="M5.75 7.5a.75.75 0 1 0 0 1.5a.75.75 0 0 0 0-1.5m1.5.75A.75.75 0 0 1 8 7.5h2.25a.75.75 0 0 1 0 1.5H8a.75.75 0 0 1-.75-.75M5.75 9.5a.75.75 0 0 0 0 1.5H8a.75.75 0 0 0 0-1.5z"/><path fill="#a6a6a6" fill-rule="evenodd" d="M4.75 1a.75.75 0 0 0-.75.75V3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2V1.75a.75.75 0 0 0-1.5 0V3h-5V1.75A.75.75 0 0 0 4.75 1M3.5 7a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1z" clip-rule="evenodd"/></svg>              </span>
+              <div className="flex items-center gap-2">
+                <label className="text-[12px] text-gray-500">Date range</label>
+                <input type="date" value={filters.from} onChange={(e)=> setFilters(f=>({...f, from: e.target.value}))} className="text-xs border rounded px-2 py-1" />
+                <span className="text-gray-400">—</span>
+                <input type="date" value={filters.to} onChange={(e)=> setFilters(f=>({...f, to: e.target.value}))} className="text-xs border rounded px-2 py-1" />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-gray-700">
+              <span className="shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M15 16.69V13h1.5v2.82l2.44 1.41l-.75 1.3zM19.5 3.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2L7.5 3.5L6 2L4.5 3.5L3 2v20l1.5-1.5L6 22l1.5-1.5L9 22l1.58-1.58c.14.19.3.36.47.53A7.001 7.001 0 0 0 21 11.1V2zM11.1 11c-.6.57-1.07 1.25-1.43 2H6v-2zm-2.03 4c-.07.33-.07.66-.07 1s0 .67.07 1H6v-2zM18 9H6V7h12zm2.85 7c0 .64-.12 1.27-.35 1.86c-.26.58-.62 1.14-1.07 1.57c-.43.45-.99.81-1.57 1.07c-.59.23-1.22.35-1.86.35c-2.68 0-4.85-2.17-4.85-4.85c0-1.29.51-2.5 1.42-3.43c.93-.91 2.14-1.42 3.43-1.42c2.67 0 4.85 2.17 4.85 4.85"/></svg>              </span>
+              <div className="flex items-center gap-2">
+                <label className="text-[12px] text-gray-500">Status</label>
+                <select value={filters.status} onChange={(e)=> setFilters(f=>({...f, status: e.target.value}))} className="text-xs border rounded px-2 py-1">
+                  <option value="all">All</option>
+                  <option value="completed">Completed</option>
+                  <option value="pending">Buyer Pending</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="ml-auto">
+              <button onClick={() => setShowFilters(false)} className="px-3 py-1 text-xs bg-white  rounded">Close</button>
+            </div>
+          </div>
+        )}
+
+      <div className="bg-white rounded-2xl shadow p-4 md:p-6 overflow-hidden ">
         {/* Desktop table */}
         <div className="hidden md:block">
           <table className="w-full table-auto border-collapse">

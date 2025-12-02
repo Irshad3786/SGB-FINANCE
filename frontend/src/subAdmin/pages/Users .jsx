@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
+import EditUserModal from '../components/EditUserModal' // added import
 
 function Users () {
-  const users = [
+  const initialUsers = [
     { id: 1, seller: 'MOHAMMAD IRSHAD', buyerName: 'RAJU K', vehicle: 'AP39DZ9786', vehicleName: 'Hero Splendor', model: 'Splendor 2020', chassis: 'MBLHAW10655DD40552', soldAmount: '35,000', buyAmount: '35,000', date: '30-10-2025', dob: '13-01-2000', phone: '9182278505', aadhaar: '5014 0694 9073', address: 'Ramapuram road, rosaiah colony Chirala, vetapalem mandal 523155 - Andhra pradesh', financeAmount: '25000', emiAmount: '3500', emiMonths: '15', emiDate: '12-10-2025', guarantorName: 'MOHAMMAD IRSHAD', guarantorPhone: '9182278505', guarantorAadhaar: '5014 0694 9073', guarantorAddress: 'Ramapuram road, rosaiah colony Chirala, vetapalem mandal 523155', referenceName: 'SURESH MAHESH', referencePhone: '9182278505' },
     { id: 2, seller: 'SURESH', buyerName: '', vehicle: 'AP39YZ8512', vehicleName: 'Bajaj Pulsar', model: 'Pulsar NS200', chassis: 'MBLHAW10655DD11111', soldAmount: '35,000', buyAmount: '', date: '30-10-2025', dob: '02-05-1992', phone: '9123456780', aadhaar: '1234 5678 9012', address: '1-2-3, Some street, City', financeAmount: '', emiAmount: '', emiMonths: '', emiDate: '', guarantorName: '', guarantorPhone: '', guarantorAadhaar: '', guarantorAddress: '', referenceName: 'RAMESH', referencePhone: '9000000000' },
     { id: 3, seller: 'RAHUL', buyerName: 'MANU', vehicle: 'AP27AZ9865', vehicleName: 'TVS Apache', model: 'Apache RTR 160', chassis: 'MBLHAW10655DD22222', soldAmount: '35,000', buyAmount: '35,000', date: '30-10-2025', dob: '08-08-1996', phone: '9190909090', aadhaar: '2222 3333 4444', address: 'Block 5, Some Area', financeAmount: '20000', emiAmount: '2200', emiMonths: '12', emiDate: '01-11-2025', guarantorName: 'SANTHOS', guarantorPhone: '9191919191', guarantorAadhaar: '3333 4444 5555', guarantorAddress: 'Guarantor address', referenceName: 'KUMAR', referencePhone: '9111111111' },
@@ -11,6 +12,8 @@ function Users () {
   ]
 
   const [modalUser, setModalUser] = useState(null)
+  const [users, setUsers] = useState(initialUsers) // useState for users so edits persist
+  const [editOpen, setEditOpen] = useState(false)
 
   useEffect(() => {
     function onKey(e) {
@@ -20,8 +23,21 @@ function Users () {
     return () => window.removeEventListener('keydown', onKey)
   }, [modalUser])
 
+  function handleSave(updated) {
+    if (!updated || !updated.id) return
+    setUsers(prev => prev.map(u => (u.id === updated.id ? { ...u, ...updated } : u)))
+    setModalUser(updated)
+    setEditOpen(false)
+  }
+
   return (
     <div className="p-6">
+      {/* hide scrollbar but keep scrolling */}
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar{display:none;}
+        .no-scrollbar{-ms-overflow-style:none; scrollbar-width:none;}
+      `}</style>
+
       <div className="md:flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <button className="flex items-center gap-2 px-4 py-2 border font-semibold rounded-lg shadow hover:shadow-md transition-shadow bg-white text-base">
@@ -102,6 +118,7 @@ function Users () {
                   </td>
                 </tr>
               ))}
+
             </tbody>
           </table>
         </div>
@@ -142,6 +159,7 @@ function Users () {
               </div>
             </div>
           ))}
+
         </div>
 
         {/* Pagination / footer */}
@@ -155,10 +173,54 @@ function Users () {
       {/* Modal */}
       {modalUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setModalUser(null)} />
-          <div className="relative w-[95%] md:w-3/4 lg:w-2/3 bg-white rounded-2xl p-6 shadow-2xl no-scrollbar max-h-[90vh] overflow-auto" style={{WebkitOverflowScrolling: 'touch'}}>
-            <button onClick={() => setModalUser(null)} className="absolute right-4 top-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">✕</button>
-            <h3 className="text-lg font-semibold mb-4">User Details</h3>
+          {/* overlay: disable closing view when editOpen is true */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => {
+              if (!editOpen) setModalUser(null)
+            }}
+          />
+
+          {/* main view: apply visual disabled state when editOpen */}
+          <div
+            className={
+              "relative w-[95%] md:w-3/4 lg:w-2/3 bg-white rounded-2xl p-6 shadow-2xl no-scrollbar max-h-[90vh] overflow-auto " +
+              (editOpen ? "pointer-events-none opacity-60 select-none" : "")
+            }
+            style={{ WebkitOverflowScrolling: "touch" }}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold mb-4">User Details</h3>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setEditOpen(true)
+                  }}
+                  className="px-3 py-1 rounded bg-yellow-50 text-sm inline-flex items-center gap-2"
+                  aria-label="Edit user"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor" aria-hidden="true">
+                    <g className="edit-outline">
+                      <g fill="currentColor" fillRule="evenodd" className="Vector" clipRule="evenodd">
+                        <path d="M2 6.857A4.857 4.857 0 0 1 6.857 2H12a1 1 0 1 1 0 2H6.857A2.857 2.857 0 0 0 4 6.857v10.286A2.857 2.857 0 0 0 6.857 20h10.286A2.857 2.857 0 0 0 20 17.143V12a1 1 0 1 1 2 0v5.143A4.857 4.857 0 0 1 17.143 22H6.857A4.857 4.857 0 0 1 2 17.143z"/>
+                        <path d="m15.137 13.219l-2.205 1.33l-1.033-1.713l2.205-1.33l.003-.002a1.2 1.2 0 0 0 .232-.182l5.01-5.036a3 3 0 0 0 .145-.157c.331-.386.821-1.15.228-1.746c-.501-.504-1.219-.028-1.684.381a6 6 0 0 0-.36.345l-.034.034l-4.94 4.965a1.2 1.2 0 0 0-.27.41l-.824 2.073a.2.2 0 0 0 .29.245l1.032 1.713c-1.805 1.088-3.96-.74-3.18-2.698l.825-2.072a3.2 3.2 0 0 1 .71-1.081l4.939-4.966l.029-.029c.147-.15.641-.656 1.24-1.02c.327-.197.849-.458 1.494-.508c.74-.059 1.53.174 2.15.797a2.9 2.9 0 0 1 .845 1.75a3.15 3.15 0 0 1-.23 1.517c-.29.717-.774 1.244-.987 1.457l-5.01 5.036q-.28.281-.62.487m4.453-7.126s-.004.003-.013.006z"/>
+                      </g>
+                    </g>
+                  </svg>
+                  <span>Edit</span>
+                </button>
+                <button
+                  onClick={() => {
+                    if (!editOpen) setModalUser(null)
+                  }}
+                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
 
             {/* Small CSS to hide scrollbars but keep touch scrolling */}
             <style>{`.no-scrollbar::-webkit-scrollbar{display:none;} .no-scrollbar{-ms-overflow-style:none; scrollbar-width:none;}`}</style>
@@ -244,6 +306,23 @@ function Users () {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit modal (separate component) */}
+      {editOpen && modalUser && (
+        <div className="fixed inset-0 z-[9999] pointer-events-auto">
+          {/* overlay (dim) */}
+          <div className="absolute inset-0 bg-black/40" />
+
+          {/* scroll wrapper: top-aligned, no visible scrollbar, allows natural scrolling */}
+          <div className="absolute inset-0 flex items-start justify-center overflow-auto no-scrollbar py-8">
+            <EditUserModal
+              user={modalUser}
+              onSave={handleSave}
+              onClose={() => setEditOpen(false)}
+            />
           </div>
         </div>
       )}

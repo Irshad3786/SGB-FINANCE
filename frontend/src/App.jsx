@@ -8,6 +8,7 @@ import Dashboard from './subAdmin/pages/Dashboard';
 import Users from './subAdmin/pages/Users ';
 import Sell from './subAdmin/pages/Sell';
 import Buy from './subAdmin/pages/Buy';
+import Finance from './subAdmin/pages/Finance';
 
 
 function App() {
@@ -29,6 +30,8 @@ function App() {
           <Route path="users" element={<Users />} />
           <Route path="sell" element={<Sell />} />
           <Route path="buy" element={<Buy />} />
+          <Route path="finance" element={<Finance/>} />
+
 
         </Route>
         

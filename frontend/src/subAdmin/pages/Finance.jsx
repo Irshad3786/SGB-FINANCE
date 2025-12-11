@@ -92,14 +92,14 @@ function Finance() {
           <table className="w-full table-auto border-collapse">
             <thead>
               <tr className="bg-gray-100 text-left rounded-lg">
-                <th className="py-3 px-3 text-base font-semibold">s no</th>
+                <th className="py-3 px-3 text-base font-semibold rounded-tl-lg">s no</th>
                 <th className="py-3 px-3 text-base font-semibold">name</th>
                 <th className="py-3 px-3 text-base font-semibold">vehicle no</th>
                 <th className="py-3 px-3 text-base font-semibold">phone no</th>
                 <th className="py-3 px-3 text-base font-semibold">finance amount</th>
                 <th className="py-3 px-3 text-base font-semibold">emi date</th>
                 <th className="py-3 px-3 text-base font-semibold">emi</th>
-                <th className="py-3 px-3 text-base font-semibold">action</th>
+                <th className="py-3 px-3 text-base font-semibold rounded-tr-lg">action</th>
               </tr>
             </thead>
             <tbody>

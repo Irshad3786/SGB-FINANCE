@@ -112,11 +112,11 @@ function Users () {
 
       <div className="bg-white rounded-2xl shadow p-4 md:p-6 overflow-hidden ">
         {/* Desktop table */}
-        <div className="hidden md:block">
-          <table className="w-full table-auto border-collapse">
+        <div className="hidden md:block ">
+          <table className="w-full table-auto border-collapse ">
             <thead>
-              <tr className="bg-gray-100 text-left rounded-lg ">
-                <th className="py-3 px-3 text-base font-semibold">s no</th>
+              <tr className="bg-gray-100 text-left ">
+                <th className="py-3 px-3 text-base font-semibold rounded-tl-lg">s no</th>
                 <th className="py-3 px-3 text-base font-semibold">seller name</th>
                 <th className="py-3 px-3 text-base font-semibold">buyer name</th>
                 <th className="py-3 px-3 text-base font-semibold">vehicle no</th>
@@ -124,7 +124,7 @@ function Users () {
                 <th className="py-3 px-3 text-base font-semibold">buy amount</th>
                 <th className="py-3 px-3 text-base font-semibold">date</th>
                 <th className="py-3 px-3 text-base font-semibold">status</th>
-                <th className="py-3 px-3 text-base font-semibold">action</th>
+                <th className="py-3 px-3 text-base font-semibold rounded-tr-lg">action</th>
               </tr>
             </thead>
             <tbody>
@@ -216,7 +216,7 @@ function Users () {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           {/* overlay: disable closing view when editOpen is true */}
           <div
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/50"
             onClick={() => {
               if (!editOpen) setModalUser(null)
             }}
@@ -355,7 +355,7 @@ function Users () {
       {editOpen && modalUser && (
         <div className="fixed inset-0 z-[9999] pointer-events-auto">
           {/* overlay (dim) */}
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-black/40" />
 
           {/* scroll wrapper: top-aligned, no visible scrollbar, allows natural scrolling */}
           <div className="absolute inset-0 flex items-start justify-center overflow-auto no-scrollbar py-8">

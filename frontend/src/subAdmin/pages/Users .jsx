@@ -216,7 +216,7 @@ function Users () {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           {/* overlay: disable closing view when editOpen is true */}
           <div
-            className="absolute inset-0 bg-black/50"
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
             onClick={() => {
               if (!editOpen) setModalUser(null)
             }}
@@ -355,7 +355,7 @@ function Users () {
       {editOpen && modalUser && (
         <div className="fixed inset-0 z-[9999] pointer-events-auto">
           {/* overlay (dim) */}
-          <div className="absolute inset-0 bg-black/40" />
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
 
           {/* scroll wrapper: top-aligned, no visible scrollbar, allows natural scrolling */}
           <div className="absolute inset-0 flex items-start justify-center overflow-auto no-scrollbar py-8">

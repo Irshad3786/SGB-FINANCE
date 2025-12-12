@@ -76,8 +76,12 @@ function Sidebar({toggle, onNavigate}) {
         <NavLink
           to="/subadmin/finance"
           onClick={() => onNavigate && onNavigate('Finance')}
-          className={({ isActive }) =>
-            `p-4 rounded-xl flex items-center gap-2 ${isActive ? "bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] font-semibold shadow-[-1px_8px_7px_-2px_rgba(0,_0,_0,_0.25)]" : "bg-gray-100 font-semibold"} hover:shadow-[-1px_8px_7px_-2px_rgba(0,_0,_0,_0.25)] transition-shadow`
+          className={() =>
+            `p-4 rounded-xl flex items-center gap-2 ${
+              (location.pathname.startsWith('/subadmin/finance') || location.pathname.startsWith('/subadmin/collection'))
+                ? "bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] font-semibold shadow-[-1px_8px_7px_-2px rgba(0,_0,_0,_0.25)]"
+                : "bg-gray-100 font-semibold"
+            } hover:shadow-[-1px_8px_7px_-2px rgba(0,_0,_0,_0.25)] transition-shadow`
           }
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">

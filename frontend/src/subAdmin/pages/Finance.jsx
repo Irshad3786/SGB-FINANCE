@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 function Finance() {
+  const navigate = useNavigate()
   const financeData = [
     { id: 1, seller: 'MOHAMMAD IRSHAD', buyerName: 'RAJU K', vehicle: 'AP39DZ9786', phoneNo: '9182278505', financeAmount: '25000', emiDate: '12-10-2025', emi: '3500', age: '32', address: 'Ramapuram Road rosaiah colony Chirala, vetapalem mandal 523157', agreementNo: 'HA454', vehiclePrice: '55,000', charges: '15,000', totalAmount: '50,000', emiSchedule: [{ sno: 1, emi: 3500, paidAmount: 3400, emiDate: '30-01-2025', paidDate: '30-01-2025', peningAmount: 100 }, { sno: 2, emi: 3500, paidAmount: 3400, emiDate: '30-01-2025', paidDate: '30-01-2025', peningAmount: 100 }, { sno: 3, emi: 3500, paidAmount: 3400, emiDate: '30-01-2025', paidDate: '30-01-2025', peningAmount: 100 }, { sno: 4, emi: 3500, paidAmount: 3400, emiDate: '30-01-2025', paidDate: '30-01-2025', peningAmount: 100 }, { sno: 5, emi: 3500, paidAmount: 3400, emiDate: '30-01-2025', paidDate: '30-01-2025', peningAmount: 100 }, { sno: 6, emi: 3500, paidAmount: 3400, emiDate: '30-01-2025', paidDate: '30-01-2025', peningAmount: 100 }], totalPaid: '20400', totalPending: '600', vehicleName: 'Hero Splendor', chassisNo: 'MBLHASD55544DD51410', vehicleModel: '2022' },
     { id: 2, seller: 'SURESH', buyerName: '', vehicle: 'AP39YZ8512', phoneNo: '9123456780', financeAmount: '', emiDate: '', emi: '', age: '', address: '', agreementNo: '', vehiclePrice: '', charges: '', totalAmount: '', emiSchedule: [], totalPaid: '', totalPending: '', vehicleName: '', chassisNo: '', vehicleModel: '' },
@@ -21,6 +23,26 @@ function Finance() {
         .no-scrollbar{-ms-overflow-style:none; scrollbar-width:none;}
       `}</style>
 
+      {/* Top Buttons */}
+      <div className="flex items-center gap-4 mb-8">
+        {/* All Users Button (active on Finance) */}
+        <button onClick={() => navigate('/subadmin/finance')} disabled className="flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] font-semibold text-gray-900 shadow-lg cursor-default opacity-100">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="w-5 h-5">
+            <path fill="#000" d="M21.987 18.73a2 2 0 0 1-.34.85a1.9 1.9 0 0 1-1.56.8h-1.651a.74.74 0 0 1-.6-.31a.76.76 0 0 1-.11-.67c.37-1.18.29-2.51-3.061-4.64a.77.77 0 0 1-.32-.85a.76.76 0 0 1 .72-.54a7.61 7.61 0 0 1 6.792 4.39a2 2 0 0 1 .13.97M19.486 7.7a4.43 4.43 0 0 1-4.421 4.42a.76.76 0 0 1-.65-1.13a6.16 6.16 0 0 0 0-6.53a.75.75 0 0 1 .61-1.18a4.3 4.3 0 0 1 3.13 1.34a4.46 4.46 0 0 1 1.291 3.12z"/>
+            <path fill="#000" d="M16.675 18.7a2.65 2.65 0 0 1-1.26 2.48c-.418.257-.9.392-1.39.39H4.652a2.63 2.63 0 0 1-1.39-.39A2.62 2.62 0 0 1 2.01 18.7a2.6 2.6 0 0 1 .5-1.35a8.8 8.8 0 0 1 6.812-3.51a8.78 8.78 0 0 1 6.842 3.5a2.7 2.7 0 0 1 .51 1.36M14.245 7.32a4.92 4.92 0 0 1-4.902 4.91a4.903 4.903 0 0 1-4.797-5.858a4.9 4.9 0 0 1 6.678-3.57a4.9 4.9 0 0 1 3.03 4.518z"/>
+          </svg>
+          <span>Users</span>
+        </button>
+
+        {/* Collection Button (inactive on Finance) */}
+        <button onClick={() => navigate('/subadmin/collection')} className="flex items-center gap-2 px-6 py-3 rounded-lg bg-white border-2 border-gray-300 font-semibold text-gray-800 shadow hover:shadow-md transition-shadow">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" className="w-5 h-5">
+            <path fill="#000" d="M0 13a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 16 13V6a1.5 1.5 0 0 0-1.5-1.5h-13A1.5 1.5 0 0 0 0 6zM2 3a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 0-1h-11A.5.5 0 0 0 2 3m2-2a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 0-1h-7A.5.5 0 0 0 4 1"/>
+          </svg>
+          <span>Collection</span>
+        </button>
+      </div>
+
       <div className="md:flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <button onClick={() => setShowFilters(s => !s)} aria-expanded={showFilters} className="flex items-center gap-2 px-4 py-2 border font-semibold rounded-lg shadow hover:shadow-md transition-shadow bg-white text-base">
@@ -38,7 +60,7 @@ function Finance() {
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" className="w-5 h-5">
                 <path fill="#a6a6a6" d="M9.5 16q-2.725 0-4.612-1.888T3 9.5t1.888-4.612T9.5 3t4.613 1.888T16 9.5q0 1.1-.35 2.075T14.7 13.3l5.6 5.6q.275.275.275.7t-.275.7t-.7.275t-.7-.275l-5.6-5.6q-.75.6-1.725.95T9.5 16m0-2q1.875 0 3.188-1.312T14 9.5t-1.312-3.187T9.5 5T6.313 6.313T5 9.5t1.313 3.188T9.5 14"/>
-              </svg>
+               </svg>
             </div>
             <input
               id="finance-search"

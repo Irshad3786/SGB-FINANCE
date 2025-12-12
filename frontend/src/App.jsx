@@ -9,6 +9,7 @@ import Users from './subAdmin/pages/Users ';
 import Sell from './subAdmin/pages/Sell';
 import Buy from './subAdmin/pages/Buy';
 import Finance from './subAdmin/pages/Finance';
+import Collection from './subAdmin/pages/Collection';
 
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
           <Route path="sell" element={<Sell />} />
           <Route path="buy" element={<Buy />} />
           <Route path="finance" element={<Finance/>} />
+          <Route path="collection" element={<Collection/>} />
 
 
         </Route>

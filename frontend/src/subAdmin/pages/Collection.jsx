@@ -1,5 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
+import { useEffect } from 'react'
+import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import WhatsAppConfirmModal from '../components/WhatsAppConfirmModal'
 
 function Collection() {
   const navigate = useNavigate()
@@ -15,21 +18,84 @@ function Collection() {
   ]
 
   const tableData = [
-    { sno: 1, ha: 'HA454', name: 'MOHAMMAD IRSHAD', vehicle: 'AP39DZ9786', phone: '9182278505', emi: '3500', emiDate: '30-11-2025', commAmount: '25-11-2025', commDate: '3030', paidAmount: '3030', status: 'paid' },
-    { sno: 2, ha: 'HA455', name: 'RAHUL KUMAR', vehicle: 'AP27AZ9865', phone: '9190909090', emi: '4250', emiDate: '01-11-2025', commAmount: '25-10-2025', commDate: '3330', paidAmount: '3330', status: 'pending' },
-    { sno: 3, ha: 'HA456', name: 'PRADEEP SINGH', vehicle: 'AP26VV2654', phone: '9155555555', emi: '2800', emiDate: '15-12-2025', commAmount: '10-12-2025', commDate: '2880', paidAmount: '2880', status: 'paid' },
-    { sno: 4, ha: 'HA457', name: 'KARTHIK RAO', vehicle: 'AP27NN3658', phone: '9166666666', emi: '3500', emiDate: '20-12-2025', commAmount: '15-12-2025', commDate: '3030', paidAmount: '3030', status: 'paid' },
-    { sno: 5, ha: 'HA458', name: 'MOULALI AHMED', vehicle: 'AP39XX7508', phone: '9133333333', emi: '2200', emiDate: '25-12-2025', commAmount: '20-12-2025', commDate: '2030', paidAmount: '2030', status: 'paid' },
-    { sno: 6, ha: 'HA459', name: 'SURESH BABU', vehicle: 'AP39YZ8512', phone: '9123456780', emi: '3500', emiDate: '05-01-2026', commAmount: '31-12-2025', commDate: '3030', paidAmount: '3030', status: 'paid' },
-    { sno: 7, ha: 'HA460', name: 'DEEPAK VERMA', vehicle: 'AP25KK4532', phone: '9144444444', emi: '1800', emiDate: '10-01-2026', commAmount: '05-01-2026', commDate: '1630', paidAmount: '1630', status: 'paid' },
+    { sno: 1, ha: 'HA454', name: 'MOHAMMAD IRSHAD', vehicle: 'AP39DZ9786', phone: '9182278505,9876543210', emi: '3500', emiDate: '12-10-2025', commAmount: '25-11-2025', commDate: '3500', paidAmount: '3500', status: 'paid', vehiclePrice: '55000', charges: '15000', totalAmount: '50000', buyerName: 'RAJU K', financeAmount: '25000', age: '32', address: 'Ramapuram Road rosaiah colony Chirala, vetapalem mandal 523157', vehicleName: 'Hero Splendor', chassisNo: 'MBLHASD55544DD51410', vehicleModel: '2022', emiSchedule: [{ sno: 1, emi: 3500, paidAmount: 3400, emiDate: '30-01-2025', paidDate: '30-01-2025', peningAmount: 100 }, { sno: 2, emi: 3500, paidAmount: 3400, emiDate: '30-02-2025', paidDate: '30-02-2025', peningAmount: 100 }, { sno: 3, emi: 3500, paidAmount: 3400, emiDate: '30-03-2025', paidDate: '30-03-2025', peningAmount: 100 }, { sno: 4, emi: 3500, paidAmount: 3400, emiDate: '30-04-2025', paidDate: '30-04-2025', peningAmount: 100 }, { sno: 5, emi: 3500, paidAmount: 3400, emiDate: '30-05-2025', paidDate: '30-05-2025', peningAmount: 100 }, { sno: 6, emi: 3500, paidAmount: 3400, emiDate: '30-06-2025', paidDate: '30-06-2025', peningAmount: 100 }], totalPaid: '20400', totalPending: '600' },
+    { sno: 2, ha: 'HA455', name: 'RAHUL KUMAR', vehicle: 'AP27AZ9865', phone: '9190909090', emi: '4250', emiDate: '01-11-2025', commAmount: '25-10-2025', commDate: '3330', paidAmount: '3330', status: 'pending', vehiclePrice: '48000', charges: '12000', totalAmount: '60000', emiSchedule: [{ sno: 1, emi: 4250, paidAmount: 4250, emiDate: '01-11-2025', paidDate: '01-11-2025', peningAmount: 0 }, { sno: 2, emi: 4250, paidAmount: 0, emiDate: '01-12-2025', paidDate: '-', peningAmount: 4250 }, { sno: 3, emi: 4250, paidAmount: 0, emiDate: '01-01-2026', paidDate: '-', peningAmount: 4250 }] },
+    { sno: 3, ha: 'HA456', name: 'PRADEEP SINGH', vehicle: 'AP26VV2654', phone: '9155555555', emi: '2800', emiDate: '15-12-2025', commAmount: '10-12-2025', commDate: '2880', paidAmount: '2880', status: 'paid', vehiclePrice: '42000', charges: '10000', totalAmount: '52000', emiSchedule: [{ sno: 1, emi: 2800, paidAmount: 2800, emiDate: '15-12-2025', paidDate: '15-12-2025', peningAmount: 0 }, { sno: 2, emi: 2800, paidAmount: 0, emiDate: '15-01-2026', paidDate: '-', peningAmount: 2800 }] },
+    { sno: 4, ha: 'HA457', name: 'KARTHIK RAO', vehicle: 'AP27NN3658', phone: '9166666666', emi: '3500', emiDate: '20-12-2025', commAmount: '15-12-2025', commDate: '3030', paidAmount: '3030', status: 'paid', vehiclePrice: '50000', charges: '14000', totalAmount: '64000', emiSchedule: [{ sno: 1, emi: 3500, paidAmount: 3500, emiDate: '20-12-2025', paidDate: '20-12-2025', peningAmount: 0 }, { sno: 2, emi: 3500, paidAmount: 0, emiDate: '20-01-2026', paidDate: '-', peningAmount: 3500 }] },
+    { sno: 5, ha: 'HA458', name: 'MOULALI AHMED', vehicle: 'AP39XX7508', phone: '9133333333', emi: '2200', emiDate: '25-12-2025', commAmount: '20-12-2025', commDate: '2030', paidAmount: '2030', status: 'paid', vehiclePrice: '38000', charges: '9000', totalAmount: '47000', emiSchedule: [{ sno: 1, emi: 2200, paidAmount: 2200, emiDate: '25-12-2025', paidDate: '25-12-2025', peningAmount: 0 }, { sno: 2, emi: 2200, paidAmount: 0, emiDate: '25-01-2026', paidDate: '-', peningAmount: 2200 }] },
+    { sno: 6, ha: 'HA459', name: 'SURESH BABU', vehicle: 'AP39YZ8512', phone: '9123456780', emi: '3500', emiDate: '05-01-2026', commAmount: '31-12-2025', commDate: '3030', paidAmount: '3030', status: 'paid', vehiclePrice: '52000', charges: '13000', totalAmount: '65000', emiSchedule: [{ sno: 1, emi: 3500, paidAmount: 0, emiDate: '05-01-2026', paidDate: '-', peningAmount: 3500 }, { sno: 2, emi: 3500, paidAmount: 0, emiDate: '05-02-2026', paidDate: '-', peningAmount: 3500 }] },
+    { sno: 7, ha: 'HA460', name: 'DEEPAK VERMA', vehicle: 'AP25KK4532', phone: '9144444444', emi: '1800', emiDate: '10-01-2026', commAmount: '05-01-2026', commDate: '1630', paidAmount: '1630', status: 'paid', vehiclePrice: '35000', charges: '8000', totalAmount: '43000', emiSchedule: [{ sno: 1, emi: 1800, paidAmount: 0, emiDate: '10-01-2026', paidDate: '-', peningAmount: 1800 }, { sno: 2, emi: 1800, paidAmount: 0, emiDate: '10-02-2026', paidDate: '-', peningAmount: 1800 }] },
   ]
 
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({ agent: '', status: 'all', date: '' })
-  const highlightedCollection = collectionData[0]
+  // Quick entry defaults so inputs are ready to edit
+  const [quickEntry, setQuickEntry] = useState({ aggNo: '586', amount: '3500', agent: 'prasad' })
+  const agentOptions = ['prasad', 'ajay', 'rajesh', 'suresh']
+  const [whatsAppModal, setWhatsAppModal] = useState({ isOpen: false, userName: '' })
+  const [financeModal, setFinanceModal] = useState(null)
+  const [editableData, setEditableData] = useState(tableData)
+  const [selectedRowIndex, setSelectedRowIndex] = useState(0)
+  const tableContainerRef = useRef(null)
+
+  const handleCellChange = (index, field, value) => {
+    setEditableData(prev => prev.map((row, idx) => 
+      idx === index ? { ...row, [field]: value } : row
+    ))
+  }
+
+  const handleWhatsAppClick = (userName) => {
+    setWhatsAppModal({ isOpen: true, userName })
+  }
+
+  const handleWhatsAppConfirm = () => {
+    // Add your WhatsApp sending logic here
+    console.log('Sending WhatsApp message to:', whatsAppModal.userName)
+    // You can integrate WhatsApp API or deep linking here
+  }
+
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setSelectedRowIndex(prev => (prev < editableData.length - 1 ? prev + 1 : prev))
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setSelectedRowIndex(prev => (prev > 0 ? prev - 1 : prev))
+      }
+    }
+    
+    if (tableContainerRef.current) {
+      tableContainerRef.current.addEventListener('keydown', handleKeyDown)
+    }
+    
+    return () => {
+      if (tableContainerRef.current) {
+        tableContainerRef.current.removeEventListener('keydown', handleKeyDown)
+      }
+    }
+  }, [editableData.length])
+
+  // Calculate totals
+  const totals = useMemo(() => {
+    const totalCommAmount = editableData.reduce((sum, row) => {
+      const amount = parseFloat(row.commDate) || 0
+      return sum + amount
+    }, 0)
+    
+    const totalPaidAmount = editableData.reduce((sum, row) => {
+      const amount = parseFloat(row.paidAmount) || 0
+      return sum + amount
+    }, 0)
+    
+    const pendingAmount = totalCommAmount - totalPaidAmount
+    
+    return { totalCommAmount, totalPaidAmount, pendingAmount }
+  }, [editableData])
 
   return (
-    <div className="p-6">
+    <div className="p-3 sm:p-6 overflow-x-hidden max-w-full break-words w-full">
       <style>{`
         .no-scrollbar::-webkit-scrollbar{display:none;}
         .no-scrollbar{-ms-overflow-style:none; scrollbar-width:none;}
@@ -69,10 +135,7 @@ function Collection() {
           </button>
 
           <button className="flex items-center gap-2 px-4 py-2 border font-semibold rounded-lg shadow hover:shadow-md transition-shadow bg-white text-base">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="w-5 h-5">
-              <path fill="#a6a6a6" d="M3 1h18v2H3V1m0 4h18v2H3V5m0 4h18v2H3V9m0 4h18v2H3v-2m0 4h18v2H3v-2"/>
-            </svg>
-            download due list
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M12 15.575q-.2 0-.375-.062T11.3 15.3l-3.6-3.6q-.3-.3-.288-.7t.288-.7q.3-.3.713-.312t.712.287L11 12.15V5q0-.425.288-.712T12 4t.713.288T13 5v7.15l1.875-1.875q.3-.3.713-.288t.712.313q.275.3.288.7t-.288.7l-3.6 3.6q-.15.15-.325.213t-.375.062M6 20q-.825 0-1.412-.587T4 18v-2q0-.425.288-.712T5 15t.713.288T6 16v2h12v-2q0-.425.288-.712T19 15t.713.288T20 16v2q0 .825-.587 1.413T18 20z"/></svg>            download due list
           </button>
         </div>
 
@@ -132,36 +195,57 @@ function Collection() {
 
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
-        <div className="flex flex-wrap items-center gap-3">
-          
-
-          {highlightedCollection && (
-            <div className="flex items-center gap-3 rounded-full bg-[#f3f1ff] text-gray-700 px-4 py-3 shadow-sm">
-              <div className="flex items-center gap-4 text-xs md:text-sm">
-                <div className="flex flex-col leading-tight">
-                  <span className="text-[11px] text-gray-500">Agg No</span>
-                  <span className="font-semibold text-base text-[#5751f5]">{highlightedCollection.aggNo}</span>
-                </div>
-                <div className="flex flex-col leading-tight">
-                  <span className="text-[11px] text-gray-500">Amount</span>
-                  <span className="font-semibold text-base">{highlightedCollection.amount}</span>
-                </div>
-                <div className="flex flex-col leading-tight">
-                  <span className="text-[11px] text-gray-500">Agent</span>
-                  <span className="font-semibold text-base text-[#5751f5] capitalize">{highlightedCollection.agent}</span>
-                </div>
-              </div>
-              <button
-                type="button"
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-[#5751f5] text-[#5751f5] bg-white hover:bg-[#5751f5] hover:text-white transition-colors"
+        <form className="flex flex-wrap items-center gap-3 bg-[#f3f1ff] rounded-xl px-4 py-3 shadow-sm" onSubmit={(e) => e.preventDefault()}>
+          <div className="flex items-center gap-3">
+            <label className="flex flex-col leading-tight text-gray-700 text-sm">
+              <span className="text-[11px] text-gray-500">Agg No</span>
+              <input
+                type="text"
+                name="aggNo"
+                value={quickEntry.aggNo}
+                onChange={(e) => setQuickEntry(q => ({ ...q, aggNo: e.target.value }))}
+                className="mt-1 w-24 rounded-md border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                placeholder="586"
+                autoComplete="off"
+              />
+            </label>
+            <label className="flex flex-col leading-tight text-gray-700 text-sm">
+              <span className="text-[11px] text-gray-500">Amount</span>
+              <input
+                type="number"
+                name="amount"
+                value={quickEntry.amount}
+                onChange={(e) => setQuickEntry(q => ({ ...q, amount: e.target.value }))}
+                className="mt-1 w-24 rounded-md border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                placeholder="3500"
+                inputMode="numeric"
+              />
+            </label>
+            <label className="flex flex-col leading-tight text-gray-700 text-sm">
+              <span className="text-[11px] text-gray-500">Agent</span>
+              <select
+                name="agent"
+                value={quickEntry.agent}
+                onChange={(e) => setQuickEntry(q => ({ ...q, agent: e.target.value }))}
+                className="mt-1 w-28 rounded-md border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a] capitalize bg-white"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 5c.552 0 1 .448 1 1v5h5c.552 0 1 .448 1 1s-.448 1-1 1h-5v5c0 .552-.448 1-1 1s-1-.448-1-1v-5H6c-.552 0-1-.448-1-1s.448-1 1-1h5V6c0-.552.448-1 1-1" />
-                </svg>
-              </button>
-            </div>
-          )}
-        </div>
+                <option value="" disabled>Select agent</option>
+                {agentOptions.map(agent => (
+                  <option key={agent} value={agent} className="capitalize">{agent}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <button
+            type="submit"
+            className="w-9 h-9 flex items-center justify-center rounded-full border border-[#5751f5] text-[#5751f5] bg-white hover:bg-[#5751f5] hover:text-white transition-colors"
+            aria-label="Add quick entry"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 5c.552 0 1 .448 1 1v5h5c.552 0 1 .448 1 1s-.448 1-1 1h-5v5c0 .552-.448 1-1 1s-1-.448-1-1v-5H6c-.552 0-1-.448-1-1s.448-1 1-1h5V6c0-.552.448-1 1-1" />
+            </svg>
+          </button>
+        </form>
 
         <div className="flex justify-start md:justify-end">
           <button
@@ -174,40 +258,110 @@ function Collection() {
         </div>
       </div>
 
+
       <div className="bg-white rounded-2xl shadow p-4 md:p-6 overflow-hidden">
+        {/* Agent Filter Display */}
+        <div className="mb-4 pb-3 border-b border-gray-200">
+          <span className="text-sm text-gray-600">Agent: </span>
+          <span className="text-base font-bold text-black capitalize">{filters.agent ? filters.agent : 'All agents'}</span>
+        </div>
+
         {/* Desktop table */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto max-w-full">
           <table className="w-full table-auto border-collapse">
             <thead>
               <tr className="bg-gray-100 text-left rounded-lg">
-                <th className="py-3 px-3 text-base font-semibold rounded-tl-lg">HA</th>
-                <th className="py-3 px-3 text-base font-semibold">Name</th>
-                <th className="py-3 px-3 text-base font-semibold">Vehicle</th>
-                <th className="py-3 px-3 text-base font-semibold">Phone</th>
-                <th className="py-3 px-3 text-base font-semibold">EMI</th>
-                <th className="py-3 px-3 text-base font-semibold">EMI Date</th>
-                <th className="py-3 px-3 text-base font-semibold">Comm Date</th>
-                <th className="py-3 px-3 text-base font-semibold">Comm Amount</th>
-                <th className="py-3 px-3 text-base font-semibold">Paid Amount</th>
-                <th className="py-3 px-3 text-base font-semibold rounded-tr-lg">Status</th>
+                <th className="py-3 px-3 text-sm font-semibold rounded-tl-lg">HA</th>
+                <th className="py-3 px-3 text-sm font-semibold">Name</th>
+                <th className="py-3 px-3 text-sm font-semibold">Vehicle</th>
+                <th className="py-3 px-3 text-sm font-semibold">Phone</th>
+                  <th className="py-3 px-3 text-sm font-semibold">EMI</th>
+                  <th className="py-3 px-3 text-sm font-semibold whitespace-nowrap">EMI Date</th>
+                <th className="py-3 px-3 text-sm font-semibold">Comm Date</th>
+                <th className="py-3 px-3 text-sm font-semibold">Comm Amount</th>
+                <th className="py-3 px-3 text-sm font-semibold">Paid Amount</th>
+                <th className="py-3 px-3 text-sm font-semibold">Status</th>
+                <th className="py-3 px-3 text-sm font-semibold rounded-tr-lg">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {tableData.map((row, idx) => (
-                <tr key={idx} className={`border-b last:border-b-0 ${row.status === 'pending' ? 'bg-red-100' : 'bg-green-50'}`}>
+              {editableData.map((row, idx) => (
+                <tr key={idx} onClick={() => setSelectedRowIndex(idx)} className={`border transition-all cursor-pointer ${
+                  selectedRowIndex === idx ? 'border-2 border-orange-600' : 'border border-gray-200'
+                } ${
+                  row.status === 'pending' ? 'bg-red-100' :
+                  row.status === 'paid' ? 'bg-green-50' :
+                  row.status === 'mark' ? 'bg-gray-200' :
+                  'bg-white'
+                }`}>
                   <td className="py-3 px-3 text-xs font-semibold">{row.ha}</td>
                   <td className="py-3 px-3 text-xs">{row.name}</td>
                   <td className="py-3 px-3 text-xs">{row.vehicle}</td>
                   <td className="py-3 px-3 text-xs">{row.phone}</td>
                   <td className="py-3 px-3 text-xs">{row.emi}</td>
-                  <td className="py-3 px-3 text-xs">{row.emiDate}</td>
-                  <td className="py-3 px-3 text-xs">{row.commAmount}</td>
-                  <td className="py-3 px-3 text-xs">{row.commDate}</td>
-                  <td className="py-3 px-3 text-xs">{row.paidAmount}</td>
+                    <td className="py-3 px-3 text-xs whitespace-nowrap">{row.emiDate}</td>
                   <td className="py-3 px-3">
-                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${row.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                      {row.status === 'paid' ? '✓ paid' : '⚠ seizing'}
-                    </span>
+                    <input
+                      type="date"
+                      value={row.commAmount}
+                      onChange={(e) => handleCellChange(idx, 'commAmount', e.target.value)}
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#bff86a] bg-white"
+                    />
+                  </td>
+                  <td className="py-3 px-3">
+                    <input
+                      type="text"
+                      value={row.commDate}
+                      onChange={(e) => handleCellChange(idx, 'commDate', e.target.value)}
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                      placeholder="Amount"
+                    />
+                  </td>
+                  <td className="py-3 px-3">
+                    <input
+                      type="text"
+                      value={row.paidAmount}
+                      onChange={(e) => handleCellChange(idx, 'paidAmount', e.target.value)}
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                      placeholder="Amount"
+                    />
+                  </td>
+                  <td className="py-3 px-3">
+                    <select
+                      value={row.status}
+                      onChange={(e) => handleCellChange(idx, 'status', e.target.value)}
+                      className={`w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#bff86a] font-medium ${
+                        row.status === 'paid' ? 'bg-green-50 text-green-700' : 
+                        row.status === 'pending' ? 'bg-red-50 text-red-700' :
+                        row.status === 'mark' ? 'bg-gray-200 text-gray-700' :
+                        'bg-white text-gray-700'
+                      }`}
+                    >
+                      <option value="none">None</option>
+                      <option value="paid">✓ Paid</option>
+                      <option value="pending">⚠ Seizing</option>
+                      <option value="mark">• Mark</option>
+                    </select>
+                  </td>
+                  <td className="py-3 px-3">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setFinanceModal(row)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="View Finance Details"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="currentColor"/><path fill="currentColor" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5"/></svg>
+                      </button>
+                      <button
+                        onClick={() => handleWhatsAppClick(row.name)}
+                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        title="Send WhatsApp message"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16">
+                          <path fill="currentColor" d="M8 0a8 8 0 1 1-4.075 14.886L.658 15.974a.5.5 0 0 1-.632-.632l1.089-3.266A8 8 0 0 1 8 0M5.214 4.004a.7.7 0 0 0-.526.266C4.508 4.481 4 4.995 4 6.037c0 1.044.705 2.054.804 2.196c.098.138 1.388 2.28 3.363 3.2q.55.255 1.12.446c.472.16.902.139 1.242.085c.379-.06 1.164-.513 1.329-1.01c.163-.493.163-.918.113-1.007c-.049-.088-.18-.142-.378-.25c-.196-.105-1.165-.618-1.345-.687c-.18-.073-.312-.106-.443.105c-.132.213-.507.691-.623.832c-.113.139-.23.159-.425.053c-.198-.105-.831-.33-1.584-1.054c-.585-.561-.98-1.258-1.094-1.469c-.116-.213-.013-.326.085-.433c.09-.094.198-.246.296-.371c.097-.122.132-.21.198-.353c.064-.141.031-.266-.018-.371s-.443-1.152-.607-1.577c-.16-.413-.323-.355-.443-.363c-.114-.005-.245-.005-.376-.005"/>
+                        </svg>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -216,14 +370,33 @@ function Collection() {
         </div>
 
         {/* Mobile cards */}
-        <div className="block md:hidden space-y-3">
-          {tableData.map((row, idx) => (
-            <div key={idx} className={`rounded-lg p-3 ${row.status === 'pending' ? 'bg-red-100' : 'bg-green-50'}`}>
-              <div className="flex items-center justify-between">
+        <div className="block md:hidden space-y-2 w-full">
+          {editableData.map((row, idx) => (
+            <div key={idx} onClick={() => setSelectedRowIndex(idx)} className={`rounded-lg p-2 sm:p-3 transition-all cursor-pointer overflow-hidden ${
+              selectedRowIndex === idx ? 'border-2 border-orange-600' : 'border border-gray-300'
+            } ${
+              row.status === 'pending' ? 'bg-red-100' : 
+              row.status === 'paid' ? 'bg-green-50' :
+              row.status === 'mark' ? 'bg-gray-200' :
+              'bg-white'
+            }`}>
+              <div className="flex items-center justify-between mb-3">
                 <div className="text-xs font-semibold">{row.ha}</div>
-                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${row.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                  {row.status === 'paid' ? '✓' : '⚠ seizing'}
-                </span>
+                <select
+                  value={row.status}
+                  onChange={(e) => handleCellChange(idx, 'status', e.target.value)}
+                  className={`px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#bff86a] font-medium ${
+                    row.status === 'paid' ? 'bg-green-50 text-green-700' :
+                    row.status === 'pending' ? 'bg-red-50 text-red-700' :
+                    row.status === 'mark' ? 'bg-gray-200 text-gray-700' :
+                    'bg-white text-gray-700'
+                  }`}
+                >
+                  <option value="none">None</option>
+                  <option value="paid">✓ Paid</option>
+                  <option value="pending">⚠ Seizing</option>
+                  <option value="mark">• Mark</option>
+                </select>
               </div>
 
               <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-700">
@@ -231,11 +404,74 @@ function Collection() {
                 <div><span className="text-[10px] text-gray-400">Vehicle</span><div className="font-medium">{row.vehicle}</div></div>
                 <div><span className="text-[10px] text-gray-400">Phone</span><div className="font-medium">{row.phone}</div></div>
                 <div><span className="text-[10px] text-gray-400">EMI</span><div className="font-medium">{row.emi}</div></div>
-                <div><span className="text-[10px] text-gray-400">Paid Amount</span><div className="font-medium">{row.paidAmount}</div></div>
+                <div>
+                  <span className="text-[10px] text-gray-400">Comm Date</span>
+                  <input
+                    type="date"
+                    value={row.commAmount}
+                    onChange={(e) => handleCellChange(idx, 'commAmount', e.target.value)}
+                    className="w-full mt-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#bff86a] bg-white"
+                  />
+                </div>
+                <div>
+                  <span className="text-[10px] text-gray-400">Comm Amount</span>
+                  <input
+                    type="text"
+                    value={row.commDate}
+                    onChange={(e) => handleCellChange(idx, 'commDate', e.target.value)}
+                    className="w-full mt-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <span className="text-[10px] text-gray-400">Paid Amount</span>
+                  <input
+                    type="text"
+                    value={row.paidAmount}
+                    onChange={(e) => handleCellChange(idx, 'paidAmount', e.target.value)}
+                    className="w-full mt-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                  />
+                </div>
                 <div><span className="text-[10px] text-gray-400">EMI Date</span><div className="font-medium">{row.emiDate}</div></div>
+              </div>
+
+              <div className="mt-3 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setFinanceModal(row)}
+                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="View Finance Details"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="currentColor"/><path fill="currentColor" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5"/></svg>
+                </button>
+                <button
+                  onClick={() => handleWhatsAppClick(row.name)}
+                  className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                  title="Send WhatsApp message"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16">
+                    <path fill="currentColor" d="M8 0a8 8 0 1 1-4.075 14.886L.658 15.974a.5.5 0 0 1-.632-.632l1.089-3.266A8 8 0 0 1 8 0M5.214 4.004a.7.7 0 0 0-.526.266C4.508 4.481 4 4.995 4 6.037c0 1.044.705 2.054.804 2.196c.098.138 1.388 2.28 3.363 3.2q.55.255 1.12.446c.472.16.902.139 1.242.085c.379-.06 1.164-.513 1.329-1.01c.163-.493.163-.918.113-1.007c-.049-.088-.18-.142-.378-.25c-.196-.105-1.165-.618-1.345-.687c-.18-.073-.312-.106-.443.105c-.132.213-.507.691-.623.832c-.113.139-.23.159-.425.053c-.198-.105-.831-.33-1.584-1.054c-.585-.561-.98-1.258-1.094-1.469c-.116-.213-.013-.326.085-.433c.09-.094.198-.246.296-.371c.097-.122.132-.21.198-.353c.064-.141.031-.266-.018-.371s-.443-1.152-.607-1.577c-.16-.413-.323-.355-.443-.363c-.114-.005-.245-.005-.376-.005"/>
+                  </svg>
+                </button>
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Totals Summary */}
+        <div className="mt-6 pt-4 border-t-2 border-gray-300">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+              <div className="text-xs text-blue-600 font-semibold mb-1">Total Comm Amount</div>
+              <div className="text-2xl font-bold text-blue-700">₹ {totals.totalCommAmount.toLocaleString()}</div>
+            </div>
+            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+              <div className="text-xs text-green-600 font-semibold mb-1">Total Paid Amount</div>
+              <div className="text-2xl font-bold text-green-700">₹ {totals.totalPaidAmount.toLocaleString()}</div>
+            </div>
+            <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+              <div className="text-xs text-orange-600 font-semibold mb-1">Pending Amount</div>
+              <div className="text-2xl font-bold text-orange-700">₹ {totals.pendingAmount.toLocaleString()}</div>
+            </div>
+          </div>
         </div>
 
         {/* Pagination */}
@@ -245,6 +481,166 @@ function Collection() {
           <button className="px-3 py-1 rounded-full bg-gray-100 text-xs">next</button>
         </div>
       </div>
+
+      {/* Finance Statement Modal */}
+      {financeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-3 sm:p-0">
+          <div className="relative w-[95%] sm:w-4/5 lg:w-3/4 bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl no-scrollbar max-h-[90vh] overflow-auto">
+            {/* Close button */}
+            <button
+              onClick={() => setFinanceModal(null)}
+              className="absolute top-4 sm:top-6 right-4 sm:right-6 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center font-bold"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-2xl sm:text-3xl font-bold text-center mb-2 text-gray-800">Finance Statement</h2>
+            <div className="text-center text-xs sm:text-sm text-gray-500 mb-4 sm:mb-8">Agreement No : {financeModal.ha}</div>
+
+            {/* Header with Images on Right */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6 mb-4 sm:mb-8">
+              {/* Left: Party Details with Image - Bordered Box */}
+              <div className="border-2 border-gray-300 rounded-lg sm:rounded-2xl p-3 sm:p-6">
+                <div className="flex gap-2 sm:gap-4">
+                  <div className="flex-1">
+                    <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-2 sm:mb-4 pb-2 border-b border-gray-300">Party Details</h3>
+                    <div className="text-xs sm:text-sm text-gray-700 space-y-1 sm:space-y-2">
+                      <div className="font-semibold text-gray-900">{financeModal.name}</div>
+                      <div className="text-gray-600">s/o ramakrishna</div>
+                      <div className="text-gray-600">Phone No: {financeModal.phone}</div>
+                      <div className="text-gray-600">EMI Amount: ₹{financeModal.emi}</div>
+                    </div>
+                  </div>
+                  {/* Party Image - Right side */}
+                  <div className="shrink-0">
+                    <div className="bg-white border-2 border-gray-300 rounded-lg p-2 sm:p-3 flex flex-col items-center">
+                      <div className="w-16 sm:w-28 h-16 sm:h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-1 sm:mb-2">
+                        <span className="text-[10px] sm:text-xs text-gray-500 text-center">Party<br/>Img</span>
+                      </div>
+                      <span className="text-[10px] sm:text-xs text-gray-600 font-semibold">Party</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Guarantor Details with Image - Bordered Box */}
+              <div className="border-2 border-gray-300 rounded-lg sm:rounded-2xl p-3 sm:p-6">
+                <div className="flex gap-2 sm:gap-4">
+                  <div className="flex-1">
+                    <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-2 sm:mb-4 pb-2 border-b border-gray-300">Guarantor Details</h3>
+                    <div className="text-xs sm:text-sm text-gray-700 space-y-1 sm:space-y-2">
+                      <div className="font-semibold text-gray-900">{financeModal.name}</div>
+                      <div className="text-gray-600">s/o ramakrishna</div>
+                      <div className="text-gray-600">Phone No: {financeModal.phone}</div>
+                      <div className="text-gray-600">Status: {financeModal.status}</div>
+                    </div>
+                  </div>
+                  {/* Guarantor Image - Right side */}
+                  <div className="shrink-0">
+                    <div className="bg-white border-2 border-gray-300 rounded-lg p-2 sm:p-3 flex flex-col items-center">
+                      <div className="w-16 sm:w-28 h-16 sm:h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-1 sm:mb-2">
+                        <span className="text-[10px] sm:text-xs text-gray-500 text-center">Guarantor<br/>Img</span>
+                      </div>
+                      <span className="text-[10px] sm:text-xs text-gray-600 font-semibold">Guarantor</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Vehicle Details */}
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg sm:rounded-2xl p-3 sm:p-6 mb-4 sm:mb-8">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-6 pb-2 sm:pb-3 border-b border-blue-300">Commission Details</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-6">
+                <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm">
+                  <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">AGREEMENT NO</div>
+                  <div className="text-base sm:text-lg font-bold text-gray-900 truncate">{financeModal.ha}</div>
+                </div>
+                <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm">
+                  <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">VEHICLE NUMBER</div>
+                  <div className="text-base sm:text-lg font-bold text-gray-900 truncate">{financeModal.vehicle}</div>
+                </div>
+                <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm">
+                  <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">EMI DATE</div>
+                  <div className="text-xs sm:text-sm font-bold text-gray-900">{financeModal.emiDate}</div>
+                </div>
+                <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm">
+                  <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">AGENT</div>
+                  <div className="text-base sm:text-lg font-bold text-gray-900 truncate">{financeModal.agent}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Finance Details */}
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg sm:rounded-2xl p-3 sm:p-6 mb-4 sm:mb-8">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-6 pb-2 sm:pb-3 border-b border-purple-300">Finance Details</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-6">
+                <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm">
+                  <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">VEHICLE PRICE</div>
+                  <div className="text-base sm:text-lg font-bold text-gray-900">₹ {financeModal.vehiclePrice?.toLocaleString()}</div>
+                </div>
+                <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm">
+                  <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">CHARGES</div>
+                  <div className="text-base sm:text-lg font-bold text-gray-900">₹ {financeModal.charges?.toLocaleString()}</div>
+                </div>
+                <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm">
+                  <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">EMI AMOUNT</div>
+                  <div className="text-base sm:text-lg font-bold text-gray-900">₹ {financeModal.emi}</div>
+                </div>
+                <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm border-2 border-purple-300">
+                  <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">TOTAL AMOUNT</div>
+                  <div className="text-base sm:text-lg font-bold text-purple-900">₹ {financeModal.totalAmount?.toLocaleString()}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* EMI Schedule */}
+            {financeModal.emiSchedule && financeModal.emiSchedule.length > 0 && (
+              <div className="mb-4 sm:mb-8">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 sm:mb-4 pb-2 sm:pb-3 border-b border-gray-300 truncate">EMI Schedule : ₹ {financeModal.emi} x {financeModal.emiSchedule.length} months</h3>
+                <div className="overflow-x-auto rounded-lg border border-gray-200">
+                  <table className="w-full text-xs sm:text-sm">
+                    <thead>
+                      <tr className="bg-gray-800 text-white">
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm whitespace-nowrap">SNO</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm whitespace-nowrap">EMI</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm whitespace-nowrap">PAID</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm whitespace-nowrap">EMI DATE</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm whitespace-nowrap">PAID DATE</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm whitespace-nowrap">PENDING</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {financeModal.emiSchedule.map((schedule, idx) => (
+                        <tr key={schedule.sno} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                          <td className="px-2 sm:px-4 py-2 sm:py-3 font-semibold text-gray-900 whitespace-nowrap">{schedule.sno}</td>
+                          <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-700 whitespace-nowrap">₹ {schedule.emi}</td>
+                          <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-700 whitespace-nowrap">₹ {schedule.paidAmount}</td>
+                          <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-700 whitespace-nowrap text-xs sm:text-base">{schedule.emiDate}</td>
+                          <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-700 whitespace-nowrap text-xs sm:text-base">{schedule.paidDate}</td>
+                          <td className="px-2 sm:px-4 py-2 sm:py-3 font-semibold text-red-600 whitespace-nowrap">₹ {schedule.peningAmount}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* EMI Summary removed as requested */}
+              </div>
+            )}
+
+            {/* Payment Summary removed as requested */}
+          </div>
+        </div>
+      )}
+
+      {/* WhatsApp Confirmation Modal */}
+      <WhatsAppConfirmModal
+        isOpen={whatsAppModal.isOpen}
+        onClose={() => setWhatsAppModal({ isOpen: false, userName: '' })}
+        onConfirm={handleWhatsAppConfirm}
+        userName={whatsAppModal.userName}
+      />
     </div>
   )
 }

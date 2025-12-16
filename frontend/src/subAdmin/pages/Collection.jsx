@@ -268,20 +268,20 @@ function Collection() {
 
         {/* Desktop table */}
         <div className="hidden md:block overflow-x-auto max-w-full">
-          <table className="w-full table-auto border-collapse">
+          <table className="w-full border-collapse text-[11px]">
             <thead>
-              <tr className="bg-gray-100 text-left rounded-lg">
-                <th className="py-3 px-3 text-sm font-semibold rounded-tl-lg">HA</th>
-                <th className="py-3 px-3 text-sm font-semibold">Name</th>
-                <th className="py-3 px-3 text-sm font-semibold">Vehicle</th>
-                <th className="py-3 px-3 text-sm font-semibold">Phone</th>
-                  <th className="py-3 px-3 text-sm font-semibold">EMI</th>
-                  <th className="py-3 px-3 text-sm font-semibold whitespace-nowrap">EMI Date</th>
-                <th className="py-3 px-3 text-sm font-semibold">Comm Date</th>
-                <th className="py-3 px-3 text-sm font-semibold">Comm Amount</th>
-                <th className="py-3 px-3 text-sm font-semibold">Paid Amount</th>
-                <th className="py-3 px-3 text-sm font-semibold">Status</th>
-                <th className="py-3 px-3 text-sm font-semibold rounded-tr-lg">Actions</th>
+              <tr className="bg-gray-100 text-left sticky top-0">
+                <th className="py-2 px-2 font-semibold whitespace-nowrap">HA</th>
+                <th className="py-2 px-2 font-semibold whitespace-nowrap">Name</th>
+                <th className="py-2 px-2 font-semibold whitespace-nowrap">Vehicle</th>
+                <th className="py-2 px-2 font-semibold whitespace-nowrap">Phone</th>
+                <th className="py-2 px-2 font-semibold whitespace-nowrap">EMI</th>
+                <th className="py-2 px-2 font-semibold whitespace-nowrap">EMI Date</th>
+                <th className="py-2 px-2 font-semibold whitespace-nowrap">Comm Date</th>
+                <th className="py-2 px-2 font-semibold whitespace-nowrap">Comm Amt</th>
+                <th className="py-2 px-2 font-semibold whitespace-nowrap">Paid Amt</th>
+                <th className="py-2 px-2 font-semibold whitespace-nowrap">Status</th>
+                <th className="py-2 px-2 font-semibold whitespace-nowrap">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -294,43 +294,43 @@ function Collection() {
                   row.status === 'mark' ? 'bg-gray-200' :
                   'bg-white'
                 }`}>
-                  <td className="py-3 px-3 text-xs font-semibold">{row.ha}</td>
-                  <td className="py-3 px-3 text-xs">{row.name}</td>
-                  <td className="py-3 px-3 text-xs">{row.vehicle}</td>
-                  <td className="py-3 px-3 text-xs">{row.phone}</td>
-                  <td className="py-3 px-3 text-xs">{row.emi}</td>
-                    <td className="py-3 px-3 text-xs whitespace-nowrap">{row.emiDate}</td>
-                  <td className="py-3 px-3">
+                  <td className="py-1.5 px-1 font-semibold whitespace-nowrap">{row.ha}</td>
+                  <td className="py-1.5 px-1 whitespace-nowrap truncate max-w-[100px] text-[12px]">{row.name}</td>
+                  <td className="py-1.5 px-1 whitespace-nowrap text-[12px]">{row.vehicle}</td>
+                  <td className="py-1.5 px-1 whitespace-nowrap text-[12px]">{row.phone}</td>
+                  <td className="py-1.5 px-1 whitespace-nowrap text-[12px]">{row.emi}</td>
+                  <td className="py-1.5 px-1 whitespace-nowrap text-[12px]">{row.emiDate}</td>
+                  <td className="py-1.5 px-1">
                     <input
                       type="date"
                       value={row.commAmount}
                       onChange={(e) => handleCellChange(idx, 'commAmount', e.target.value)}
-                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#bff86a] bg-white"
+                      className="w-24 px-2 py-1 text-[10px] border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#bff86a] bg-white"
                     />
                   </td>
-                  <td className="py-3 px-3">
+                  <td className="py-2 px-2">
                     <input
                       type="text"
                       value={row.commDate}
                       onChange={(e) => handleCellChange(idx, 'commDate', e.target.value)}
-                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
-                      placeholder="Amount"
+                      className="w-16 px-2 py-1 text-[10px] border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#bff86a]"
+                      placeholder="Amt"
                     />
                   </td>
-                  <td className="py-3 px-3">
+                  <td className="py-2 px-2">
                     <input
                       type="text"
                       value={row.paidAmount}
                       onChange={(e) => handleCellChange(idx, 'paidAmount', e.target.value)}
-                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
-                      placeholder="Amount"
+                      className="w-16 px-2 py-1 text-[10px] border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#bff86a]"
+                      placeholder="Amt"
                     />
                   </td>
-                  <td className="py-3 px-3">
+                  <td className="py-1.5 px-1">
                     <select
                       value={row.status}
                       onChange={(e) => handleCellChange(idx, 'status', e.target.value)}
-                      className={`w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#bff86a] font-medium ${
+                      className={`w-20 px-2 py-1 text-[10px] border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#bff86a] font-medium ${
                         row.status === 'paid' ? 'bg-green-50 text-green-700' : 
                         row.status === 'pending' ? 'bg-red-50 text-red-700' :
                         row.status === 'mark' ? 'bg-gray-200 text-gray-700' :
@@ -338,23 +338,23 @@ function Collection() {
                       }`}
                     >
                       <option value="none">None</option>
-                      <option value="paid">✓ Paid</option>
-                      <option value="pending">⚠ Seizing</option>
-                      <option value="mark">• Mark</option>
+                      <option value="paid">Paid</option>
+                      <option value="pending">Pend</option>
+                      <option value="mark">Mark</option>
                     </select>
                   </td>
-                  <td className="py-3 px-3">
-                    <div className="flex items-center gap-2">
+                  <td className="py-1.5 px-1">
+                    <div className="flex items-center gap-0.5">
                       <button
                         onClick={() => setFinanceModal(row)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-1 text-blue-600 hover:bg-blue-50 rounded"
                         title="View Finance Details"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="currentColor"/><path fill="currentColor" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="currentColor"/><path fill="currentColor" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5"/></svg>
                       </button>
                       <button
                         onClick={() => handleWhatsAppClick(row.name)}
-                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        className="p-1 text-green-600 hover:bg-green-50 rounded"
                         title="Send WhatsApp message"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16">

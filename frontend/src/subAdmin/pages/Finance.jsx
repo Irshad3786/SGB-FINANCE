@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 function Finance() {
@@ -178,7 +178,7 @@ function Finance() {
         </div>
       </div>
 
-      {/* Modal */}
+      
       {modalData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <div className="relative w-[95%] md:w-4/5 lg:w-3/4 bg-white rounded-3xl p-8 shadow-2xl no-scrollbar max-h-[90vh] overflow-auto">

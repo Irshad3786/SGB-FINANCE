@@ -4,28 +4,19 @@ import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import WhatsAppConfirmModal from '../components/WhatsAppConfirmModal'
 
+// Finance data for EMI entry autocomplete
+const unifiedData = [
+  { sno: 1, ha: 'HA454', name: 'MOHAMMAD IRSHAD', vehicle: 'AP39DZ9786', phone: '9182278505,9876543210', emi: '3500', emiDate: '12-10-2025', commAmount: '25-11-2025', commDate: '3500', paidAmount: '3500', status: 'paid', vehiclePrice: '55000', charges: '15000', totalAmount: '50000', buyerName: 'RAJU K', financeAmount: '25000', age: '32', address: 'Ramapuram Road rosaiah colony Chirala, vetapalem mandal 523157', vehicleName: 'Hero Splendor', chassisNo: 'MBLHASD55544DD51410', vehicleModel: '2022', phoneNo: '9182278505', seller: 'MOHAMMAD IRSHAD', agreementNo: 'HA454', emiSchedule: [{ sno: 1, emi: 3500, paidAmount: 3400, emiDate: '30-01-2025', paidDate: '30-01-2025', peningAmount: 100 }, { sno: 2, emi: 3500, paidAmount: 3400, emiDate: '30-02-2025', paidDate: '30-02-2025', peningAmount: 100 }, { sno: 3, emi: 3500, paidAmount: 3400, emiDate: '30-03-2025', paidDate: '30-03-2025', peningAmount: 100 }, { sno: 4, emi: 3500, paidAmount: 3400, emiDate: '30-04-2025', paidDate: '30-04-2025', peningAmount: 100 }, { sno: 5, emi: 3500, paidAmount: 3400, emiDate: '30-05-2025', paidDate: '30-05-2025', peningAmount: 100 }, { sno: 6, emi: 3500, paidAmount: 3400, emiDate: '30-06-2025', paidDate: '30-06-2025', peningAmount: 100 }], totalPaid: '20400', totalPending: '600' },
+  { sno: 2, ha: 'HA455', name: 'RAHUL KUMAR', vehicle: 'AP27AZ9865', phone: '9190909090', emi: '4250', emiDate: '01-11-2025', commAmount: '25-10-2025', commDate: '3330', paidAmount: '3330', status: 'pending', vehiclePrice: '48000', charges: '12000', totalAmount: '60000', buyerName: 'MANU', financeAmount: '20000', age: '28', address: 'Block 5, Some Area', vehicleName: 'TVS Apache', chassisNo: 'MBLHASD55544DD22222', vehicleModel: '2021', phoneNo: '9190909090', seller: 'RAHUL', agreementNo: 'HA455', emiSchedule: [{ sno: 1, emi: 4250, paidAmount: 4250, emiDate: '01-11-2025', paidDate: '01-11-2025', peningAmount: 0 }, { sno: 2, emi: 4250, paidAmount: 0, emiDate: '01-12-2025', paidDate: '-', peningAmount: 4250 }, { sno: 3, emi: 4250, paidAmount: 0, emiDate: '01-01-2026', paidDate: '-', peningAmount: 4250 }] },
+  { sno: 3, ha: 'HA456', name: 'PRADEEP SINGH', vehicle: 'AP26VV2654', phone: '9155555555', emi: '2800', emiDate: '15-12-2025', commAmount: '10-12-2025', commDate: '2880', paidAmount: '2880', status: 'paid', vehiclePrice: '42000', charges: '10000', totalAmount: '52000', buyerName: 'SAI', financeAmount: '15000', age: '30', address: 'Address line here', vehicleName: 'Royal Enfield', chassisNo: 'MBLHASD55544DD33333', vehicleModel: '2020', phoneNo: '9155555555', seller: 'PRADEEP', agreementNo: 'HA456', emiSchedule: [{ sno: 1, emi: 2800, paidAmount: 2800, emiDate: '15-12-2025', paidDate: '15-12-2025', peningAmount: 0 }, { sno: 2, emi: 2800, paidAmount: 0, emiDate: '15-01-2026', paidDate: '-', peningAmount: 2800 }] },
+  { sno: 4, ha: 'HA457', name: 'KARTHIK RAO', vehicle: 'AP27NN3658', phone: '9166666666', emi: '3500', emiDate: '20-12-2025', commAmount: '15-12-2025', commDate: '3030', paidAmount: '3030', status: 'paid', vehiclePrice: '50000', charges: '14000', totalAmount: '64000', buyerName: '', financeAmount: '', age: '', address: '', vehicleName: '', chassisNo: '', vehicleModel: '', phoneNo: '9166666666', seller: 'KARTHIK', agreementNo: 'HA457', emiSchedule: [{ sno: 1, emi: 3500, paidAmount: 3500, emiDate: '20-12-2025', paidDate: '20-12-2025', peningAmount: 0 }, { sno: 2, emi: 3500, paidAmount: 0, emiDate: '20-01-2026', paidDate: '-', peningAmount: 3500 }] },
+  { sno: 5, ha: 'HA458', name: 'MOULALI AHMED', vehicle: 'AP39XX7508', phone: '9133333333', emi: '2200', emiDate: '25-12-2025', commAmount: '20-12-2025', commDate: '2030', paidAmount: '2030', status: 'paid', vehiclePrice: '38000', charges: '9000', totalAmount: '47000', buyerName: '', financeAmount: '', age: '', address: '', vehicleName: '', chassisNo: '', vehicleModel: '', phoneNo: '9133333333', seller: 'MOULALI', agreementNo: 'HA458', emiSchedule: [{ sno: 1, emi: 2200, paidAmount: 2200, emiDate: '25-12-2025', paidDate: '25-12-2025', peningAmount: 0 }, { sno: 2, emi: 2200, paidAmount: 0, emiDate: '25-01-2026', paidDate: '-', peningAmount: 2200 }] },
+  { sno: 6, ha: 'HA459', name: 'SURESH BABU', vehicle: 'AP39YZ8512', phone: '9123456780', emi: '3500', emiDate: '05-01-2026', commAmount: '31-12-2025', commDate: '3030', paidAmount: '3030', status: 'paid', vehiclePrice: '52000', charges: '13000', totalAmount: '65000', buyerName: '', financeAmount: '', age: '', address: '', vehicleName: '', chassisNo: '', vehicleModel: '', phoneNo: '9123456780', seller: 'SURESH', agreementNo: 'HA459', emiSchedule: [{ sno: 1, emi: 3500, paidAmount: 0, emiDate: '05-01-2026', paidDate: '-', peningAmount: 3500 }, { sno: 2, emi: 3500, paidAmount: 0, emiDate: '05-02-2026', paidDate: '-', peningAmount: 3500 }] },
+  { sno: 7, ha: 'HA460', name: 'DEEPAK VERMA', vehicle: 'AP25KK4532', phone: '9144444444', emi: '1800', emiDate: '10-01-2026', commAmount: '05-01-2026', commDate: '1630', paidAmount: '1630', status: 'paid', vehiclePrice: '35000', charges: '8000', totalAmount: '43000', buyerName: '', financeAmount: '', age: '', address: '', vehicleName: '', chassisNo: '', vehicleModel: '', phoneNo: '9144444444', seller: 'DEEPAK VERMA', agreementNo: 'HA460', emiSchedule: [{ sno: 1, emi: 1800, paidAmount: 0, emiDate: '10-01-2026', paidDate: '-', peningAmount: 1800 }, { sno: 2, emi: 1800, paidAmount: 0, emiDate: '10-02-2026', paidDate: '-', peningAmount: 1800 }] },
+]
+
 function Collection() {
   const navigate = useNavigate()
-  
-  const collectionData = [
-    { id: 1, aggNo: 586, amount: 3500, agent: 'prasad', status: 'paid' },
-    { id: 2, aggNo: 663, amount: 4250, agent: 'ajay', status: 'pending' },
-    { id: 3, aggNo: 754, amount: 2800, agent: 'prasad', status: 'paid' },
-    { id: 4, aggNo: 821, amount: 3500, agent: 'rajesh', status: 'paid' },
-    { id: 5, aggNo: 893, amount: 2200, agent: 'prasad', status: 'paid' },
-    { id: 6, aggNo: 945, amount: 3500, agent: 'suresh', status: 'paid' },
-    { id: 7, aggNo: 1012, amount: 1800, agent: 'prasad', status: 'paid' },
-  ]
-
-  const tableData = [
-    { sno: 1, ha: 'HA454', name: 'MOHAMMAD IRSHAD', vehicle: 'AP39DZ9786', phone: '9182278505,9876543210', emi: '3500', emiDate: '12-10-2025', commAmount: '25-11-2025', commDate: '3500', paidAmount: '3500', status: 'paid', vehiclePrice: '55000', charges: '15000', totalAmount: '50000', buyerName: 'RAJU K', financeAmount: '25000', age: '32', address: 'Ramapuram Road rosaiah colony Chirala, vetapalem mandal 523157', vehicleName: 'Hero Splendor', chassisNo: 'MBLHASD55544DD51410', vehicleModel: '2022', emiSchedule: [{ sno: 1, emi: 3500, paidAmount: 3400, emiDate: '30-01-2025', paidDate: '30-01-2025', peningAmount: 100 }, { sno: 2, emi: 3500, paidAmount: 3400, emiDate: '30-02-2025', paidDate: '30-02-2025', peningAmount: 100 }, { sno: 3, emi: 3500, paidAmount: 3400, emiDate: '30-03-2025', paidDate: '30-03-2025', peningAmount: 100 }, { sno: 4, emi: 3500, paidAmount: 3400, emiDate: '30-04-2025', paidDate: '30-04-2025', peningAmount: 100 }, { sno: 5, emi: 3500, paidAmount: 3400, emiDate: '30-05-2025', paidDate: '30-05-2025', peningAmount: 100 }, { sno: 6, emi: 3500, paidAmount: 3400, emiDate: '30-06-2025', paidDate: '30-06-2025', peningAmount: 100 }], totalPaid: '20400', totalPending: '600' },
-    { sno: 2, ha: 'HA455', name: 'RAHUL KUMAR', vehicle: 'AP27AZ9865', phone: '9190909090', emi: '4250', emiDate: '01-11-2025', commAmount: '25-10-2025', commDate: '3330', paidAmount: '3330', status: 'pending', vehiclePrice: '48000', charges: '12000', totalAmount: '60000', emiSchedule: [{ sno: 1, emi: 4250, paidAmount: 4250, emiDate: '01-11-2025', paidDate: '01-11-2025', peningAmount: 0 }, { sno: 2, emi: 4250, paidAmount: 0, emiDate: '01-12-2025', paidDate: '-', peningAmount: 4250 }, { sno: 3, emi: 4250, paidAmount: 0, emiDate: '01-01-2026', paidDate: '-', peningAmount: 4250 }] },
-    { sno: 3, ha: 'HA456', name: 'PRADEEP SINGH', vehicle: 'AP26VV2654', phone: '9155555555', emi: '2800', emiDate: '15-12-2025', commAmount: '10-12-2025', commDate: '2880', paidAmount: '2880', status: 'paid', vehiclePrice: '42000', charges: '10000', totalAmount: '52000', emiSchedule: [{ sno: 1, emi: 2800, paidAmount: 2800, emiDate: '15-12-2025', paidDate: '15-12-2025', peningAmount: 0 }, { sno: 2, emi: 2800, paidAmount: 0, emiDate: '15-01-2026', paidDate: '-', peningAmount: 2800 }] },
-    { sno: 4, ha: 'HA457', name: 'KARTHIK RAO', vehicle: 'AP27NN3658', phone: '9166666666', emi: '3500', emiDate: '20-12-2025', commAmount: '15-12-2025', commDate: '3030', paidAmount: '3030', status: 'paid', vehiclePrice: '50000', charges: '14000', totalAmount: '64000', emiSchedule: [{ sno: 1, emi: 3500, paidAmount: 3500, emiDate: '20-12-2025', paidDate: '20-12-2025', peningAmount: 0 }, { sno: 2, emi: 3500, paidAmount: 0, emiDate: '20-01-2026', paidDate: '-', peningAmount: 3500 }] },
-    { sno: 5, ha: 'HA458', name: 'MOULALI AHMED', vehicle: 'AP39XX7508', phone: '9133333333', emi: '2200', emiDate: '25-12-2025', commAmount: '20-12-2025', commDate: '2030', paidAmount: '2030', status: 'paid', vehiclePrice: '38000', charges: '9000', totalAmount: '47000', emiSchedule: [{ sno: 1, emi: 2200, paidAmount: 2200, emiDate: '25-12-2025', paidDate: '25-12-2025', peningAmount: 0 }, { sno: 2, emi: 2200, paidAmount: 0, emiDate: '25-01-2026', paidDate: '-', peningAmount: 2200 }] },
-    { sno: 6, ha: 'HA459', name: 'SURESH BABU', vehicle: 'AP39YZ8512', phone: '9123456780', emi: '3500', emiDate: '05-01-2026', commAmount: '31-12-2025', commDate: '3030', paidAmount: '3030', status: 'paid', vehiclePrice: '52000', charges: '13000', totalAmount: '65000', emiSchedule: [{ sno: 1, emi: 3500, paidAmount: 0, emiDate: '05-01-2026', paidDate: '-', peningAmount: 3500 }, { sno: 2, emi: 3500, paidAmount: 0, emiDate: '05-02-2026', paidDate: '-', peningAmount: 3500 }] },
-    { sno: 7, ha: 'HA460', name: 'DEEPAK VERMA', vehicle: 'AP25KK4532', phone: '9144444444', emi: '1800', emiDate: '10-01-2026', commAmount: '05-01-2026', commDate: '1630', paidAmount: '1630', status: 'paid', vehiclePrice: '35000', charges: '8000', totalAmount: '43000', emiSchedule: [{ sno: 1, emi: 1800, paidAmount: 0, emiDate: '10-01-2026', paidDate: '-', peningAmount: 1800 }, { sno: 2, emi: 1800, paidAmount: 0, emiDate: '10-02-2026', paidDate: '-', peningAmount: 1800 }] },
-  ]
 
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({ agent: '', status: 'all', date: '' })
@@ -34,9 +25,11 @@ function Collection() {
   const agentOptions = ['prasad', 'ajay', 'rajesh', 'suresh']
   const [whatsAppModal, setWhatsAppModal] = useState({ isOpen: false, userName: '' })
   const [financeModal, setFinanceModal] = useState(null)
-  const [editableData, setEditableData] = useState(tableData)
+  const [editableData, setEditableData] = useState(unifiedData)
   const [selectedRowIndex, setSelectedRowIndex] = useState(0)
   const tableContainerRef = useRef(null)
+  const [emiEntryOpen, setEmiEntryOpen] = useState(false)
+  const [emiEntryForm, setEmiEntryForm] = useState({ agreementNo: '', bookNo: '', pageNo: '', amount: '' })
 
   const handleCellChange = (index, field, value) => {
     setEditableData(prev => prev.map((row, idx) => 
@@ -46,6 +39,28 @@ function Collection() {
 
   const handleWhatsAppClick = (userName) => {
     setWhatsAppModal({ isOpen: true, userName })
+  }
+
+  const filteredAgreements = useMemo(() => {
+    const query = emiEntryForm.agreementNo.trim().toLowerCase()
+    if (!query) return []
+    return unifiedData
+      .filter(f => f.agreementNo && f.agreementNo.toLowerCase().includes(query))
+      .slice(0, 6)
+  }, [emiEntryForm.agreementNo])
+
+  const selectedAgreement = useMemo(
+    () => unifiedData.find(f => f.agreementNo === emiEntryForm.agreementNo),
+    [emiEntryForm.agreementNo]
+  )
+
+  const handleEmiEntryChange = (field, value) => {
+    setEmiEntryForm(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleEmiEntrySave = () => {
+    console.log('EMI Entry saved', emiEntryForm)
+    setEmiEntryOpen(false)
   }
 
   const handleWhatsAppConfirm = () => {
@@ -134,8 +149,14 @@ function Collection() {
             select filter
           </button>
 
-          <button className="flex items-center gap-2 px-4 py-2 border font-semibold rounded-lg shadow hover:shadow-md transition-shadow bg-white text-base">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M12 15.575q-.2 0-.375-.062T11.3 15.3l-3.6-3.6q-.3-.3-.288-.7t.288-.7q.3-.3.713-.312t.712.287L11 12.15V5q0-.425.288-.712T12 4t.713.288T13 5v7.15l1.875-1.875q.3-.3.713-.288t.712.313q.275.3.288.7t-.288.7l-3.6 3.6q-.15.15-.325.213t-.375.062M6 20q-.825 0-1.412-.587T4 18v-2q0-.425.288-.712T5 15t.713.288T6 16v2h12v-2q0-.425.288-.712T19 15t.713.288T20 16v2q0 .825-.587 1.413T18 20z"/></svg>            download due list
+          <button
+            onClick={() => setEmiEntryOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 border font-semibold rounded-lg shadow hover:shadow-md transition-shadow bg-white text-base"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-0.5 -0.5 24 24" className="w-5 h-5">
+              <path fill="#000" d="m21.289.98l.59.59c.813.814.69 2.257-.277 3.223L9.435 16.96l-3.942 1.442c-.495.182-.977-.054-1.075-.525a.93.93 0 0 1 .045-.51l1.47-3.976L18.066 1.257c.967-.966 2.41-1.09 3.223-.276zM8.904 2.19a1 1 0 1 1 0 2h-4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4a1 1 0 0 1 2 0v4a4 4 0 0 1-4 4h-12a4 4 0 0 1-4-4v-12a4 4 0 0 1 4-4z"/>
+            </svg>
+            <span>EMI Entry</span>
           </button>
         </div>
 
@@ -346,18 +367,35 @@ function Collection() {
                   <td className="py-1.5 px-1">
                     <div className="flex items-center gap-0.5">
                       <button
+                        onClick={() => {
+                          setEmiEntryForm({
+                            agreementNo: row.ha,
+                            bookNo: '',
+                            pageNo: '',
+                            amount: row.paidAmount
+                          })
+                          setEmiEntryOpen(true)
+                        }}
+                        className="p-1 text-gray-600 hover:bg-gray-100 rounded"
+                        title="EMI Entry"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="-0.5 -0.5 24 24" className="w-5 h-5">
+                          <path fill="currentColor" d="m21.289.98l.59.59c.813.814.69 2.257-.277 3.223L9.435 16.96l-3.942 1.442c-.495.182-.977-.054-1.075-.525a.93.93 0 0 1 .045-.51l1.47-3.976L18.066 1.257c.967-.966 2.41-1.09 3.223-.276zM8.904 2.19a1 1 0 1 1 0 2h-4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4a1 1 0 0 1 2 0v4a4 4 0 0 1-4 4h-12a4 4 0 0 1-4-4v-12a4 4 0 0 1 4-4z"/>
+                        </svg>
+                      </button>
+                      <button
                         onClick={() => setFinanceModal(row)}
                         className="p-1 text-blue-600 hover:bg-blue-50 rounded"
                         title="View Finance Details"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="currentColor"/><path fill="currentColor" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="currentColor"/><path fill="currentColor" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5"/></svg>
                       </button>
                       <button
                         onClick={() => handleWhatsAppClick(row.name)}
                         className="p-1 text-green-600 hover:bg-green-50 rounded"
                         title="Send WhatsApp message"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
                           <path fill="currentColor" d="M8 0a8 8 0 1 1-4.075 14.886L.658 15.974a.5.5 0 0 1-.632-.632l1.089-3.266A8 8 0 0 1 8 0M5.214 4.004a.7.7 0 0 0-.526.266C4.508 4.481 4 4.995 4 6.037c0 1.044.705 2.054.804 2.196c.098.138 1.388 2.28 3.363 3.2q.55.255 1.12.446c.472.16.902.139 1.242.085c.379-.06 1.164-.513 1.329-1.01c.163-.493.163-.918.113-1.007c-.049-.088-.18-.142-.378-.25c-.196-.105-1.165-.618-1.345-.687c-.18-.073-.312-.106-.443.105c-.132.213-.507.691-.623.832c-.113.139-.23.159-.425.053c-.198-.105-.831-.33-1.584-1.054c-.585-.561-.98-1.258-1.094-1.469c-.116-.213-.013-.326.085-.433c.09-.094.198-.246.296-.371c.097-.122.132-.21.198-.353c.064-.141.031-.266-.018-.371s-.443-1.152-.607-1.577c-.16-.413-.323-.355-.443-.363c-.114-.005-.245-.005-.376-.005"/>
                         </svg>
                       </button>
@@ -435,6 +473,23 @@ function Collection() {
               </div>
 
               <div className="mt-3 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setEmiEntryForm({
+                      agreementNo: row.ha,
+                      bookNo: '',
+                      pageNo: '',
+                      amount: row.paidAmount
+                    })
+                    setEmiEntryOpen(true)
+                  }}
+                  className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="EMI Entry"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="-0.5 -0.5 24 24" className="w-5 h-5">
+                    <path fill="currentColor" d="m21.289.98l.59.59c.813.814.69 2.257-.277 3.223L9.435 16.96l-3.942 1.442c-.495.182-.977-.054-1.075-.525a.93.93 0 0 1 .045-.51l1.47-3.976L18.066 1.257c.967-.966 2.41-1.09 3.223-.276zM8.904 2.19a1 1 0 1 1 0 2h-4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4a1 1 0 0 1 2 0v4a4 4 0 0 1-4 4h-12a4 4 0 0 1-4-4v-12a4 4 0 0 1 4-4z"/>
+                  </svg>
+                </button>
                 <button
                   onClick={() => setFinanceModal(row)}
                   className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -630,6 +685,142 @@ function Collection() {
             )}
 
             {/* Payment Summary removed as requested */}
+          </div>
+        </div>
+      )}
+
+      {/* EMI Entry Modal */}
+      {emiEntryOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl">
+            <button
+              onClick={() => setEmiEntryOpen(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center font-bold"
+            >
+              ✕
+            </button>
+
+            <h3 className="text-xl font-bold text-gray-900 text-center mb-6">EMI Entry</h3>
+
+            <div className="space-y-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Agreement No
+                <div className="relative mt-2">
+                  <input
+                    type="text"
+                    value={emiEntryForm.agreementNo}
+                    onChange={(e) => handleEmiEntryChange('agreementNo', e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                    placeholder="HA123"
+                    autoComplete="off"
+                  />
+                  {filteredAgreements.length > 0 && !selectedAgreement && (
+                    <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-48 overflow-auto">
+                      {filteredAgreements.map(item => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setEmiEntryForm(prev => ({ ...prev, agreementNo: item.agreementNo }))}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100"
+                        >
+                          <div className="font-semibold text-gray-800">{item.agreementNo}</div>
+                          <div className="text-xs text-gray-600">{item.seller}</div>
+                          <div className="text-[11px] text-gray-500">{item.vehicle}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </label>
+
+              {selectedAgreement && (
+                <div className="rounded-lg border border-green-200 bg-green-50 p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 space-y-3">
+                      <div>
+                        <label className="text-xs font-medium text-gray-600">Name</label>
+                        <div className="text-sm font-semibold text-gray-900 mt-1">{selectedAgreement.seller}</div>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600">Vehicle No</label>
+                        <div className="text-sm font-semibold text-gray-900 mt-1">{selectedAgreement.vehicle}</div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEmiEntryForm(prev => ({ ...prev, agreementNo: '' }))}
+                      className="ml-3 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-100 rounded transition-colors"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="block text-sm font-medium text-gray-700">
+                  Book No
+                  <input
+                    type="text"
+                    value={emiEntryForm.bookNo}
+                    onChange={(e) => handleEmiEntryChange('bookNo', e.target.value)}
+                    disabled={!selectedAgreement}
+                    className={`mt-2 w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a] ${
+                      !selectedAgreement 
+                        ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed' 
+                        : 'border-gray-300'
+                    }`}
+                    placeholder="Select agreement first"
+                  />
+                </label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Page No
+                  <input
+                    type="text"
+                    value={emiEntryForm.pageNo}
+                    onChange={(e) => handleEmiEntryChange('pageNo', e.target.value)}
+                    disabled={!selectedAgreement}
+                    className={`mt-2 w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a] ${
+                      !selectedAgreement 
+                        ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed' 
+                        : 'border-gray-300'
+                    }`}
+                    placeholder="Select agreement first"
+                  />
+                </label>
+              </div>
+
+              <label className="block text-sm font-medium text-gray-700">
+                Amount
+                <input
+                  type="number"
+                  value={emiEntryForm.amount}
+                  onChange={(e) => handleEmiEntryChange('amount', e.target.value)}
+                  disabled={!selectedAgreement}
+                  className={`mt-2 w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a] ${
+                    !selectedAgreement 
+                      ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed' 
+                      : 'border-gray-300'
+                  }`}
+                  placeholder="Select agreement first"
+                />
+              </label>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setEmiEntryOpen(false)}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEmiEntrySave}
+                className="px-5 py-2 rounded-lg bg-gradient-to-r from-[#B0FF1C] to-[#40FF00] text-sm font-semibold text-gray-900 shadow hover:shadow-md"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -11,6 +11,7 @@ import Buy from './subAdmin/pages/Buy';
 import Finance from './subAdmin/pages/Finance';
 import Collection from './subAdmin/pages/Collection';
 import VehicleStock from './subAdmin/pages/VehicleStock';
+import PendingDownpayment from './subAdmin/pages/PendingDownpayment';
 
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
           <Route path="finance" element={<Finance/>} />
           <Route path="collection" element={<Collection/>} />
           <Route path="vehicle-stock" element={<VehicleStock/>} />
+          <Route path="pending-downpayment" element={<PendingDownpayment/>} />
 
 
         </Route>

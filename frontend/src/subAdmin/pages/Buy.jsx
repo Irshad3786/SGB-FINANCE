@@ -1,6 +1,7 @@
 import React from 'react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import RefinanceForm from '../components/RefinanceForm'
 
 function Buy() {
     const [role, setRole] = useState('buyer')
@@ -43,6 +44,7 @@ function Buy() {
 
       const [showPending, setShowPending] = useState(false)
       const [showGuarantor, setShowGuarantor] = useState(false)
+      const [showRefinance, setShowRefinance] = useState(false)
     
       const inputBase = 'w-full pl-10 px-3 py-2 rounded-xl border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a] pr-4 text-sm'
     
@@ -106,6 +108,30 @@ function Buy() {
           </div>
         </div>
 
+        <div className="flex justify-center mb-4">
+          <button
+            type="button"
+            onClick={() => setShowRefinance((s) => !s)}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold shadow transition-all ${
+              showRefinance
+                ? 'bg-gradient-to-b from-[#bfff3a] to-[#40ff00] text-black'
+                : 'bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <span className="flex items-center justify-center h-6 w-6 rounded-full bg-white border border-gray-200">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                <path fill="#a6a6a6" d="M0 10.5v-1A4.5 4.5 0 0 1 4.5 5h7.586l-2-2L11.5 1.586L15.914 6L11.5 10.414L10.086 9l2-2H4.5a2.5 2.5 0 0 0 0 5H12v2H4.5a4.5 4.5 0 0 1-4.388-3.5z"/>
+              </svg>
+            </span>
+            Refinance
+          </button>
+        </div>
+
+        {showRefinance ? (
+          <div className="mb-6">
+            <RefinanceForm inputBase={inputBase} labelClass={labelClass} />
+          </div>
+        ) : (
         <div className="space-y-3">
           <label className={labelClass}>full name</label>
           <div className="relative">
@@ -496,15 +522,18 @@ function Buy() {
 
           
         </div>
+        )}
 
-        <div className="mt-6 flex justify-center">
-          <button
-            type="submit"
-            className="px-6 py-2 rounded-full bg-gradient-to-b from-[#bfff3a] to-[#40ff00] font-semibold shadow"
-          >
-            Submit
-          </button>
-        </div>
+        {!showRefinance && (
+          <div className="mt-6 flex justify-center">
+            <button
+              type="submit"
+              className="px-6 py-2 rounded-full bg-gradient-to-b from-[#bfff3a] to-[#40ff00] font-semibold shadow"
+            >
+              Submit
+            </button>
+          </div>
+        )}
       </form>
     </div>
   )

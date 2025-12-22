@@ -199,7 +199,7 @@ function PendingDownpayment() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border overflow-hidden hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
@@ -337,6 +337,131 @@ function PendingDownpayment() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile cards */}
+      <div className="md:hidden grid grid-cols-1 gap-4">
+        {filteredPayments.length === 0 ? (
+          <div className="bg-white border rounded-xl shadow-sm p-4 text-center text-gray-500">
+            No pending payments found
+          </div>
+        ) : (
+          filteredPayments.map((payment) => {
+            const daysRemaining = getDaysRemaining(payment.paymentDueDate);
+            const statusClass =
+              daysRemaining < 0
+                ? "bg-red-50 text-red-700 border-red-200"
+                : daysRemaining <= 3
+                ? "bg-orange-50 text-orange-700 border-orange-200"
+                : "bg-green-50 text-green-700 border-green-200";
+            return (
+              <div key={payment.id} className="bg-white border rounded-xl shadow-sm p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-base font-semibold text-gray-900">{payment.name}</div>
+                    <div className="text-sm text-gray-600">{payment.phoneNumber}</div>
+                  </div>
+                  <span className={`text-xs font-semibold px-2 py-1 rounded-full border ${statusClass}`}>
+                    {daysRemaining < 0
+                      ? "Overdue"
+                      : daysRemaining === 0
+                      ? "Due Today"
+                      : `${daysRemaining}d left`}
+                  </span>
+                </div>
+
+                <div className="text-sm text-gray-700 leading-relaxed">
+                  {payment.address}
+                </div>
+
+                <div className="flex flex-wrap gap-3 text-sm text-gray-700">
+                  <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg flex-1 min-w-[140px]">
+                    <span className="text-xs text-gray-500">Amount</span>
+                    <span className="text-sm font-semibold text-gray-900">₹{inr(payment.downpaymentAmount)}</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg flex-1 min-w-[140px]">
+                    <span className="text-xs text-gray-500">Due</span>
+                    <span className="text-sm font-semibold text-gray-900">{payment.paymentDueDate}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-xs text-gray-500">Commitment date</div>
+                  {editingCommitment === payment.id ? (
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <input
+                        type="date"
+                        value={commitmentDate}
+                        onChange={(e) => setCommitmentDate(e.target.value)}
+                        className="h-9 px-3 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-lime-400 flex-1"
+                      />
+                      <div className="flex gap-2 w-full sm:w-auto">
+                        <button
+                          onClick={() => handleCommitmentUpdate(payment.id)}
+                          className="flex-1 sm:flex-initial h-9 px-3 rounded bg-lime-400 text-gray-800 text-sm font-semibold hover:bg-lime-500"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingCommitment(null);
+                            setCommitmentDate("");
+                          }}
+                          className="flex-1 sm:flex-initial h-9 px-3 rounded border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-800">{payment.commitmentDate}</span>
+                      <button
+                        onClick={() => {
+                          setEditingCommitment(payment.id);
+                          setCommitmentDate(payment.commitmentDate);
+                        }}
+                        className="h-7 w-7 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center"
+                        title="Edit commitment date"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <div className="text-xs text-gray-500">Status</div>
+                  <select
+                    onChange={(e) => handleStatusChange(payment.id, e.target.value)}
+                    defaultValue="Pending"
+                    className={`w-full px-3 py-2 rounded-lg text-sm font-semibold border-2 focus:outline-none focus:ring-2 focus:ring-lime-400 ${statusClass}`}
+                  >
+                    <option value="Pending">
+                      {daysRemaining < 0
+                        ? "Overdue"
+                        : daysRemaining === 0
+                        ? "Due Today"
+                        : `${daysRemaining}d remaining`}
+                    </option>
+                    <option value="Paid">Paid</option>
+                  </select>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
 
       <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">

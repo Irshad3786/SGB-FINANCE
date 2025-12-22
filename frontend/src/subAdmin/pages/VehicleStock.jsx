@@ -167,13 +167,13 @@ function VehicleStock() {
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 1024 1024"
                     >
                       <path
                         fill="currentColor"
-                        d="M3 12h18v2H3zm0 4h18v2H3zm0-8h18v2H3z"
+                        d="M104.704 338.752a64 64 0 0 1 90.496 0l316.8 316.8l316.8-316.8a64 64 0 0 1 90.496 90.496L557.248 791.296a64 64 0 0 1-90.496 0L104.704 429.248a64 64 0 0 1 0-90.496"
                       />
                     </svg>
                     <span>open list</span>

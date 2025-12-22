@@ -1,10 +1,11 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import Logo from '../home/components/Logo';
 import { useLocation } from 'react-router-dom';
 
 
 function Sidebar({toggle, onNavigate}) {
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const location = useLocation();
  // Check both routes
@@ -13,8 +14,9 @@ function Sidebar({toggle, onNavigate}) {
     location.pathname.startsWith("/subadmin/buy");
     
   return (
-    <aside className="w-48 md:w-64 bg-white border-r h-screen sticky top-0 p-4">
-      <div className="flex items-center justify-between mb-8 mt-5">
+    <>
+    <aside className="w-48 md:w-64 bg-white border-r h-screen sticky top-0 p-4 flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between mb-8 mt-5 flex-shrink-0">
         <Logo/>
         <div className='pl-4' onClick={()=>{
           toggle(true)
@@ -23,7 +25,7 @@ function Sidebar({toggle, onNavigate}) {
         </div>
       </div>
  
-      <nav className="space-y-3 ">
+      <nav className="space-y-3 flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         <NavLink
           to="/subadmin/dashboard"
           onClick={() => onNavigate && onNavigate('Dashboard')}
@@ -92,9 +94,9 @@ function Sidebar({toggle, onNavigate}) {
           className={() =>
             `p-4 rounded-xl flex items-center gap-2 ${
               (location.pathname.startsWith('/subadmin/finance') || location.pathname.startsWith('/subadmin/collection'))
-                ? "bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] font-semibold shadow-[-1px_8px_7px_-2px rgba(0,_0,_0,_0.25)]"
+                ? "bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] font-semibold shadow-[-1px_8px_7px_-2px_rgba(0,_0,_0,_0.25)]"
                 : "bg-gray-100 font-semibold"
-            } hover:shadow-[-1px_8px_7px_-2px rgba(0,_0,_0,_0.25)] transition-shadow`
+            } hover:shadow-[-1px_8px_7px_-2px_rgba(0,_0,_0,_0.25)] transition-shadow`
           }
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
@@ -119,8 +121,71 @@ function Sidebar({toggle, onNavigate}) {
           Pending Payments
         </NavLink>
       </nav>
+
+      <div className="flex-shrink-0 pb-2 pt-4">
+        <button
+          onClick={() => setShowLogoutModal(true)}
+          className="w-full p-4 rounded-xl flex items-center gap-2 bg-red-50 hover:bg-red-100 font-semibold text-red-600 transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+            <g className="logout-outline">
+              <g fill="currentColor" fillRule="evenodd" className="Vector" clipRule="evenodd">
+                <path d="M3 7a5 5 0 0 1 5-5h5a1 1 0 1 1 0 2H8a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h5a1 1 0 1 1 0 2H8a5 5 0 0 1-5-5z"/>
+                <path d="M14.47 7.316a1 1 0 0 1 1.414-.046l4.8 4.5a1 1 0 0 1 0 1.46l-4.8 4.5a1 1 0 1 1-1.368-1.46l2.955-2.77H8a1 1 0 1 1 0-2h9.471l-2.955-2.77a1 1 0 0 1-.046-1.414"/>
+              </g>
+            </g>
+          </svg>
+          Logout
+        </button>
+      </div>
     </aside>
+
+    {/* Logout Confirmation Modal - Outside sidebar */}
+    {showLogoutModal && (
+      <div 
+        className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
+        onClick={() => setShowLogoutModal(false)}
+      >
+        <div 
+          className="bg-white rounded-2xl p-6 max-w-sm mx-4 shadow-[0_20px_60px_rgba(0,0,0,0.3)]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                <path fill="#dc2626" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2m1 15h-2v-2h2zm0-4h-2V7h2z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Confirm Logout</h3>
+              <p className="text-sm text-gray-600">Are you sure you want to logout?</p>
+            </div>
+          </div>
+          
+          <div className="flex gap-3 mt-6">
+            <button
+              onClick={() => setShowLogoutModal(false)}
+              className="flex-1 px-4 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 font-semibold text-gray-700 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                setShowLogoutModal(false);
+                // Add your logout logic here
+                console.log('Logging out...');
+              }}
+              className="flex-1 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 font-semibold text-white transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </>
   )
+  
 }
 
 export default Sidebar

@@ -16,6 +16,7 @@ function Users () {
   const [editOpen, setEditOpen] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({ from: '', to: '', status: 'all' })
+  const [deleteUserId, setDeleteUserId] = useState(null)
 
   useEffect(() => {
     function onKey(e) {
@@ -30,6 +31,14 @@ function Users () {
     setUsers(prev => prev.map(u => (u.id === updated.id ? { ...u, ...updated } : u)))
     setModalUser(updated)
     setEditOpen(false)
+  }
+
+  function handleDelete() {
+    if (deleteUserId) {
+      setUsers(prev => prev.filter(u => u.id !== deleteUserId))
+      setDeleteUserId(null)
+      setModalUser(null)
+    }
   }
 
   return (
@@ -155,6 +164,9 @@ function Users () {
                       <button onClick={() => setModalUser(u)} className="p-2 text-gray-700" title="view">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="#a6a6a6"/><path fill="#a6a6a6" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5"/></svg>
                       </button>
+                      <button onClick={() => setDeleteUserId(u.id)} className="p-2 text-red-600 hover:text-red-800" title="delete">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M7 21q-.825 0-1.412-.587T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413T17 21zM17 6H7v13h10zM9 17h2V8H9zm4 0h2V8h-2zM7 6v13z"/></svg>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -197,6 +209,9 @@ function Users () {
 
               <div className="mt-3 flex items-center justify-end gap-2">
                 <button onClick={() => setModalUser(u)} className="p-2 text-gray-700" title="view"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="#a6a6a6"/><path fill="#a6a6a6" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5"/></svg></button>
+                <button onClick={() => setDeleteUserId(u.id)} className="p-2 text-red-600 hover:text-red-800" title="delete">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M7 21q-.825 0-1.412-.587T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413T17 21zM17 6H7v13h10zM9 17h2V8H9zm4 0h2V8h-2zM7 6v13z"/></svg>
+                </button>
               </div>
             </div>
           ))}
@@ -364,6 +379,43 @@ function Users () {
               onSave={handleSave}
               onClose={() => setEditOpen(false)}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {deleteUserId && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setDeleteUserId(null)} />
+          <div className="relative bg-white rounded-2xl p-6 shadow-2xl w-[90%] max-w-md">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="text-red-600">
+                  <path fill="currentColor" d="M12 2c5.5 0 10 4.5 10 10s-4.5 10-10 10S2 17.5 2 12S6.5 2 12 2m0 2c-4.4 0-8 3.6-8 8s3.6 8 8 8s8-3.6 8-8s-3.6-8-8-8m3.5 4L12 11.5L8.5 8L7 9.5L10.5 13L7 16.5L8.5 18l3.5-3.5l3.5 3.5l1.5-1.5l-3.5-3.5l3.5-3.5z"/>
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Delete User</h3>
+                <p className="text-sm text-gray-600">This action cannot be undone</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-700 mb-6">
+              Deleting this user will permanently remove both <strong>seller and buyer</strong> records associated with this transaction.
+            </p>
+            <div className="flex items-center gap-3 justify-end">
+              <button
+                onClick={() => setDeleteUserId(null)}
+                className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 font-medium"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

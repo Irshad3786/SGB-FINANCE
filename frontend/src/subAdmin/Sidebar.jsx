@@ -15,8 +15,8 @@ function Sidebar({toggle, onNavigate}) {
     
   return (
     <>
-    <aside className="w-48 md:w-64 bg-white border-r h-screen sticky top-0 p-4 flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between mb-8 mt-5 flex-shrink-0">
+    <aside className="w-48 md:w-64 bg-white border-r h-screen sticky top-0 p-3 flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between mb-5 mt-5 flex-shrink-0">
         <Logo/>
         <div className='pl-4' onClick={()=>{
           toggle(true)
@@ -25,7 +25,7 @@ function Sidebar({toggle, onNavigate}) {
         </div>
       </div>
  
-      <nav className="space-y-3 flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      <nav className="space-y-3 flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide pb-5" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         <NavLink
           to="/subadmin/dashboard"
           onClick={() => onNavigate && onNavigate('Dashboard')}

@@ -2,6 +2,7 @@ import React from 'react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import RefinanceForm from '../components/RefinanceForm'
+import { apDistricts, apMandals } from '../constants/apLocations'
 
 function Sell() {
   const [role, setRole] = useState('seller')
@@ -10,6 +11,7 @@ function Sell() {
   const [form, setForm] = useState({
     fullName: '',
     phone: '',
+    alternatePhone: '',
     aadhaar: '',
     vehicleName: '',
     model: '',
@@ -17,6 +19,11 @@ function Sell() {
     chassisNo: '',
     saleAmount: '',
     dob: '',
+    district: '',
+    customDistrict: '',
+    mandal: '',
+    customMandal: '',
+    street: '',
     address: '',
     referralName: '',
     referralPhone: '',
@@ -36,6 +43,26 @@ function Sell() {
   function onChange(e) {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
+  }
+
+  function onDistrictChange(e) {
+    const value = e.target.value
+    setForm(prev => ({
+      ...prev,
+      district: value,
+      mandal: '',
+      customMandal: '',
+      customDistrict: value === 'Other' ? prev.customDistrict : ''
+    }))
+  }
+
+  function onMandalChange(e) {
+    const value = e.target.value
+    setForm(prev => ({
+      ...prev,
+      mandal: value,
+      customMandal: value === 'Other' ? prev.customMandal : ''
+    }))
   }
 
   function onFileChange(e, key) {
@@ -149,6 +176,20 @@ function Sell() {
               </div>
             </div>
 
+            <label className={labelClass}>alternate phone no</label>
+            <div className="relative">
+              <input
+                name="alternatePhone"
+                value={form.alternatePhone}
+                onChange={onChange}
+                placeholder="Enter alternate phone no"
+                className={inputBase}
+              />
+              <div className="absolute left-3 top-5 -translate-y-1/2 text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" fill-rule="evenodd" d="m16.1 13.359l.456-.453c.63-.626 1.611-.755 2.417-.317l1.91 1.039c1.227.667 1.498 2.302.539 3.255l-1.42 1.412c-.362.36-.81.622-1.326.67c-1.192.111-3.645.051-6.539-1.643zm-5.91-5.876l.287-.286c.707-.702.774-1.83.157-2.654L9.374 2.86C8.61 1.84 7.135 1.705 6.26 2.575l-1.57 1.56c-.433.432-.723.99-.688 1.61c.065 1.14.453 3.22 2.149 5.776z" clip-rule="evenodd"/><path fill="#a6a6a6" d="M12.063 11.497c-2.946-2.929-1.88-4.008-1.873-4.015l-4.039 4.04c.667 1.004 1.535 2.081 2.664 3.204c1.14 1.134 2.26 1.975 3.322 2.596L16.1 13.36s-1.082 1.076-4.037-1.862" opacity="0.6"/></svg>
+              </div>
+            </div>
+
             <label className={labelClass}>aadhaar no</label>
             <div className="relative">
               <input
@@ -244,7 +285,89 @@ function Sell() {
                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M6.94 2c.416 0 .753.324.753.724v1.46c.668-.012 1.417-.012 2.26-.012h4.015c.842 0 1.591 0 2.259.013v-1.46c0-.4.337-.725.753-.725s.753.324.753.724V4.25c1.445.111 2.394.384 3.09 1.055c.698.67.982 1.582 1.097 2.972L22 9H2v-.724c.116-1.39.4-2.302 1.097-2.972s1.645-.944 3.09-1.055V2.724c0-.4.337-.724.753-.724"/><path fill="#a6a6a6" d="M22 14v-2c0-.839-.004-2.335-.017-3H2.01c-.013.665-.01 2.161-.01 3v2c0 3.771 0 5.657 1.172 6.828S6.228 22 10 22h4c3.77 0 5.656 0 6.828-1.172S22 17.772 22 14" opacity="0.5"/><path fill="#a6a6a6" d="M18 17a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-5 4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-5 4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0"/></svg>
               </div>
             </div>
-            <label className={labelClass}>Address</label>
+            <label className={labelClass}>District</label>
+            <div className="relative">
+              <input
+                name="district"
+                value={form.district}
+                onChange={onDistrictChange}
+                list="district-options-sell"
+                placeholder="Select district"
+                className={inputBase}
+              />
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M12 11.5A2.5 2.5 0 0 1 9.5 9A2.5 2.5 0 0 1 12 6.5A2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/></svg>
+              </div>
+            </div>
+            {form.district === 'Other' && (
+              <div className="relative">
+                <input
+                  name="customDistrict"
+                  value={form.customDistrict}
+                  onChange={onChange}
+                  placeholder="Enter district"
+                  className={inputBase}
+                />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="w-6 h-6" fill="none"><path fill="#a6a6a6" d="M12 2a6 6 0 0 0-6 6c0 5 6 14 6 14s6-9 6-14a6 6 0 0 0-6-6m0 8a2 2 0 1 1 0-4a2 2 0 0 1 0 4"/></svg>
+                </div>
+              </div>
+            )}
+            <datalist id="district-options-sell">
+              {apDistricts.map((d) => (
+                <option key={d} value={d} />
+              ))}
+            </datalist>
+
+            <label className={labelClass}>Mandal</label>
+            <div className="relative">
+              <input
+                name="mandal"
+                value={form.mandal}
+                onChange={onMandalChange}
+                list="mandal-options-sell"
+                placeholder="Select mandal"
+                className={inputBase}
+              />
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M12 11.5A2.5 2.5 0 0 1 9.5 9A2.5 2.5 0 0 1 12 6.5A2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/></svg>
+              </div>
+            </div>
+            {form.mandal === 'Other' && (
+              <div className="relative">
+                <input
+                  name="customMandal"
+                  value={form.customMandal}
+                  onChange={onChange}
+                  placeholder="Enter mandal"
+                  className={inputBase}
+                />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M12 11.5A2.5 2.5 0 0 1 9.5 9A2.5 2.5 0 0 1 12 6.5A2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/></svg>
+                </div>
+              </div>
+            )}
+            <datalist id="mandal-options-sell">
+              {apMandals.map((m) => (
+                <option key={m} value={m} />
+              ))}
+            </datalist>
+
+            <label className={labelClass}>Street / Locality</label>
+            <div className="relative">
+              <input
+                name="street"
+                value={form.street}
+                onChange={onChange}
+                placeholder="Enter street or locality"
+                className={inputBase}
+              />
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M12 11.5A2.5 2.5 0 0 1 9.5 9A2.5 2.5 0 0 1 12 6.5A2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/></svg>
+              </div>
+            </div>
+
+            <label className={labelClass}>Full Address</label>
             <div className="relative">
               <textarea
                 name="address"

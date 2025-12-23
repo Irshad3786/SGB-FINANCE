@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { apDistricts, apMandals } from "../constants/apLocations";
 
 function RefinanceForm({ inputBase, labelClass }) {
   const baseInput =
@@ -9,6 +10,7 @@ function RefinanceForm({ inputBase, labelClass }) {
   const [form, setForm] = useState({
     fullName: "",
     phone: "",
+    alternatePhone: "",
     aadhaar: "",
     vehicleName: "",
     model: "",
@@ -17,6 +19,11 @@ function RefinanceForm({ inputBase, labelClass }) {
     refinanceAmount: "",
     oldHaNumber: "",
     dob: "",
+    district: "",
+    customDistrict: "",
+    mandal: "",
+    customMandal: "",
+    street: "",
     address: "",
     guarantorName: "",
     guarantorPhone: "",
@@ -30,6 +37,7 @@ function RefinanceForm({ inputBase, labelClass }) {
     aadhaarFront: null,
     aadhaarBack: null,
     profile: null,
+    guarantorPhoto: null,
   });
 
   const [showGuarantor, setShowGuarantor] = useState(false);
@@ -37,6 +45,26 @@ function RefinanceForm({ inputBase, labelClass }) {
   const onChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+  };
+
+  const onDistrictChange = (e) => {
+    const value = e.target.value;
+    setForm((prev) => ({
+      ...prev,
+      district: value,
+      mandal: "",
+      customMandal: "",
+      customDistrict: value === "Other" ? prev.customDistrict : "",
+    }));
+  };
+
+  const onMandalChange = (e) => {
+    const value = e.target.value;
+    setForm((prev) => ({
+      ...prev,
+      mandal: value,
+      customMandal: value === "Other" ? prev.customMandal : "",
+    }));
   };
 
   const onFileChange = (e, key) => {
@@ -92,6 +120,32 @@ function RefinanceForm({ inputBase, labelClass }) {
           value={form.phone}
           onChange={onChange}
           placeholder="Enter phone no"
+          className={baseInput}
+        />
+        <div className="absolute left-3 top-5 -translate-y-1/2 text-gray-400">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+            <path
+              fill="#a6a6a6"
+              fillRule="evenodd"
+              d="m16.1 13.359l.456-.453c.63-.626 1.611-.755 2.417-.317l1.91 1.039c1.227.667 1.498 2.302.539 3.255l-1.42 1.412c-.362.36-.81.622-1.326.67c-1.192.111-3.645.051-6.539-1.643zm-5.91-5.876l.287-.286c.707-.702.774-1.83.157-2.654L9.374 2.86C8.61 1.84 7.135 1.705 6.26 2.575l-1.57 1.56c-.433.432-.723.99-.688 1.61c.065 1.14.453 3.22 2.149 5.776z"
+              clipRule="evenodd"
+            />
+            <path
+              fill="#a6a6a6"
+              d="M12.063 11.497c-2.946-2.929-1.88-4.008-1.873-4.015l-4.039 4.04c.667 1.004 1.535 2.081 2.664 3.204c1.14 1.134 2.26 1.975 3.322 2.596L16.1 13.36s-1.082 1.076-4.037-1.862"
+              opacity="0.6"
+            />
+          </svg>
+        </div>
+      </div>
+
+      <label className={baseLabel}>alternate phone no</label>
+      <div className="relative">
+        <input
+          name="alternatePhone"
+          value={form.alternatePhone}
+          onChange={onChange}
+          placeholder="Enter alternate phone no"
           className={baseInput}
         />
         <div className="absolute left-3 top-5 -translate-y-1/2 text-gray-400">
@@ -276,7 +330,89 @@ function RefinanceForm({ inputBase, labelClass }) {
         </div>
       </div>
 
-      <label className={baseLabel}>Address</label>
+      <label className={baseLabel}>District</label>
+      <div className="relative">
+        <input
+          name="district"
+          value={form.district}
+          onChange={onDistrictChange}
+          list="district-options-refi"
+          placeholder="Select district"
+          className={baseInput}
+        />
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M12 11.5A2.5 2.5 0 0 1 9.5 9A2.5 2.5 0 0 1 12 6.5A2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/></svg>
+        </div>
+      </div>
+      {form.district === "Other" && (
+        <div className="relative">
+          <input
+            name="customDistrict"
+            value={form.customDistrict}
+            onChange={onChange}
+            placeholder="Enter district"
+            className={baseInput}
+          />
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="w-6 h-6" fill="none"><path fill="#a6a6a6" d="M12 2a6 6 0 0 0-6 6c0 5 6 14 6 14s6-9 6-14a6 6 0 0 0-6-6m0 8a2 2 0 1 1 0-4a2 2 0 0 1 0 4"/></svg>
+          </div>
+        </div>
+      )}
+      <datalist id="district-options-refi">
+        {apDistricts.map((d) => (
+          <option key={d} value={d} />
+        ))}
+      </datalist>
+
+      <label className={baseLabel}>Mandal</label>
+      <div className="relative">
+        <input
+          name="mandal"
+          value={form.mandal}
+          onChange={onMandalChange}
+          list="mandal-options-refi"
+          placeholder="Select mandal"
+          className={baseInput}
+        />
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M12 11.5A2.5 2.5 0 0 1 9.5 9A2.5 2.5 0 0 1 12 6.5A2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/></svg>
+        </div>
+      </div>
+      {form.mandal === "Other" && (
+        <div className="relative">
+          <input
+            name="customMandal"
+            value={form.customMandal}
+            onChange={onChange}
+            placeholder="Enter mandal"
+            className={baseInput}
+          />
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M12 11.5A2.5 2.5 0 0 1 9.5 9A2.5 2.5 0 0 1 12 6.5A2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/></svg>
+          </div>
+        </div>
+      )}
+      <datalist id="mandal-options-refi">
+        {apMandals.map((m) => (
+          <option key={m} value={m} />
+        ))}
+      </datalist>
+
+      <label className={baseLabel}>Street / Locality</label>
+      <div className="relative">
+        <input
+          name="street"
+          value={form.street}
+          onChange={onChange}
+          placeholder="Enter street or locality"
+          className={baseInput}
+        />
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M12 11.5A2.5 2.5 0 0 1 9.5 9A2.5 2.5 0 0 1 12 6.5A2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/></svg>
+        </div>
+      </div>
+
+      <label className={baseLabel}>Full Address</label>
       <div className="relative">
         <textarea
           name="address"
@@ -547,6 +683,40 @@ function RefinanceForm({ inputBase, labelClass }) {
               </svg>
             </div>
           </div>
+
+            <label className={baseLabel}>Guarantor photo</label>
+            <label className="mt-1 flex items-center gap-3 h-10 px-3 bg-white rounded-full border border-dashed text-sm cursor-pointer">
+              <span className="flex items-center justify-center w-7 h-7">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="w-5 h-5" fill="none">
+                  <g fill="none" stroke="#a6a6a6" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2">
+                    <path
+                      fill="#a6a6a6"
+                      fillOpacity="0"
+                      strokeDasharray="20"
+                      strokeDashoffset="20"
+                      d="M12 15h2v-6h2.5l-4.5 -4.5M12 15h-2v-6h-2.5l4.5 -4.5"
+                    >
+                      <animate attributeName="d" begin="0.5s" dur="1.5s" repeatCount="indefinite" values="M12 15h2v-6h2.5l-4.5 -4.5M12 15h-2v-6h-2.5l4.5 -4.5;M12 15h2v-3h2.5l-4.5 -4.5M12 15h-2v-3h-2.5l4.5 -4.5;M12 15h2v-6h2.5l-4.5 -4.5M12 15h-2v-6h-2.5l4.5 -4.5" />
+                      <animate fill="freeze" attributeName="fill-opacity" begin="0.7s" dur="0.5s" values="0;1" />
+                      <animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="20;0" />
+                    </path>
+                    <path strokeDasharray="14" strokeDashoffset="14" d="M6 19h12">
+                      <animate fill="freeze" attributeName="stroke-dashoffset" begin="0.5s" dur="0.2s" values="14;0" />
+                    </path>
+                  </g>
+                </svg>
+              </span>
+
+              <span className="text-gray-500 truncate flex-1">
+                {files.guarantorPhoto ? files.guarantorPhoto.name : "Upload guarantor photo"}
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => onFileChange(e, "guarantorPhoto")}
+              />
+            </label>
         </>
       )}
 

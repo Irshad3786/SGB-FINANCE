@@ -125,15 +125,15 @@ function Users () {
           <table className="w-full table-auto border-collapse ">
             <thead>
               <tr className="bg-gray-100 text-left ">
-                <th className="py-3 px-3 text-base font-semibold rounded-tl-lg">s no</th>
-                <th className="py-3 px-3 text-base font-semibold">seller name</th>
-                <th className="py-3 px-3 text-base font-semibold">buyer name</th>
-                <th className="py-3 px-3 text-base font-semibold">vehicle no</th>
-                <th className="py-3 px-3 text-base font-semibold">sold amount</th>
-                <th className="py-3 px-3 text-base font-semibold">buy amount</th>
-                <th className="py-3 px-3 text-base font-semibold">date</th>
-                <th className="py-3 px-3 text-base font-semibold">status</th>
-                <th className="py-3 px-3 text-base font-semibold rounded-tr-lg">action</th>
+                <th className="py-3 px-3 text-sm font-semibold text-gray-600 rounded-tl-lg">S NO</th>
+                <th className="py-3 px-3 text-sm font-semibold text-gray-600">SELLER NAME</th>
+                <th className="py-3 px-3 text-sm font-semibold text-gray-600">BUYER NAME</th>
+                <th className="py-3 px-3 text-sm font-semibold text-gray-600">VEHICLE NO</th>
+                <th className="py-3 px-3 text-sm font-semibold text-gray-600">SOLD AMOUNT</th>
+                <th className="py-3 px-3 text-sm font-semibold text-gray-600">BUY AMOUNT</th>
+                <th className="py-3 px-3 text-sm font-semibold text-gray-600">DATE</th>
+                <th className="py-3 px-3 text-sm font-semibold text-gray-600">STATUS</th>
+                <th className="py-3 px-3 text-sm font-semibold text-gray-600 rounded-tr-lg">ACTION</th>
               </tr>
             </thead>
             <tbody>

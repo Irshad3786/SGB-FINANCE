@@ -36,6 +36,7 @@ function Buy() {
         emiAmount: '',
         // guarantor
         guarantorName: '',
+        guarantorSoWoCo: '',
         guarantorPhone: '',
         guarantorAadhaar: '',
         guarantorAddress: '',
@@ -634,6 +635,16 @@ function Buy() {
               <div className="relative">
                 <input name="guarantorName" value={form.guarantorName} onChange={onChange} placeholder="Enter full name" className={inputBase} />
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M12 12q-1.65 0-2.825-1.175T8 8t1.175-2.825T12 4t2.825 1.175T16 8t-1.175 2.825T12 12m-8 6v-.8q0-.85.438-1.562T5.6 14.55q1.55-.775 3.15-1.162T12 13t3.25.388t3.15 1.162q.725.375 1.163 1.088T20 17.2v.8q0 .825-.587 1.413T18 20H6q-.825 0-1.412-.587T4 18"/></svg></div>
+              </div>
+
+              <label className={labelClass}>s/o w/o c/o</label>
+              <div className="relative">
+                <input name="guarantorSoWoCo" value={form.guarantorSoWoCo} onChange={onChange} placeholder="Enter s/o w/o c/o" className={inputBase} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                    <path fill="#a6a6a6" d="M3 14s-1 0-1-1s1-4 6-4s6 3 6 4s-1 1-1 1zm5-6a3 3 0 1 0 0-6a3 3 0 0 0 0 6"/>
+                  </svg>
+                </div>
               </div>
 
               <label className={labelClass}>Guarantor phone no</label>

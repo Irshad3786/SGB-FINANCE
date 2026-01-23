@@ -6,13 +6,24 @@ const sellerSchema = new mongoose.Schema({
     phoneNo: String,
     alternatePhoneNo: String,
     aadharNo: String,
-
+    
     vehicle: {
     vehicleName: String,
     vehicleNumber: String,
     model: String,
     chassisNo: { type: String, unique: true },
-    bikePrice: Number
+    bikePrice: Number,
+    status: {
+    type: String,
+    enum: ["available", "work", "sold"],
+    default: "available"
+        },
+    workList: [{
+        name: String,
+        amount: Number,
+        date: Date,
+        modifiedDate: Date
+        }]
     },
 
     dateOfBirth: Date,

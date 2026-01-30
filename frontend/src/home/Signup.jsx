@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import axios from 'axios'
 import Logo from './components/Logo'
 import Footer from './components/Footer'
 
@@ -21,8 +22,42 @@ function Signup() {
 
   function handleSubmit(e) {
     e.preventDefault()
-    // minimal handling for now
-    console.log('Signup submit', form)
+    
+    // Validate passwords match
+    if (form.password !== form.confirmPassword) {
+      alert('Passwords do not match')
+      return
+    }
+
+    // Send data to backend
+    axios.post(`${process.env.REACT_APP_API_URL}/api/auth/signup`, {
+      firstName: form.firstName,
+      lastName: form.lastName,
+      email: form.email,
+      phone: form.phone,
+      vehicleNo: form.vehicleNo,
+      chassis: form.chassis,
+      password: form.password
+    })
+    .then(response => {
+      console.log('Signup successful:', response.data)
+      alert('Account created successfully!')
+      // Reset form
+      setForm({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        vehicleNo: '',
+        chassis: '',
+        password: '',
+        confirmPassword: ''
+      })
+    })
+    .catch(error => {
+      console.error('Signup error:', error.response?.data || error.message)
+      alert('Error: ' + (error.response?.data?.message || 'Failed to create account'))
+    })
   }
 
   return (

@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
-import jwt from "jsonwebtoken";
-import Admin from "../models/adminModel";
+import Admin from "../models/adminModel.js";
+import { sendAdminOtp } from "../utils/authEmails/adminRegisterEmail.js";
+
 
 const registerAdmin = async (req, res) => {
 
@@ -8,10 +9,10 @@ const registerAdmin = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { fullName, email, designation, password, confirmPassword } = req.body;
+    const { name, phone, email, password, confirmPassword, secretCode } = req.body;
 
     // 1️⃣ Validate required fields
-    if (!fullName || !email || !designation || !password || !confirmPassword) {
+    if (!name || !phone || !email || !password || !confirmPassword || !secretCode) {
       await session.abortTransaction();
       session.endSession();
       return res.status(400).json({
@@ -30,6 +31,7 @@ const registerAdmin = async (req, res) => {
       });
     }
 
+    
     // 3️⃣ Block if Admin already exists
     const existingAdmin = await Admin.countDocuments().session(session);
     if (existingAdmin > 0) {
@@ -41,31 +43,21 @@ const registerAdmin = async (req, res) => {
       });
     }
 
-    // 4️⃣ Block if any PendingAdmin exists
-    const pendingCount = await PendingAdmin.countDocuments().session(session);
-    if (pendingCount > 0) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({
-        success: false,
-        message:
-          "An Admin registration is already in progress. Please complete OTP verification.",
-      });
-    }
-
     // 5️⃣ Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Create pendingAdmin entry inside session
-    const [pendingAdmin] = await PendingAdmin.create(
+    // Create admin entry inside session
+    const [admin] = await Admin.create(
       [
         {
-          fullName,
+          name,
+          phone,
           email,
-          designation,
           password, // 🔒 hashed in schema
+          secretCode, // 🔒 hashed in schema
           otp, // 🔒 hashed in schema
           otpExpiresAt: Date.now() + 5 * 60 * 1000, // 5 min expiry
+          lastOtpSentAt: new Date(),
         },
       ],
       { session }
@@ -73,7 +65,7 @@ const registerAdmin = async (req, res) => {
 
     // 6️⃣ Try sending OTP email
     try {
-      const emailResponse = await sendAdminOtp(pendingAdmin, otp);
+      const emailResponse = await sendAdminOtp(admin, otp);
       if (!emailResponse.success) {
         throw new Error("Failed to send OTP email");
       }
@@ -93,12 +85,12 @@ const registerAdmin = async (req, res) => {
     session.endSession();
 
     // 8️⃣ Generate short-lived token
-    const otpToken = pendingAdmin.generateOtpToken();
+    const otpToken = admin.generateOtpToken();
 
     return res.status(201).json({
       success: true,
       message: "OTP sent successfully. Please verify to complete registration.",
-      otpToken, // short-lived JWT (contains pendingAdmin._id)
+      otpToken, // short-lived JWT (contains admin._id)
     });
   } catch (error) {
     await session.abortTransaction();

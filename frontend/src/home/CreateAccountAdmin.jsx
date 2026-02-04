@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import axios from 'axios'
 import Logo from './components/Logo'
 import Footer from './components/Footer'
 
@@ -62,22 +63,35 @@ function CreateAccountAdmin() {
     return newErrors
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     const newErrors = validateForm()
 
     if (Object.keys(newErrors).length === 0) {
-      console.log('Admin account created:', form)
-      setSubmitted(true)
-      setForm({
-        name: '',
-        phoneNo: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-        secretCode: ''
-      })
-      setTimeout(() => setSubmitted(false), 3000)
+      try {
+        const response = await axios.post('http://localhost:5100/api/admin/registerAdmin', {
+          name: form.name,
+          phone: form.phoneNo,
+          email: form.email,
+          password: form.password,
+          confirmPassword: form.confirmPassword,
+          secretCode: form.secretCode
+        })
+        console.log('Admin account created:', response.data)
+        setSubmitted(true)
+        setForm({
+          name: '',
+          phoneNo: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+          secretCode: ''
+        })
+        setTimeout(() => setSubmitted(false), 3000)
+      } catch (error) {
+        console.error('Admin registration error:', error.response?.data || error.message)
+        setErrors({ submit: error.response?.data?.message || 'Failed to create admin account' })
+      }
     } else {
       setErrors(newErrors)
     }

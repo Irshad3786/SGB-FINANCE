@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 const adminSchema = new mongoose.Schema(
   {
@@ -75,16 +77,19 @@ const adminSchema = new mongoose.Schema(
 
 
 
-adminSchema.pre("save", async function (next) {
+adminSchema.pre("save", async function () {
   // hash password only if not already hashed
   if (this.isModified("password") && !this.password.startsWith("$2b$")) {
     this.password = await bcrypt.hash(this.password, 12);
+  }
+  // hash secretCode only if not already hashed
+  if (this.isModified("secretCode") && !this.secretCode.startsWith("$2b$")) {
+    this.secretCode = await bcrypt.hash(this.secretCode, 12);
   }
   // hash otp only if not already hashed
   if (this.isModified("otp") && this.otp && !this.otp.startsWith("$2b$")) {
     this.otp = await bcrypt.hash(this.otp.toString(), 10);
   }
-  next();
 });
 
 

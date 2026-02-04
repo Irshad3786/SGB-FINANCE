@@ -4,6 +4,7 @@ import Footer from './components/Footer'
 
 function CreateAccountAdmin() {
   const [form, setForm] = useState({
+    name: '',
     phoneNo: '',
     email: '',
     password: '',
@@ -25,6 +26,10 @@ function CreateAccountAdmin() {
 
   const validateForm = () => {
     const newErrors = {}
+
+    if (!form.name.trim()) {
+      newErrors.name = 'Name is required'
+    }
 
     if (!form.phoneNo.trim()) {
       newErrors.phoneNo = 'Phone number is required'
@@ -65,6 +70,7 @@ function CreateAccountAdmin() {
       console.log('Admin account created:', form)
       setSubmitted(true)
       setForm({
+        name: '',
         phoneNo: '',
         email: '',
         password: '',
@@ -97,6 +103,28 @@ function CreateAccountAdmin() {
             )}
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              {/* Name */}
+              <div className="flex flex-col relative">
+                <label className="text-xs font-extrabold text-[#0e6b53] mb-1">Name</label>
+
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" className="block">
+                      <path fill="#a6a6a6" fillRule="evenodd" d="M8 7a4 4 0 1 1 8 0a4 4 0 0 1-8 0m0 6a5 5 0 0 0-5 5a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3a5 5 0 0 0-5-5z" clipRule="evenodd"/>
+                    </svg>
+                  </span>
+
+                  <input
+                    name="name"
+                    value={form.name}
+                    onChange={onChange}
+                    className="pl-10 px-3 py-2 rounded-md border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a] w-full"
+                    placeholder="Full Name"
+                  />
+                </div>
+                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+              </div>
+
               {/* Phone No */}
               <div className="flex flex-col relative">
                 <label className="text-xs font-extrabold text-[#0e6b53] mb-1">Phone No</label>

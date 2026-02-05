@@ -1,5 +1,7 @@
 import express from "express";
 import { registerAdmin } from "../controllers/adminController.js";
+import { verifyAdminOtp } from "../controllers/adminController.js";
+import { verifyOtpToken } from "../middlewares/adminMiddleware.js";
 // import {
 //   registerAdmin,
 //   verifyAdminOtp,
@@ -18,7 +20,7 @@ const router = express.Router();
 
 // register admin routes
 router.post("/registerAdmin", registerAdmin);
-// router.post("/verifyAdminOtp", verifyOtpToken, verifyAdminOtp);
+router.post("/verifyAdminOtp", verifyOtpToken, verifyAdminOtp);
 
 // // login admin routes
 // router.post("/loginAdmin",loginAdmin);

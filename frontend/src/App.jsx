@@ -15,6 +15,7 @@ import PendingDownpayment from './subAdmin/pages/PendingDownpayment';
 import CreateAccountAdmin from './home/CreateAccountAdmin';
 import AdminSignin from './home/AdminSignin';
 import Admin from './admin/Admin';
+import AdminOtpCreateAccount from './home/AdminOtpCreateAccount';
 
 
 function App() {
@@ -27,8 +28,12 @@ function App() {
         <Route path="/" element={<Home/>} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+
+        {/* admin */}
+        <Route path="/admin" element={<Admin/>} /> 
         <Route path="/admin-createaccount" element={<CreateAccountAdmin/>} />
         <Route path="/admin-signin" element={<AdminSignin/>} />
+        <Route path="/admin-createaccount-otp" element={<AdminOtpCreateAccount/>} />
 
         {/* Subadmin Layout */}
         <Route path="/subadmin" element={<Subadmin />}>
@@ -46,8 +51,7 @@ function App() {
 
         </Route>
 
-        {/* admin */}
-        <Route path="/admin" element={<Admin/>} />  
+         
      </Routes>
         
     </>

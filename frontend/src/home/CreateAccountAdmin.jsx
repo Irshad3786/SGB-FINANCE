@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import Logo from './components/Logo'
 import Footer from './components/Footer'
 
 function CreateAccountAdmin() {
+  const navigate = useNavigate()
   const [form, setForm] = useState({
     name: '',
     phoneNo: '',
@@ -14,7 +16,6 @@ function CreateAccountAdmin() {
   })
 
   const [errors, setErrors] = useState({})
-  const [submitted, setSubmitted] = useState(false)
 
   function onChange(e) {
     const { name, value } = e.target
@@ -69,7 +70,7 @@ function CreateAccountAdmin() {
 
     if (Object.keys(newErrors).length === 0) {
       try {
-        const response = await axios.post('http://localhost:5100/api/admin/registerAdmin', {
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_APP_API_URL}/api/admin/registerAdmin`, {
           name: form.name,
           phone: form.phoneNo,
           email: form.email,
@@ -78,16 +79,11 @@ function CreateAccountAdmin() {
           secretCode: form.secretCode
         })
         console.log('Admin account created:', response.data)
-        setSubmitted(true)
-        setForm({
-          name: '',
-          phoneNo: '',
-          email: '',
-          password: '',
-          confirmPassword: '',
-          secretCode: ''
-        })
-        setTimeout(() => setSubmitted(false), 3000)
+        const authHeader = response.headers?.authorization
+        const otpToken = authHeader?.startsWith('Bearer ')
+          ? authHeader.split(' ')[1]
+          : null
+        navigate('/admin-createaccount-otp', { state: { otpToken } })
       } catch (error) {
         console.error('Admin registration error:', error.response?.data || error.message)
         setErrors({ submit: error.response?.data?.message || 'Failed to create admin account' })
@@ -109,12 +105,6 @@ function CreateAccountAdmin() {
         <div className="max-w-5xl w-full">
           <div className="bg-[#eafef2] md:rounded-3xl rounded-lg p-6 md:p-10 shadow-sm">
             <h2 className="text-3xl md:text-4xl font-bold text-[#14493b] mb-6">Create Admin Account</h2>
-
-            {submitted && (
-              <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg font-semibold">
-                Admin account created successfully!
-              </div>
-            )}
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               {/* Name */}

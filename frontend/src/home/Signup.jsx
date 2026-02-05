@@ -30,7 +30,7 @@ function Signup() {
     }
 
     // Send data to backend
-    axios.post(`${process.env.REACT_APP_API_URL}/api/auth/signup`, {
+    axios.post(`${import.meta.env.VITE_BACKEND_APP_API_URL}/api/auth/signup`, {
       firstName: form.firstName,
       lastName: form.lastName,
       email: form.email,

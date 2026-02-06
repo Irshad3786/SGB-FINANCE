@@ -2,6 +2,9 @@ import express from "express";
 import { registerAdmin } from "../controllers/adminController.js";
 import { verifyAdminOtp } from "../controllers/adminController.js";
 import { verifyOtpToken } from "../middlewares/adminMiddleware.js";
+import { otpRateLimiter } from "../middlewares/rateLimitMiddleware.js";
+import { verifyOtp } from "../middlewares/adminMiddleware.js";
+import { resendAdminOtp } from "../controllers/adminController.js";
 // import {
 //   registerAdmin,
 //   verifyAdminOtp,
@@ -25,7 +28,7 @@ router.post("/verifyAdminOtp", verifyOtpToken, verifyAdminOtp);
 // // login admin routes
 // router.post("/loginAdmin",loginAdmin);
 // router.post("/verifyAdmin", otpRateLimiter, verifyOtp, verifyAdmin); // 🧠 rate limiter added
-// router.post("/resendAdminOtp", otpRateLimiter, verifyOtp, resendAdminOtp); // 🧠 rate limiter added
+router.post("/resendOtp", otpRateLimiter, verifyOtp, resendAdminOtp); // 🧠 rate limiter added
 // // forgot and reset password routes
 // router.post("/refresh-Admin-Token",refreshAccessToken);
 // router.post("/forgot-Admin-Password",forgotAdminPassword);

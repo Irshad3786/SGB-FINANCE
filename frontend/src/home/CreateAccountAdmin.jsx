@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import Logo from './components/Logo'
 import Footer from './components/Footer'
+import Loader from '../components/Loader'
 
 function CreateAccountAdmin() {
   const navigate = useNavigate()
@@ -16,6 +17,7 @@ function CreateAccountAdmin() {
   })
 
   const [errors, setErrors] = useState({})
+  const [loading, setLoading] = useState(false)
 
   function onChange(e) {
     const { name, value } = e.target
@@ -69,6 +71,7 @@ function CreateAccountAdmin() {
     const newErrors = validateForm()
 
     if (Object.keys(newErrors).length === 0) {
+      setLoading(true)
       try {
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_APP_API_URL}/api/admin/registerAdmin`, {
           name: form.name,
@@ -84,6 +87,8 @@ function CreateAccountAdmin() {
       } catch (error) {
         console.error('Admin registration error:', error.response?.data || error.message)
         setErrors({ submit: error.response?.data?.message || 'Failed to create admin account' })
+      } finally {
+        setLoading(false)
       }
     } else {
       setErrors(newErrors)
@@ -92,6 +97,7 @@ function CreateAccountAdmin() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
+      {loading && <Loader message="Creating admin account..." />}
       <header className="px-6 md:px-10 pt-6">
         <div className="max-w-7xl mx-auto">
           <Logo />
@@ -245,9 +251,10 @@ function CreateAccountAdmin() {
               <div className="md:col-span-2 mt-4 flex justify-center md:justify-end">
                 <button
                   type="submit"
-                  className="bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] text-black font-bold px-6 py-2 rounded-full border-2 border-black"
+                  disabled={loading}
+                  className="bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] text-black font-bold px-6 py-2 rounded-full border-2 border-black disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Submit
+                  {loading ? 'Submitting...' : 'Submit'}
                 </button>
               </div>
             </form>

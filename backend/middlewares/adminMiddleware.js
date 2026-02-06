@@ -87,7 +87,6 @@ const verifyOtpToken = async (req, res, next) => {
   try {
     const token = getTokenFromRequest(req);
 
-    console.log(token);
     
     if (!token) {
       return res

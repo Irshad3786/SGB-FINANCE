@@ -6,6 +6,7 @@ import Footer from './components/Footer'
 import OtpInput from './components/OtpInput'
 import OtpTimer from './components/OtpTimer'
 import ResendOtpButton from './components/ResendOtpButton'
+import Loader from '../components/Loader'
 
 function AdminOtpCreateAccount() {
   const location = useLocation()
@@ -81,6 +82,7 @@ function AdminOtpCreateAccount() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
+      {loading && <Loader message="Verifying OTP..." />}
       <header className="px-6 md:px-10 pt-6">
         <div className="max-w-7xl mx-auto">
           <Logo />

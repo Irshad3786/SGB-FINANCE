@@ -116,8 +116,7 @@ const verifyAdminOtp = async (req, res) => {
     const { otp } = req.body;
     const admin = req.admin; // ✅ injected by middleware
 
-    console.log(otp);
-    
+
 
     // 🔒 Check OTP validity
     const isOtpValid = await admin.isOtpCorrect(otp);
@@ -156,6 +155,69 @@ const verifyAdminOtp = async (req, res) => {
   }
 };
 
+
+const resendAdminOtp = async (req, res) => {
+  try {
+    const adminId = req.adminId; // From verifyOtp middleware
+
+    if (!adminId) {
+      return res.status(400).json({
+        success: false,
+        message: "Admin identifier missing. Cannot resend OTP",
+      });
+    }
+
+    const admin = await Admin.findById(adminId);
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: "Admin not found. Please login again",
+      });
+    }
+
+    // 🛡️ Prevent resend spam — 1 OTP every 60 seconds
+    if (
+      admin.lastOtpSentAt &&
+      Date.now() - admin.lastOtpSentAt.getTime() < 60 * 1000
+    ) {
+      return res.status(429).json({
+        success: false,
+        message: "You can request a new OTP only once every 60 seconds.",
+      });
+    }
+
+    // 📩 Generate new OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    admin.otp = otp;
+    admin.otpExpiresAt = Date.now() + 5 * 60 * 1000; // 5 min expiry
+    
+    // Send OTP email
+    const sendOtp = await sendAdminOtp(admin, otp);
+    if (!sendOtp.success) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send OTP. Please try again !!",
+      });
+    }
+
+    // ✅ Update timestamp
+    admin.lastOtpSentAt = new Date();
+    await admin.save({ validateBeforeSave: false });
+
+    return res.status(200).json({
+      success: true,
+      message: "A new OTP has been sent to your registered email !!",
+    });
+  } catch (error) {
+    console.error("Error in resendAdminOtp:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error !!",
+      error: error.message,
+    });
+  }
+};
+
 export{
-    registerAdmin ,verifyAdminOtp
+    registerAdmin ,verifyAdminOtp, resendAdminOtp
 }

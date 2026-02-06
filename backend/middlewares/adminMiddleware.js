@@ -1,14 +1,15 @@
 import Admin from "../models/adminModel.js";
 import jwt from "jsonwebtoken";
 
-// 🔐 Get token from Authorization header or cookie
+// 🔐 Get token from request body, Authorization header, or cookie
 const getTokenFromRequest = (req) => {
+  const tokenFromBody = req.body?.token;
   const authHeader = req.headers.authorization || req.headers.Authorization;
   const tokenFromHeader = authHeader?.startsWith("Bearer ")
     ? authHeader.split(" ")[1]
     : null;
   const tokenFromCookie = req.cookies?.accessToken;
-  return tokenFromHeader || tokenFromCookie; // 🔧 Authorization header takes priority
+  return tokenFromBody || tokenFromHeader || tokenFromCookie; // 🔧 Request body takes priority
 };
 
 
@@ -81,7 +82,7 @@ const verifyOtp = async (req, res, next) => {
   }
 };
 
-// for register and verifyAdminOtp routes only uses pendingAdmin model
+// for register and verifyAdminOtp routes only uses Admin model
 const verifyOtpToken = async (req, res, next) => {
   try {
     const token = getTokenFromRequest(req);
@@ -97,19 +98,19 @@ const verifyOtpToken = async (req, res, next) => {
     // 🔑 Decode token
     const decoded = decodeToken(token, process.env.OTP_TOKEN_SECRET);
 
-    // 🔎 Find pending admin
-    const pendingAdmin = await PendingAdmin.findById(decoded._id);
-    if (!pendingAdmin) {
+    // 🔎 Find admin
+    const admin = await Admin.findById(decoded._id || decoded.id);
+    if (!admin) {
       return res
         .status(404)
         .json({
           success: false,
-          message: "Pending admin not found or expired",
+          message: "Admin not found or expired",
         });
     }
 
     // ✅ Attach to request object
-    req.pendingAdmin = pendingAdmin;
+    req.admin = admin;
     next();
   } catch (error) {
     return res.status(401).json({

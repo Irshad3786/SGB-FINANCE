@@ -35,12 +35,7 @@ function AdminOtpCreateAccount() {
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_APP_API_URL}/api/admin/verifyAdminOtp`,
-        { otp: otp },
-        {
-          headers: {
-            Authorization: `Bearer ${otpToken}`
-          }
-        }
+        { otp: otp, token: otpToken }
       )
       console.log('OTP verified:', response.data)
       setSubmitted(true)
@@ -66,12 +61,7 @@ function AdminOtpCreateAccount() {
     try {
       await axios.post(
         `${import.meta.env.VITE_BACKEND_APP_API_URL}/api/admin/resendOtp`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${otpToken}`
-          }
-        }
+        { token: otpToken }
       )
       setTimerExpired(false)
       setOtp('')

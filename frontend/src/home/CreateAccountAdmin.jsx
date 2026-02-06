@@ -79,10 +79,7 @@ function CreateAccountAdmin() {
           secretCode: form.secretCode
         })
         console.log('Admin account created:', response.data)
-        const authHeader = response.headers?.authorization
-        const otpToken = authHeader?.startsWith('Bearer ')
-          ? authHeader.split(' ')[1]
-          : null
+        const otpToken = response.data.token
         navigate('/admin-createaccount-otp', { state: { otpToken } })
       } catch (error) {
         console.error('Admin registration error:', error.response?.data || error.message)

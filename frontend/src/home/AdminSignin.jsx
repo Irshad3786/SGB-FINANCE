@@ -1,19 +1,44 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import Logo from './components/Logo'
 import Footer from './components/Footer'
 
 function AdminSignin() {
+  const navigate = useNavigate()
   const [form, setForm] = useState({ email: '', password: '', remember: false })
   const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   function onChange(e) {
     const { name, value, type, checked } = e.target
     setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }))
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    console.log('Admin signin submit', form)
+    setError('')
+    setLoading(true)
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_APP_API_URL}/api/admin/loginAdmin`,
+        {
+          email: form.email,
+          password: form.password
+        }
+      )
+
+      console.log('Login successful:', response.data)
+      navigate('/admin-login-otp', { state: { otpToken: response.data?.data?.otpToken } })
+      
+    } catch (err) {
+      console.error('Login error:', err)
+      setError(err.response?.data?.message || 'Login failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -30,6 +55,12 @@ function AdminSignin() {
           <div className="bg-[#eafef2] rounded-3xl p-8 md:p-10 shadow-[-1px_3px_3px_0px_rgba(0,_0,_0,_0.1)]">
             <h2 className="text-3xl font-bold text-center text-[#14493b] mb-2">Admin Sign in</h2>
             <p className="text-center text-[#0e6b53] text-sm mb-6">Access your admin dashboard</p>
+
+            {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+                {error}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Email Field */}
@@ -107,9 +138,10 @@ function AdminSignin() {
               <div className="flex justify-center">
                 <button
                   type="submit"
-                  className="mt-4 bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] text-black font-bold px-6 py-2 rounded-full border-2 border-black"
+                  disabled={loading}
+                  className="mt-4 bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] text-black font-bold px-6 py-2 rounded-full border-2 border-black disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Sign In
+                  {loading ? 'Signing in...' : 'Sign In'}
                 </button>
               </div>
             </form>

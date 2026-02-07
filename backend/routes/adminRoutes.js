@@ -5,6 +5,8 @@ import { verifyOtpToken } from "../middlewares/adminMiddleware.js";
 import { otpRateLimiter } from "../middlewares/rateLimitMiddleware.js";
 import { verifyOtp } from "../middlewares/adminMiddleware.js";
 import { resendAdminOtp } from "../controllers/adminController.js";
+import { loginAdmin } from "../controllers/adminController.js";
+import { verifyAdmin } from "../controllers/adminController.js";
 // import {
 //   registerAdmin,
 //   verifyAdminOtp,
@@ -26,8 +28,8 @@ router.post("/registerAdmin", registerAdmin);
 router.post("/verifyAdminOtp", verifyOtpToken, verifyAdminOtp);
 
 // // login admin routes
-// router.post("/loginAdmin",loginAdmin);
-// router.post("/verifyAdmin", otpRateLimiter, verifyOtp, verifyAdmin); // 🧠 rate limiter added
+router.post("/loginAdmin",loginAdmin);
+router.post("/verifyAdmin", otpRateLimiter, verifyOtp, verifyAdmin); // 🧠 rate limiter added
 router.post("/resendOtp", otpRateLimiter, verifyOtp, resendAdminOtp); // 🧠 rate limiter added
 // // forgot and reset password routes
 // router.post("/refresh-Admin-Token",refreshAccessToken);

@@ -28,13 +28,12 @@ const adminSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, "Password is required"],
-      select: false,
+ 
       
     },
     secretCode: {
       type: String,
-      required: true,
-      select: false
+      required: true
     },
     refreshToken: {
       type: String,

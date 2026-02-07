@@ -16,6 +16,7 @@ import CreateAccountAdmin from './home/CreateAccountAdmin';
 import AdminSignin from './home/AdminSignin';
 import Admin from './admin/Admin';
 import AdminOtpCreateAccount from './home/AdminOtpCreateAccount';
+import AdminOtpLogin from './home/AdminOtpLogin';
 
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
         <Route path="/admin-createaccount" element={<CreateAccountAdmin/>} />
         <Route path="/admin-signin" element={<AdminSignin/>} />
         <Route path="/admin-createaccount-otp" element={<AdminOtpCreateAccount/>} />
+        <Route path="/admin-login-otp" element={<AdminOtpLogin/>} />
 
         {/* Subadmin Layout */}
         <Route path="/subadmin" element={<Subadmin />}>

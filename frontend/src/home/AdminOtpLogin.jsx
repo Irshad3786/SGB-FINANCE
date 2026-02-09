@@ -36,7 +36,8 @@ function AdminOtpLogin() {
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_APP_API_URL}/api/admin/verifyAdmin`,
-        { otp: otp, token: otpToken }
+        { otp: otp, token: otpToken },
+        { withCredentials: true }
       )
       console.log('OTP verified:', response.data)
       setSubmitted(true)
@@ -61,8 +62,9 @@ function AdminOtpLogin() {
     setResendLoading(true)
     try {
       await axios.post(
-        `${import.meta.env.VITE_BACKEND_APP_API_URL}/api/admin/resendAdminOtp`,
-        { token: otpToken }
+        `${import.meta.env.VITE_BACKEND_APP_API_URL}/api/admin/resendOtp`,
+        { token: otpToken },
+        { withCredentials: true }
       )
       setTimerExpired(false)
       setOtp('')

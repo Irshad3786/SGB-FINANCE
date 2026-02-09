@@ -387,16 +387,15 @@ const verifyAdmin = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     };
 
-    // ✅ Send success response with tokens in body AND cookies
+    // ✅ Send success response - accessToken in body only, refreshToken in cookie
     return res
       .status(200)
-      .cookie("accessToken", accessToken, cookieOptions)
       .cookie("refreshToken", refreshToken, cookieOptions)
       .json({
         success: true,
         message: "OTP verified successfully. Logged in.",
-        accessToken,  // ✅ Added for frontend to store in localStorage
-        refreshToken, // ✅ Added for frontend to store in localStorage
+        accessToken,  // ✅ Send in response for frontend to store
+        refreshToken, // ✅ Also in response body
         data: {
           id: admin._id,
           fullName: admin.fullName,

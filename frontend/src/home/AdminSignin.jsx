@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import Logo from './components/Logo'
 import Footer from './components/Footer'
+import Loader from '../components/Loader'
 
 function AdminSignin() {
   const navigate = useNavigate()
@@ -43,6 +44,7 @@ function AdminSignin() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
+      {loading && <Loader message="Signing in..." />}
       <header className="px-6 md:px-10 pt-6">
         <div className="max-w-7xl mx-auto">
           <Logo />
@@ -119,7 +121,7 @@ function AdminSignin() {
               <div className="flex flex-col sm:flex-row items-center justify-between text-xs gap-3">
                 <div className="flex-1 flex flex-col sm:flex-row items-center justify-between gap-2">
                   <div className="flex items-center text-gray-700">
-                    <a href="#" className="text-blue-600 font-medium hover:underline">Forgot password?</a>
+                    <a href="/admin-forgot-password" className="text-blue-600 font-medium hover:underline">Forgot password?</a>
                   </div>
 
                   <div className="flex items-center text-gray-700">

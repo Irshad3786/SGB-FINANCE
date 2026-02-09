@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import apiClient, { setAuthToken } from '../api/axios'
 import Logo from './components/Logo'
 import Footer from './components/Footer'
 import OtpInput from './components/OtpInput'
@@ -34,21 +34,25 @@ function AdminOtpLogin() {
     setLoading(true)
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_APP_API_URL}/api/admin/verifyAdmin`,
-        { otp: otp, token: otpToken },
-        { withCredentials: true }
-      )
+      const response = await apiClient.post('/api/admin/verifyAdmin', {
+        otp: otp,
+        token: otpToken,
+      })
+      const accessToken = response.data?.accessToken
+      if (accessToken) {
+        setAuthToken(accessToken)
+      }
       console.log('OTP verified:', response.data)
       setSubmitted(true)
       setOtp('')
+      
       setTimeout(() => {
+        setLoading(false)
         navigate('/admin')
       }, 2000)
     } catch (error) {
       console.error('OTP verification error:', error.response?.data || error.message)
       setErrors(error.response?.data?.message || 'Invalid OTP. Please try again.')
-    } finally {
       setLoading(false)
     }
   }
@@ -61,11 +65,7 @@ function AdminOtpLogin() {
 
     setResendLoading(true)
     try {
-      await axios.post(
-        `${import.meta.env.VITE_BACKEND_APP_API_URL}/api/admin/resendOtp`,
-        { token: otpToken },
-        { withCredentials: true }
-      )
+      await apiClient.post('/api/admin/resendOtp', { token: otpToken })
       setTimerExpired(false)
       setOtp('')
       setErrors('')

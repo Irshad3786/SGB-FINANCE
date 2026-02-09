@@ -17,6 +17,8 @@ import AdminSignin from './home/AdminSignin';
 import Admin from './admin/Admin';
 import AdminOtpCreateAccount from './home/AdminOtpCreateAccount';
 import AdminOtpLogin from './home/AdminOtpLogin';
+import AdminForgotPassword from './home/AdminForgotPassword';
+import AdminResetPassword from './home/AdminResetPassword';
 
 
 function App() {
@@ -36,6 +38,8 @@ function App() {
         <Route path="/admin-signin" element={<AdminSignin/>} />
         <Route path="/admin-createaccount-otp" element={<AdminOtpCreateAccount/>} />
         <Route path="/admin-login-otp" element={<AdminOtpLogin/>} />
+        <Route path="/admin-forgot-password" element={<AdminForgotPassword/>} />
+        <Route  path="/reset-admin-password/:token" element={<AdminResetPassword/>} />
 
         {/* Subadmin Layout */}
         <Route path="/subadmin" element={<Subadmin />}>

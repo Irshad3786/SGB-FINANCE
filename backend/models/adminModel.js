@@ -98,6 +98,9 @@ adminSchema.methods.isPasswordCorrect = async function (inputPassword) {
 
 // 🔐 Compare OTP
 adminSchema.methods.isOtpCorrect = async function (plainOtp) {
+  if (!plainOtp || !this.otp) {
+    return false;
+  }
   return await bcrypt.compare(plainOtp.toString(), this.otp);
 };
 

@@ -1,7 +1,9 @@
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
 import Admin from "../models/adminModel.js";
 import { sendAdminOtp } from "../utils/authEmails/adminRegisterEmail.js";
 import AdminOtpVerifyEmail from "../utils/authEmails/adminOtpVerification.js";
+import AdminPasswordResetEmail from "../utils/authEmails/sendAdminResetPasswordEmail.js";
 
 
 
@@ -331,6 +333,13 @@ const verifyAdmin = async (req, res) => {
       });
     }
 
+    if (!admin.otp || !admin.otpExpiresAt || admin.otpExpiresAt < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP missing or expired. Please request a new OTP.",
+      });
+    }
+
 
     // 🧠 STEP 1: Brute-force protection (limit 3 wrong attempts)
     if (admin.otpBlockedUntil && admin.otpBlockedUntil > new Date()) {
@@ -412,6 +421,134 @@ const verifyAdmin = async (req, res) => {
   }
 };
 
+
+
+
+const forgotAdminPassword = async (req,res) => {
+    try {
+    const { email } = req.body;
+
+    // ✅ Validate email presence
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    // ✅ Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email format",
+      });
+    }
+
+    // ✅ Find user by email
+    const admin = await Admin.findOne({ email });
+
+    if (!admin) {
+      return res.status(500).json({
+        success: false,
+        message: "No user registered with this email",
+      });
+    }
+
+    // ✅ Send reset email or OTP only if user is verified
+    const result = await AdminPasswordResetEmail(admin); // handles OTP or token generation & sending
+    if (result.success) {
+      return res.status(200).json({
+        success: true,
+        message: "Reset Email sent Successfully",
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send reset email. Please try again later.",
+      });
+    }
+
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+
+
+const resetAdminPassword = async (req,res) => {
+      try {
+    const { password, confirmPassword } = req.body;
+    const { token } = req.params; // ⬅️ Get token from URL params
+
+    // ✅ Validate required fields
+    if (!token || !password || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Token, password, and confirmPassword are required.",
+      });
+    }
+
+    // ✅ Validate password format
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.",
+      });
+    }
+
+    // ✅ Check password match
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Password and confirmPassword do not match.",
+      });
+    }
+
+    // ✅ Verify token
+    let payload;
+    try {
+      payload = jwt.verify(token, process.env.RESET_PASSWORD_SECRET);
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired token.",
+      });
+    }
+
+    // ✅ Find user by token payload
+    const admin = await Admin.findById(payload.id);
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: "Admin not found.",
+      });
+    }
+
+    // ✅ Update and hash new password (will trigger pre-save middleware)
+    admin.password = password;
+    await admin.save();
+
+    return res.status(200).json({
+      success: true,
+      message:"Password has been reset successfully !!, Now you can Login",
+    });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+};
+
 export{
-    registerAdmin ,verifyAdminOtp, resendAdminOtp, loginAdmin, verifyAdmin
+    registerAdmin ,verifyAdminOtp, resendAdminOtp, loginAdmin, verifyAdmin, forgotAdminPassword, resetAdminPassword
 }

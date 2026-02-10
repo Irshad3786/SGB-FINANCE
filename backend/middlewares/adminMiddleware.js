@@ -5,6 +5,8 @@ import jwt from "jsonwebtoken";
 const getTokenFromRequest = (req) => {
   const tokenFromBody = req.body?.token;
   const authHeader = req.headers.authorization || req.headers.Authorization;
+  console.log(authHeader);
+  
   const tokenFromHeader = authHeader?.startsWith("Bearer ")
     ? authHeader.split(" ")[1]
     : null;

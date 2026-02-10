@@ -1,8 +1,15 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Logo from '../home/components/Logo'
 import Footer from '../home/components/Footer'
+import ChangePasswordModal from './components/ChangePasswordModal'
+import LogoutConfirmModal from './components/LogoutConfirmModal'
+import { setAuthToken, setRefreshToken } from '../api/axios'
 
 function Admin() {
+  const navigate = useNavigate()
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false)
   const [form, setForm] = useState({
     email: '',
     phoneNo: '',
@@ -194,9 +201,31 @@ function Admin() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <header className="px-6 md:px-10 pt-6">
-        <div className="max-w-7xl mx-auto">
+      <header className="px-4 md:px-10 pt-4 md:pt-6">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
           <Logo />
+          <div className="flex items-center gap-2 md:gap-3">
+            <button 
+              onClick={() => setIsChangePasswordOpen(true)}
+              className="flex items-center gap-0 md:gap-2 px-2 md:px-4 py-2 rounded-full border-2 border-[#0e6b53] text-[#0e6b53] font-semibold hover:bg-[#eafef2] hover:shadow-md transition-all"
+              title="Change Password"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                <path fill="#0e6b53" fillRule="evenodd" d="M12 17a2 2 0 0 0 2-2a2 2 0 0 0-2-2a2 2 0 0 0-2 2a2 2 0 0 0 2 2m6-9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2h1V6a5 5 0 0 1 5-5a5 5 0 0 1 5 5v2zm-6-5a3 3 0 0 0-3 3v2h6V6a3 3 0 0 0-3-3"/>
+              </svg>
+              <span className="hidden md:inline">Change Password</span>
+            </button>
+            <button 
+              onClick={() => setIsLogoutConfirmOpen(true)}
+              className="flex items-center gap-0 md:gap-2 px-2 md:px-4 py-2 rounded-full border-2 border-red-500 text-red-500 font-semibold hover:bg-red-50 hover:shadow-md transition-all"
+              title="Logout"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M5 21q-.825 0-1.412-.587Q3 19.825 3 19V5q0-.825.588-1.412Q4.175 3 5 3h7v2H5v14h7v2Zm11-4l-1.4-1.4L16.2 12l-1.6-1.6L16 9l4 4Z"/>
+              </svg>
+              <span className="hidden md:inline">Logout</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -453,6 +482,24 @@ function Admin() {
         </div>
       </div>
     </main>
+
+    <ChangePasswordModal 
+      isOpen={isChangePasswordOpen}
+      onClose={() => setIsChangePasswordOpen(false)}
+    />
+
+    <LogoutConfirmModal 
+      isOpen={isLogoutConfirmOpen}
+      onClose={() => setIsLogoutConfirmOpen(false)}
+      onConfirm={() => {
+        // Clear auth tokens
+        setAuthToken(null)
+        setRefreshToken(null)
+        setIsLogoutConfirmOpen(false)
+        // Redirect to login
+        navigate('/admin-login')
+      }}
+    />
 
     <Footer />
   </div>

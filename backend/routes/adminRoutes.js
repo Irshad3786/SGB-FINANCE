@@ -9,6 +9,9 @@ import { loginAdmin } from "../controllers/adminController.js";
 import { verifyAdmin } from "../controllers/adminController.js";
 import { forgotAdminPassword } from "../controllers/adminController.js";
 import { resetAdminPassword } from "../controllers/adminController.js";
+import { verifyAdminToken } from "../middlewares/adminMiddleware.js";
+import { changePassword } from "../controllers/adminController.js";
+import { refreshAdminToken } from "../controllers/adminController.js";
 // import {
 //   registerAdmin,
 //   verifyAdminOtp,
@@ -34,10 +37,10 @@ router.post("/loginAdmin",loginAdmin);
 router.post("/verifyAdmin", otpRateLimiter, verifyOtp, verifyAdmin); // 🧠 rate limiter added
 router.post("/resendOtp", otpRateLimiter, verifyOtp, resendAdminOtp); // 🧠 rate limiter added
 // // forgot and reset password routes
-// router.post("/refresh-Admin-Token",refreshAccessToken);
+router.post("/refresh-Admin-Token", refreshAdminToken);
 router.post("/forgot-Admin-Password",forgotAdminPassword);
 router.post("/reset-Admin-Password/:token",resetAdminPassword);
-// router.post("/change-admin-password",verifyAdminToken,changePassword);
+router.post("/change-admin-password",verifyAdminToken,changePassword);
 
 // // logout admin route
 // router.post("/logOutAdmin",verifyAdminToken,logOutAdmin);

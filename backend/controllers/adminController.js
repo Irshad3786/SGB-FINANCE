@@ -549,6 +549,157 @@ const resetAdminPassword = async (req,res) => {
   }
 };
 
+
+
+
+
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    const adminId = req.adminId; // set from auth middleware
+    if(!adminId){
+      return res.status(401).json({
+         success: false,
+          message: "Unauthorized. Admin ID missing !!",
+      })
+    }
+    // Validate input presence
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
+
+    // Get user from request
+    const admin = await Admin.findById(adminId);
+    if (!admin) {
+      return res.status(401).json({
+        success: false,
+        message: "Admin not found",
+      });
+    }
+
+    // Check current password
+    const isPasswordCorrect = await admin.isPasswordCorrect(currentPassword);
+    if (!isPasswordCorrect) {
+      return res.status(401).json({
+        success: false,
+        message: "Current password is incorrect",
+      });
+    }
+
+    // Validate new password strength
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "New password must be at least 8 characters long and include uppercase, lowercase, number, and special character",
+      });
+    }
+
+    // Check new vs confirm
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "New password and confirm password do not match",
+      });
+    }
+
+    // Update password (hashed via pre-save hook)
+    admin.password = newPassword;
+    await admin.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    console.error("Change password error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+
+
+
+const refreshAdminToken = async (req, res) => {
+  try {
+    const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Refresh token is required",
+      });
+    }
+
+    // ✅ Verify refresh token
+    let payload;
+    try {
+      payload = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    } catch (err) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid or expired refresh token",
+      });
+    }
+
+    // ✅ Find admin by ID
+    const admin = await Admin.findById(payload.id);
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: "Admin not found",
+      });
+    }
+
+    // ✅ Verify refresh token matches stored token
+    if (admin.refreshToken !== refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid refresh token",
+      });
+    }
+
+    // ✅ Generate new access token
+    const newAccessToken = admin.generateAccessToken();
+    const newRefreshToken = admin.generateRefreshToken();
+    admin.refreshToken = newRefreshToken;
+    await admin.save({ validateBeforeSave: false });
+
+    const isProd = process.env.NODE_ENV === "production";
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "None" : "Lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    };
+
+    return res
+      .status(200)
+      .cookie("refreshToken", newRefreshToken, cookieOptions)
+      .json({
+        success: true,
+        message: "Token refreshed successfully",
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      });
+  } catch (error) {
+    console.error("Refresh token error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 export{
-    registerAdmin ,verifyAdminOtp, resendAdminOtp, loginAdmin, verifyAdmin, forgotAdminPassword, resetAdminPassword
+    registerAdmin ,verifyAdminOtp, resendAdminOtp, loginAdmin, verifyAdmin, forgotAdminPassword, resetAdminPassword, changePassword, refreshAdminToken
 }

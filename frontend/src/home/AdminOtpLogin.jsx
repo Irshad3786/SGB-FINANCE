@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import apiClient, { setAuthToken } from '../api/axios'
+import apiClient, { setAuthToken, setRefreshToken } from '../api/axios'
 import Logo from './components/Logo'
 import Footer from './components/Footer'
 import OtpInput from './components/OtpInput'
@@ -39,8 +39,12 @@ function AdminOtpLogin() {
         token: otpToken,
       })
       const accessToken = response.data?.accessToken
+      const refreshToken = response.data?.refreshToken
       if (accessToken) {
         setAuthToken(accessToken)
+      }
+      if (refreshToken) {
+        setRefreshToken(refreshToken)
       }
       console.log('OTP verified:', response.data)
       setSubmitted(true)

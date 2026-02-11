@@ -66,21 +66,24 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
+        // Only send the cookie, not the refreshToken in the body
         const response = await axios.post(
           `${import.meta.env.VITE_BACKEND_APP_API_URL}/api/admin/refresh-Admin-Token`,
-          { refreshToken },
+          {},
           { withCredentials: true }
         );
 
-        const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
+        console.log("ssresponse", response);
         
+        const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
+
         // Update tokens
         setAuthToken(newAccessToken);
         setRefreshToken(newRefreshToken);
 
         // Update original request header
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        
+
         // Process queued requests
         processQueue(null, newAccessToken);
 
@@ -89,7 +92,7 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         // Refresh token failed - redirect to login
         processQueue(refreshError, null);
-        
+
         // Clear auth state
         setAuthToken(null);
         setRefreshToken(null);

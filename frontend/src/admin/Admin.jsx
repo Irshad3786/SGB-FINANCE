@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import apiClient, { setAuthToken, setRefreshToken } from '../api/axios'
 import Logo from '../home/components/Logo'
 import Footer from '../home/components/Footer'
 import ChangePasswordModal from './components/ChangePasswordModal'
 import LogoutConfirmModal from './components/LogoutConfirmModal'
-import { setAuthToken, setRefreshToken } from '../api/axios'
 
 function Admin() {
   const navigate = useNavigate()
@@ -491,13 +491,31 @@ function Admin() {
     <LogoutConfirmModal 
       isOpen={isLogoutConfirmOpen}
       onClose={() => setIsLogoutConfirmOpen(false)}
-      onConfirm={() => {
-        // Clear auth tokens
-        setAuthToken(null)
-        setRefreshToken(null)
-        setIsLogoutConfirmOpen(false)
-        // Redirect to login
-        navigate('/admin-login')
+      onConfirm={async () => {
+        try {
+          // Call logout endpoint
+          await apiClient.post('/api/admin/logOutAdmin')
+          
+          // Clear auth tokens
+          setAuthToken(null)
+          setRefreshToken(null)
+          setIsLogoutConfirmOpen(false)
+          
+          // Clear sessionStorage
+          if (typeof window !== 'undefined') {
+            sessionStorage.removeItem('accessToken')
+          }
+          
+          // Redirect to login
+          navigate('/admin-signin')
+        } catch (error) {
+          console.error('Logout error:', error)
+          // Clear tokens even if logout API fails
+          setAuthToken(null)
+          setRefreshToken(null)
+          setIsLogoutConfirmOpen(false)
+          navigate('/admin-signin')
+        }
       }}
     />
 

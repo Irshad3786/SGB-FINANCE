@@ -73,7 +73,6 @@ apiClient.interceptors.response.use(
           { withCredentials: true }
         );
 
-        console.log("ssresponse", response);
         
         const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
 

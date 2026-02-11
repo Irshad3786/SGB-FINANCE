@@ -629,53 +629,52 @@ const changePassword = async (req, res) => {
 
 
 
-const refreshAdminToken = async (req, res) => {
+const refreshAccessToken = async (req, res) => {
+  const incomingRefreshToken =
+    req.cookies?.refreshToken || req.body.refreshToken;
+
+  if (!incomingRefreshToken) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized: No refresh token provided",
+    });
+  }
+
   try {
-    const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+    // 1️⃣ Verify refresh token
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
 
-    if (!refreshToken) {
-      return res.status(401).json({
-        success: false,
-        message: "Refresh token is required",
-      });
-    }
-
-    // ✅ Verify refresh token
-    let payload;
-    try {
-      payload = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-    } catch (err) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid or expired refresh token",
-      });
-    }
-
-    // ✅ Find admin by ID
-    const admin = await Admin.findById(payload.id);
+    // 2️⃣ Find user
+    const admin = await Admin.findById(decodedToken?._id);
     if (!admin) {
       return res.status(404).json({
         success: false,
-        message: "Admin not found",
+        message: "Admin  not found",
       });
     }
 
-    // ✅ Verify refresh token matches stored token
-    if (admin.refreshToken !== refreshToken) {
-      return res.status(401).json({
+    // 3️⃣ Check if incoming refresh token matches DB
+    if (admin.refreshToken !== incomingRefreshToken) {
+      return res.status(403).json({
         success: false,
-        message: "Invalid refresh token",
+        message: "Refresh token has already been used or is invalid",
       });
     }
 
-    // ✅ Generate new access token
-    const newAccessToken = admin.generateAccessToken();
-    const newRefreshToken = admin.generateRefreshToken();
-    admin.refreshToken = newRefreshToken;
+    // 4️⃣ Generate new access & refresh tokens
+    const { accessToken, refreshToken } =
+      await generateAccessAndRefreshToken(admin._id);
+
+    // 5️⃣ Save new refresh token in DB (invalidate old one)
+    admin.refreshToken = refreshToken;
     await admin.save({ validateBeforeSave: false });
 
+    // 6️⃣ Send new tokens
     const isProd = process.env.NODE_ENV === "production";
-    const cookieOptions = {
+    const options = {
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? "None" : "Lax",
@@ -684,22 +683,75 @@ const refreshAdminToken = async (req, res) => {
 
     return res
       .status(200)
-      .cookie("refreshToken", newRefreshToken, cookieOptions)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
       .json({
         success: true,
-        message: "Token refreshed successfully",
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
+        message: "New access and refresh tokens issued",
+        accessToken,
+        refreshToken,
       });
   } catch (error) {
-    console.error("Refresh token error:", error);
+    console.error("❌ refreshAccessToken error:", error.message);
+    return res.status(403).json({
+      success: false,
+      message: "Invalid or expired refresh token",
+      error: error.message,
+    });
+  }
+};
+
+
+
+const logOutAdmin = async (req,res) => {
+    try {
+    const adminId = req.adminId; // set from auth middleware (decoded token)
+
+    if (!adminId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized. SubAdmin ID missing !!",
+      });
+    }
+
+    // ✅ Find and clear refreshToken
+    const admin = await Admin.findById(adminId);
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: "SubAdmin not found !!",
+      });
+    }
+
+    admin.refreshToken = null;
+    await admin.save({ validateBeforeSave: false });
+
+    // ✅ Clear cookies
+    const isProd = process.env.NODE_ENV === "production";
+    const options = {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "None" : "Lax",
+    };
+
+    return res
+      .status(200)
+      .clearCookie("accessToken", options)
+      .clearCookie("refreshToken", options)
+      .json({
+        success: true,
+        message: "Logged out successfully !!",
+      });
+  } catch (error) {
+    console.error("Error in logOutSubAdmin:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message: "Internal server error !!",
+      error: error.message,
     });
   }
 };
 
 export{
-    registerAdmin ,verifyAdminOtp, resendAdminOtp, loginAdmin, verifyAdmin, forgotAdminPassword, resetAdminPassword, changePassword, refreshAdminToken
+    registerAdmin ,verifyAdminOtp, resendAdminOtp, loginAdmin, verifyAdmin, forgotAdminPassword, resetAdminPassword, changePassword, refreshAccessToken, logOutAdmin
 }

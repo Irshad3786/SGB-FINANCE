@@ -5,11 +5,14 @@ import Logo from '../home/components/Logo'
 import Footer from '../home/components/Footer'
 import ChangePasswordModal from './components/ChangePasswordModal'
 import LogoutConfirmModal from './components/LogoutConfirmModal'
+import EditSubAdminModal from './components/EditSubAdminModal'
+import SubAdminList from './components/SubAdminList'
 
 function Admin() {
   const navigate = useNavigate()
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false)
+  const [activeView, setActiveView] = useState('create') // 'create' or 'manage'
   const [form, setForm] = useState({
     email: '',
     phoneNo: '',
@@ -231,7 +234,33 @@ function Admin() {
 
       <main className="flex-1 flex items-start justify-center py-10 px-6 md:px-10">
         <div className="max-w-4xl w-full">
-          <div className="bg-[#eafef2] rounded-3xl p-6 md:p-10 shadow-sm">
+          {/* Tabs */}
+          <div className="flex gap-4 mb-6 border-b-2 border-gray-200">
+            <button
+              onClick={() => setActiveView('create')}
+              className={`px-6 py-3 font-semibold transition-all ${
+                activeView === 'create'
+                  ? 'text-[#0e6b53] border-b-2 border-[#40FF00] -mb-[2px]'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Create SubAdmin
+            </button>
+            <button
+              onClick={() => setActiveView('manage')}
+              className={`px-6 py-3 font-semibold transition-all ${
+                activeView === 'manage'
+                  ? 'text-[#0e6b53] border-b-2 border-[#40FF00] -mb-[2px]'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Manage SubAdmins
+            </button>
+          </div>
+
+          {/* Create Form View */}
+          {activeView === 'create' && (
+            <div className="bg-[#eafef2] rounded-3xl p-6 md:p-10 shadow-sm">
           <h2 className="text-3xl md:text-4xl font-bold text-[#14493b] mb-2">Add Sub-Admin</h2>
           <p className="text-[#0e6b53] mb-6">Create a new sub-admin account with specific role access</p>
 
@@ -479,9 +508,17 @@ function Admin() {
               </button>
             </div>
           </form>
+            </div>
+          )}
+
+          {/* Manage SubAdmins View */}
+          {activeView === 'manage' && (
+            <div className="bg-[#eafef2] rounded-3xl p-6 md:p-10 shadow-sm">
+              <SubAdminList />
+            </div>
+          )}
         </div>
-      </div>
-    </main>
+      </main>
 
     <ChangePasswordModal 
       isOpen={isChangePasswordOpen}

@@ -683,16 +683,8 @@ const refreshAccessToken = async (req, res) => {
 
     return res
       .status(200)
-      .cookie("accessToken", accessToken, options)
       .cookie("refreshToken", refreshToken, options)
-      .json({
-        success: true,
-        message: "New access and refresh tokens issued",
-        accessToken,
-        refreshToken,
-      });
-  } catch (error) {
-    console.error("❌ refreshAccessToken error:", error.message);
+    .json({ success: true, message: "New access and refresh tokens issued", accessToken, refreshToken, }); } catch (error) { console.error("❌ refreshAccessToken error:", error.message);
     return res.status(403).json({
       success: false,
       message: "Invalid or expired refresh token",

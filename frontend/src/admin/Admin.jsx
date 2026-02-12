@@ -7,13 +7,18 @@ import ChangePasswordModal from './components/ChangePasswordModal'
 import LogoutConfirmModal from './components/LogoutConfirmModal'
 import EditSubAdminModal from './components/EditSubAdminModal'
 import SubAdminList from './components/SubAdminList'
+import SubAdminOtpModal from './components/SubAdminOtpModal'
 
 function Admin() {
   const navigate = useNavigate()
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false)
+  const [isOtpModalOpen, setIsOtpModalOpen] = useState(false)
+  const [otpToken, setOtpToken] = useState('')
+  const [registrationEmail, setRegistrationEmail] = useState('')
   const [activeView, setActiveView] = useState('create') // 'create' or 'manage'
   const [form, setForm] = useState({
+    name: '',
     email: '',
     phoneNo: '',
     password: '',
@@ -31,13 +36,14 @@ function Admin() {
   })
 
   const roleNames = [
-    { value: 'financer', label: 'Financer' },
-    { value: 'data_entry', label: 'Data Entry' },
-    { value: 'collection_agent', label: 'Collection Agent' }
+    { value: 'Financer', label: 'Financer' },
+    { value: 'Data Entry', label: 'Data Entry' },
+    { value: 'Collection Agent', label: 'Collection Agent' }
   ]
 
   const [errors, setErrors] = useState({})
   const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const roles = [
     { 
@@ -137,6 +143,10 @@ function Admin() {
   const validateForm = () => {
     const newErrors = {}
 
+    if (!form.name.trim()) {
+      newErrors.name = 'Full name is required'
+    }
+
     if (!form.email.trim()) {
       newErrors.email = 'Email is required'
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
@@ -173,33 +183,71 @@ function Admin() {
     return newErrors
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     const newErrors = validateForm()
 
     if (Object.keys(newErrors).length === 0) {
-      console.log('Sub-admin created:', form)
-      setSubmitted(true)
-      setForm({
-        email: '',
-        phoneNo: '',
-        password: '',
-        confirmPassword: '',
-        roleName: '',
-        status: 'active',
-        roleAccess: {
-          dashboard: { enabled: false, edit: false, view: false },
-          vehicleStock: { enabled: false, edit: false, view: false },
-          users: { enabled: false, edit: false, view: false },
-          addEntry: { enabled: false, edit: false, view: false },
-          finance: { enabled: false, edit: false, view: false },
-          pendingPayments: { enabled: false, edit: false, view: false }
+      setLoading(true)
+      try {
+        // Format permissions array from roleAccess
+        const permissions = Object.entries(form.roleAccess)
+          .filter(([, val]) => val.enabled)
+          .map(([module, actions]) => ({
+            module,
+            actions: {
+              edit: actions.edit,
+              view: actions.view
+            }
+          }))
+
+        const response = await apiClient.post('/api/subadmin/registerSubAdmin', {
+          name: form.name,
+          email: form.email,
+          phone: form.phoneNo,
+          password: form.password,
+          confirmPassword: form.confirmPassword,
+          roleName: form.roleName,
+          permissions
+        })
+
+        if (response.data.success) {
+          setOtpToken(response.data.token)
+          setRegistrationEmail(form.email)
+          setIsOtpModalOpen(true)
         }
-      })
-      setTimeout(() => setSubmitted(false), 3000)
+      } catch (error) {
+        console.error('Registration error:', error)
+        setErrors({ submit: error.response?.data?.message || 'Failed to register sub-admin' })
+      } finally {
+        setLoading(false)
+      }
     } else {
       setErrors(newErrors)
     }
+  }
+
+  const handleOtpSuccess = () => {
+    setSubmitted(true)
+    setForm({
+      name: '',
+      email: '',
+      phoneNo: '',
+      password: '',
+      confirmPassword: '',
+      roleName: '',
+      status: 'active',
+      roleAccess: {
+        dashboard: { enabled: false, edit: false, view: false },
+        vehicleStock: { enabled: false, edit: false, view: false },
+        users: { enabled: false, edit: false, view: false },
+        addEntry: { enabled: false, edit: false, view: false },
+        finance: { enabled: false, edit: false, view: false },
+        pendingPayments: { enabled: false, edit: false, view: false }
+      }
+    })
+    setErrors({})
+    setTimeout(() => setSubmitted(false), 3000)
   }
 
   return (
@@ -270,7 +318,27 @@ function Admin() {
             </div>
           )}
 
+          {errors.submit && (
+            <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg font-semibold">
+              {errors.submit}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Name */}
+            <div className="flex flex-col">
+              <label className="text-xs font-extrabold text-[#0e6b53] mb-1">Full Name</label>
+              <input
+                name="name"
+                type="text"
+                value={form.name}
+                onChange={onChange}
+                className="w-full px-3 py-2 rounded-md border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                placeholder="Full Name"
+              />
+              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+            </div>
+
             {/* Email and Phone No Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               {/* Email */}
@@ -502,9 +570,20 @@ function Admin() {
             <div className="flex justify-center md:justify-end pt-4">
               <button
                 type="submit"
-                className="bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] text-black font-bold px-8 py-2.5 rounded-full border-2 border-black hover:shadow-lg transition-shadow"
+                disabled={loading}
+                className={`bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] text-black font-bold px-8 py-2.5 rounded-full border-2 border-black hover:shadow-lg transition-shadow disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2`}
               >
-                Create Sub-Admin
+                {loading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Creating...
+                  </>
+                ) : (
+                  'Create Sub-Admin'
+                )}
               </button>
             </div>
           </form>
@@ -523,6 +602,14 @@ function Admin() {
     <ChangePasswordModal 
       isOpen={isChangePasswordOpen}
       onClose={() => setIsChangePasswordOpen(false)}
+    />
+
+    <SubAdminOtpModal 
+      isOpen={isOtpModalOpen}
+      onClose={() => setIsOtpModalOpen(false)}
+      otpToken={otpToken}
+      email={registrationEmail}
+      onSuccess={handleOtpSuccess}
     />
 
     <LogoutConfirmModal 

@@ -1,32 +1,23 @@
 import express from "express";
-import { registerAdmin } from "../controllers/adminController.js";
-import { verifyAdminOtp } from "../controllers/adminController.js";
-import { verifyOtpToken } from "../middlewares/adminMiddleware.js";
+import {
+  registerAdmin,
+  verifyAdminOtp,
+  resendAdminOtp,
+  loginAdmin,
+  verifyAdmin,
+  forgotAdminPassword,
+  resetAdminPassword,
+  changePassword,
+  refreshAccessToken,
+  logOutAdmin,
+} from "../controllers/adminController.js";
+import {
+  verifyOtpToken,
+  verifyOtp,
+  verifyAdminToken,
+} from "../middlewares/adminMiddleware.js";
 import { otpRateLimiter } from "../middlewares/rateLimitMiddleware.js";
-import { verifyOtp } from "../middlewares/adminMiddleware.js";
-import { resendAdminOtp } from "../controllers/adminController.js";
-import { loginAdmin } from "../controllers/adminController.js";
-import { verifyAdmin } from "../controllers/adminController.js";
-import { forgotAdminPassword } from "../controllers/adminController.js";
-import { resetAdminPassword } from "../controllers/adminController.js";
-import { verifyAdminToken } from "../middlewares/adminMiddleware.js";
-import { changePassword } from "../controllers/adminController.js";
-import { refreshAccessToken } from "../controllers/adminController.js";
-import { logOutAdmin } from "../controllers/adminController.js";
-// import {
-//   registerAdmin,
-//   verifyAdminOtp,
-//   loginAdmin,
-//   verifyAdmin,
-//   resendAdminOtp,
-//   refreshAccessToken,
-//   forgotAdminPassword,
-//   resetAdminPassword,
-//   changePassword,
-//   logOutAdmin,
-// } from "../../controllers/superAdminControllers/admin.controller.js";
-// import {verifyAdminToken, verifyOtp, verifyOtpToken } from "../../middlewares/admin.middleware.js";
-// import { otpRateLimiter } from "../../middlewares/rateLimiter.middleware.js";
+
 const router = express.Router();
 
 // register admin routes

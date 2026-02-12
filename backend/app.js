@@ -2,6 +2,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import adminRoutes from "./routes/adminRoutes.js";
+import subAdminRoutes from "./routes/subAdminRoutes.js"
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // ✅admin routes
 app.use("/api/admin", adminRoutes);
+app.use("/api/subadmin", subAdminRoutes);
 
 export { app, configureCORS };
 

@@ -7,6 +7,7 @@ const apiClient = axios.create({
 
 let accessToken = null;
 let refreshToken = null;
+let userType = null;
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -23,8 +24,9 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-export const setAuthToken = (token) => {
+export const setAuthToken = (token, type = null) => {
   accessToken = token || null;
+  userType = type || null;
   if (accessToken) {
     apiClient.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
   } else {
@@ -66,9 +68,22 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
+        // Determine refresh endpoint based on user type
+        const currentUserType = userType || localStorage.getItem('userType') || 'admin';
+        let refreshEndpoint = '';
+        
+        if (currentUserType === 'subadmin') {
+          refreshEndpoint = '/api/subadmin/refresh-SubAdmin-Token';
+        } else if (currentUserType === 'admin') {
+          refreshEndpoint = '/api/admin/refresh-Admin-Token';
+        } else {
+          // Default to user if userType is 'user' or anything else
+          refreshEndpoint = '/api/user/refresh-User-Token';
+        }
+
         // Only send the cookie, not the refreshToken in the body
         const response = await axios.post(
-          `${import.meta.env.VITE_BACKEND_APP_API_URL}/api/admin/refresh-Admin-Token`,
+          `${import.meta.env.VITE_BACKEND_APP_API_URL}${refreshEndpoint}`,
           {},
           { withCredentials: true }
         );
@@ -76,8 +91,8 @@ apiClient.interceptors.response.use(
         
         const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
 
-        // Update tokens
-        setAuthToken(newAccessToken);
+        // Update tokens (preserve userType)
+        setAuthToken(newAccessToken, currentUserType);
         setRefreshToken(newRefreshToken);
 
         // Update original request header
@@ -93,8 +108,9 @@ apiClient.interceptors.response.use(
         processQueue(refreshError, null);
 
         // Clear auth state
-        setAuthToken(null);
+        setAuthToken(null, null);
         setRefreshToken(null);
+        userType = null;
 
         // Redirect to login page
         if (typeof window !== 'undefined') {

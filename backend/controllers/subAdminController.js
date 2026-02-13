@@ -274,9 +274,217 @@ const resendSubAdminOtp = async (req, res) => {
   }
 };
 
+const loginSubAdmin = async (req, res) => {
+  try {
+    const { email, phone, password } = req.body;
+
+    // ✅ Validate input
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        message: "Password is required",
+      });
+    }
+
+    if (!email && !phone) {
+      return res.status(400).json({
+        success: false,
+        message: "Email or phone number is required",
+      });
+    }
+
+    // ✅ Find subAdmin by email or phone - include password field
+    const subAdmin = await SubAdmin.findOne({
+      $or: [{ email }, { phone }],
+    }).select('+password');
+
+    if (!subAdmin) {
+      return res.status(404).json({
+        success: false,
+        message: "SubAdmin not found with this email or phone",
+      });
+    }
+
+    // ✅ Check if subAdmin is active
+    if (subAdmin.status !== "active") {
+      return res.status(403).json({
+        success: false,
+        message: "Your account is not active. Please contact admin.",
+      });
+    }
+
+    // ✅ Compare password
+    const isPasswordCorrect = await subAdmin.isPasswordCorrect(password);
+    if (!isPasswordCorrect) {
+      return res.status(401).json({
+        success: false,
+        message: "Password is incorrect",
+      });
+    }
+
+    // ✅ Generate tokens
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+      subAdmin._id
+    );
+
+    // ✅ Set cookie options
+    const isProd = process.env.NODE_ENV === "production";
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "None" : "Lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    };
+
+    // ✅ Success response
+    return res
+      .status(200)
+      .cookie("refreshToken", refreshToken, cookieOptions)
+      .json({
+        success: true,
+        message: "SubAdmin logged in successfully",
+        accessToken,
+        refreshToken,
+        data: {
+          id: subAdmin._id,
+          name: subAdmin.name,
+          email: subAdmin.email,
+          phone: subAdmin.phone,
+          roleName: subAdmin.roleName,
+        },
+      });
+  } catch (error) {
+    console.error("Error in loginSubAdmin:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+const refreshSubAdminToken = async (req, res) => {
+  const incomingRefreshToken =
+    req.cookies?.refreshToken || req.body.refreshToken;
+
+  if (!incomingRefreshToken) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized: No refresh token provided",
+    });
+  }
+
+  try {
+    // ✅ Verify refresh token
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    // ✅ Find subAdmin
+    const subAdmin = await SubAdmin.findById(decodedToken?._id);
+    if (!subAdmin) {
+      return res.status(404).json({
+        success: false,
+        message: "SubAdmin not found",
+      });
+    }
+
+    // ✅ Check if incoming refresh token matches DB
+    if (subAdmin.refreshToken !== incomingRefreshToken) {
+      return res.status(403).json({
+        success: false,
+        message: "Refresh token has already been used or is invalid",
+      });
+    }
+
+    // ✅ Generate new access & refresh tokens
+    const { accessToken, refreshToken } =
+      await generateAccessAndRefreshToken(subAdmin._id);
+
+    // ✅ Set cookie options
+    const isProd = process.env.NODE_ENV === "production";
+    const options = {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "None" : "Lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    };
+
+    return res
+      .status(200)
+      .cookie("refreshToken", refreshToken, options)
+      .json({
+        success: true,
+        message: "New access and refresh tokens issued",
+        accessToken,
+        refreshToken,
+      });
+  } catch (error) {
+    console.error("refreshSubAdminToken error:", error.message);
+    return res.status(403).json({
+      success: false,
+      message: "Invalid or expired refresh token",
+      error: error.message,
+    });
+  }
+};
+
+const logOutSubAdmin = async (req, res) => {
+  try {
+    const subAdminId = req.subAdminId; // Set from auth middleware
+
+    if (!subAdminId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized. SubAdmin ID missing",
+      });
+    }
+
+    // ✅ Find and clear refreshToken
+    const subAdmin = await SubAdmin.findById(subAdminId);
+    if (!subAdmin) {
+      return res.status(404).json({
+        success: false,
+        message: "SubAdmin not found",
+      });
+    }
+
+    subAdmin.refreshToken = null;
+    await subAdmin.save({ validateBeforeSave: false });
+
+    // ✅ Clear cookies
+    const isProd = process.env.NODE_ENV === "production";
+    const options = {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "None" : "Lax",
+    };
+
+    return res
+      .status(200)
+      .clearCookie("accessToken", options)
+      .clearCookie("refreshToken", options)
+      .json({
+        success: true,
+        message: "Logged out successfully",
+      });
+  } catch (error) {
+    console.error("Error in logOutSubAdmin:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
 export {
   generateAccessAndRefreshToken,
   registerSubAdmin,
   verifySubAdminOtp,
-  resendSubAdminOtp
+  resendSubAdminOtp,
+  loginSubAdmin,
+  refreshSubAdminToken,
+  logOutSubAdmin
 };

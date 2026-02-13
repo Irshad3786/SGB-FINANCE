@@ -1,20 +1,84 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Logo from './components/Logo'
 import Footer from './components/Footer'
+import apiClient from '../api/axios'
+import { setAuthToken } from '../api/axios'
 
 function Login() {
-  const [role, setRole] = useState('customer')
+  const [role, setRole] = useState('subadmin')
   const [form, setForm] = useState({ identifier: '', password: '', remember: false })
   const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const navigate = useNavigate()
 
   function onChange(e) {
     const { name, value, type, checked } = e.target
     setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }))
+    setError('')
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    console.log('Login submit', { role, ...form })
+    setLoading(true)
+    setError('')
+
+    try {
+      let endpoint = ''
+      let payload = {}
+
+      if (role === 'subadmin') {
+        // SubAdmin login - no OTP required
+        endpoint = '/api/subadmin/loginSubAdmin'    
+        // Determine if identifier is email or phone
+        const isEmail = form.identifier.includes('@')
+        payload = {
+          password: form.password,
+          ...(isEmail ? { email: form.identifier } : { phone: form.identifier })
+        }
+      } else {
+        // Admin login - requires OTP verification
+        endpoint = '/api/admin/loginAdmin'
+        payload = {
+          email: form.identifier,
+          password: form.password
+        }
+      }
+
+      const response = await apiClient.post(endpoint, payload)
+      
+
+      if (response.data.success) {
+        // Set accessToken in auth headers, refreshToken already in cookies from backend
+        const { accessToken } = response.data
+        
+        if (accessToken) {
+          // Pass userType to setAuthToken
+          const userTypeValue = role === 'subadmin' ? 'subadmin' : 'user';
+          setAuthToken(accessToken, userTypeValue);
+          // Also store in localStorage as backup
+          localStorage.setItem('userType', userTypeValue);
+        }
+
+        // Store user data
+        if (response.data.data) {
+          localStorage.setItem('userData', JSON.stringify(response.data.data));
+        }
+
+        // Redirect based on role
+        if (role === 'subadmin') {
+          navigate('/subadmin/dashboard')
+        } else {
+          navigate('/admin-login-otp')
+        }
+      }
+    } catch (err) {
+      console.error('Login error:', err)
+      setError(err.response?.data?.message || 'Login failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -31,20 +95,9 @@ function Login() {
           <div className="relative inline-flex bg-[#f5f5f5] rounded-full shadow-md p-1 w-64 overflow-hidden">
             {/* sliding indicator */}
             <div
-              className={`absolute top-1 bottom-1 rounded-full transition-transform duration-200 ease-in-out pointer-events-none ${role === 'subadmin' ? 'translate-x-full' : 'translate-x-0'}`}
+              className={`absolute top-1 bottom-1 rounded-full transition-transform duration-200 ease-in-out pointer-events-none ${role === 'customer' ? 'translate-x-full' : 'translate-x-0'}`}
               style={{ left: 4, width: 'calc(50% - 4px)', background: 'linear-gradient(180deg,#B0FF1C,#40FF00)' }}
             />
-
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() => setRole('customer')}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setRole('customer') }}
-              aria-pressed={role === 'customer'}
-              className={`relative z-10 w-1/2 text-center px-4 py-3 text-sm font-semibold rounded-full  cursor-pointer ${role === 'customer' ? 'text-black' : 'text-gray-700'}`}
-            >
-              Sub Admin
-            </div>
 
             <div
               role="button"
@@ -54,7 +107,18 @@ function Login() {
               aria-pressed={role === 'subadmin'}
               className={`relative z-10 w-1/2 text-center px-4 py-3 text-sm font-semibold rounded-full cursor-pointer ${role === 'subadmin' ? 'text-black' : 'text-gray-700'}`}
             >
-              Customer
+              SubAdmin
+            </div>
+
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => setRole('customer')}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setRole('customer') }}
+              aria-pressed={role === 'customer'}
+              className={`relative z-10 w-1/2 text-center px-4 py-3 text-sm font-semibold rounded-full  cursor-pointer ${role === 'customer' ? 'text-black' : 'text-gray-700'}`}
+            >
+              User
             </div>
           </div>
         </div>
@@ -64,9 +128,17 @@ function Login() {
           <div className="bg-[#eafef2] rounded-3xl p-8 md:p-10  shadow-[-1px_3px_3px_0px_rgba(0,_0,_0,_0.1)]">
             <h2 className="text-3xl font-bold text-center text-[#14493b] mb-6">Sign in</h2>
 
+            {error && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-sm">
+                {error}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="flex flex-col">
-                <label className="text-xs font-bold text-[#0e6b53] mb-1">Email Or Phone No</label>
+                <label className="text-xs font-bold text-[#0e6b53] mb-1">
+                  {role === 'subadmin' ? 'Email Or Phone No' : 'Email'}
+                </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
@@ -78,7 +150,9 @@ function Login() {
                       value={form.identifier}
                       onChange={onChange}
                       className="w-full pl-10 px-3 py-2 rounded-md border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
-                      placeholder="Email or Phone"
+                      placeholder={role === 'subadmin' ? 'Email or Phone' : 'Email'}
+                      required
+                      disabled={loading}
                     />
                   </div>
               </div>
@@ -98,10 +172,13 @@ function Login() {
                     onChange={onChange}
                     className="w-full pl-10 px-3 py-2 rounded-md border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a] pr-10"
                     placeholder="Password"
+                    required
+                    disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(s => !s)}
+                    disabled={loading}
                     className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 text-gray-500"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
@@ -130,16 +207,17 @@ function Login() {
               </div>
 
               <div className="flex items-center gap-2">
-                  <input id="remember" name="remember" type="checkbox" checked={form.remember} onChange={onChange} className="h-3 w-3" />
+                  <input id="remember" name="remember" type="checkbox" checked={form.remember} onChange={onChange} className="h-3 w-3" disabled={loading} />
                   <label htmlFor="remember" className="text-gray-700">Remember me</label>
                 </div>
 
               <div className="flex justify-center">
                 <button
                   type="submit"
-                  className="mt-4 bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] text-black font-bold px-6 py-2 rounded-full border-2 border-black "
+                  disabled={loading}
+                  className={`mt-4 font-bold px-8 py-2.5 rounded-full border-2 border-black ${loading ? 'bg-gray-400 text-gray-600 cursor-not-allowed' : 'bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] text-black'}`}
                 >
-                  submit
+                  {loading ? 'Logging in...' : 'Sign In'}
                 </button>
               </div>
             </form>

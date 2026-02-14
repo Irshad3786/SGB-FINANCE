@@ -57,8 +57,7 @@ function Login() {
           // Pass userType to setAuthToken
           const userTypeValue = role === 'subadmin' ? 'subadmin' : 'user';
           setAuthToken(accessToken, userTypeValue);
-          // Also store in localStorage as backup
-          localStorage.setItem('userType', userTypeValue);
+        
         }
 
         // Store user data

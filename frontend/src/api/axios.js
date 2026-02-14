@@ -69,8 +69,11 @@ apiClient.interceptors.response.use(
 
       try {
         // Determine refresh endpoint based on user type
-        const currentUserType = userType || localStorage.getItem('userType') || 'admin';
+        const currentUserType = userType 
         let refreshEndpoint = '';
+
+        console.log('Attempting refresh for user type:', currentUserType);
+        
         
         if (currentUserType === 'subadmin') {
           refreshEndpoint = '/api/subadmin/refresh-SubAdmin-Token';

@@ -19,6 +19,7 @@ import AdminOtpCreateAccount from './home/AdminOtpCreateAccount';
 import AdminOtpLogin from './home/AdminOtpLogin';
 import AdminForgotPassword from './home/AdminForgotPassword';
 import AdminResetPassword from './home/AdminResetPassword';
+import UserDashboard from './user/UserDashboard';
 
 
 function App() {
@@ -31,6 +32,9 @@ function App() {
         <Route path="/" element={<Home/>} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+
+        {/* User */}
+        <Route path="/user" element={<UserDashboard/>} />
 
         {/* admin */}
         <Route path="/admin" element={<Admin/>} /> 
@@ -56,6 +60,10 @@ function App() {
 
 
         </Route>
+
+
+    
+
 
          
      </Routes>

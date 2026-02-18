@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import axios from 'axios'
+import apiClient from '../api/axios'
 import Logo from './components/Logo'
 import Footer from './components/Footer'
 
@@ -30,14 +30,16 @@ function Signup() {
     }
 
     // Send data to backend
-    axios.post(`${import.meta.env.VITE_BACKEND_APP_API_URL}/api/auth/signup`, {
-      firstName: form.firstName,
-      lastName: form.lastName,
+    const username = `${form.firstName} ${form.lastName}`.trim()
+
+    apiClient.post('/api/user/register', {
+      username,
       email: form.email,
-      phone: form.phone,
-      vehicleNo: form.vehicleNo,
-      chassis: form.chassis,
-      password: form.password
+      phoneNumber: form.phone,
+      vehicleNumber: form.vehicleNo,
+      chassisNumber: form.chassis,
+      password: form.password,
+      confirmPassword: form.confirmPassword
     })
     .then(response => {
       console.log('Signup successful:', response.data)

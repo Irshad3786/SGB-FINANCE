@@ -38,10 +38,10 @@ function Login() {
           ...(isEmail ? { email: form.identifier } : { phone: form.identifier })
         }
       } else {
-        // Admin login - requires OTP verification
-        endpoint = '/api/admin/loginAdmin'
+        // User login
+        endpoint = '/api/user/login'
         payload = {
-          email: form.identifier,
+          identifier: form.identifier,
           password: form.password
         }
       }
@@ -70,7 +70,7 @@ function Login() {
         if (role === 'subadmin') {
           navigate('/subadmin/dashboard')
         } else {
-          navigate('/admin-login-otp')
+          navigate('/user')
         }
       }
     } catch (err) {
@@ -95,7 +95,7 @@ function Login() {
           <div className="relative inline-flex bg-[#f5f5f5] rounded-full shadow-md p-1 w-64 overflow-hidden">
             {/* sliding indicator */}
             <div
-              className={`absolute top-1 bottom-1 rounded-full transition-transform duration-200 ease-in-out pointer-events-none ${role === 'customer' ? 'translate-x-full' : 'translate-x-0'}`}
+              className={`absolute top-1 bottom-1 rounded-full transition-transform duration-200 ease-in-out pointer-events-none ${role === 'user' ? 'translate-x-full' : 'translate-x-0'}`}
               style={{ left: 4, width: 'calc(50% - 4px)', background: 'linear-gradient(180deg,#B0FF1C,#40FF00)' }}
             />
 
@@ -113,10 +113,10 @@ function Login() {
             <div
               role="button"
               tabIndex={0}
-              onClick={() => setRole('customer')}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setRole('customer') }}
-              aria-pressed={role === 'customer'}
-              className={`relative z-10 w-1/2 text-center px-4 py-3 text-sm font-semibold rounded-full  cursor-pointer ${role === 'customer' ? 'text-black' : 'text-gray-700'}`}
+              onClick={() => setRole('user')}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setRole('user') }}
+              aria-pressed={role === 'user'}
+              className={`relative z-10 w-1/2 text-center px-4 py-3 text-sm font-semibold rounded-full  cursor-pointer ${role === 'user' ? 'text-black' : 'text-gray-700'}`}
             >
               User
             </div>
@@ -137,7 +137,7 @@ function Login() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="flex flex-col">
                 <label className="text-xs font-bold text-[#0e6b53] mb-1">
-                  {role === 'subadmin' ? 'Email Or Phone No' : 'Email'}
+                  Email Or Phone No
                 </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
@@ -150,7 +150,7 @@ function Login() {
                       value={form.identifier}
                       onChange={onChange}
                       className="w-full pl-10 px-3 py-2 rounded-md border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
-                      placeholder={role === 'subadmin' ? 'Email or Phone' : 'Email'}
+                      placeholder="Email or Phone"
                       required
                       disabled={loading}
                     />

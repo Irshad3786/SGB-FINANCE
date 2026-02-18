@@ -42,7 +42,6 @@ function AdminOtpLogin() {
       const refreshToken = response.data?.refreshToken
       if (accessToken) {
         setAuthToken(accessToken, 'admin');
-        localStorage.setItem('userType', 'admin');
       }
       if (refreshToken) {
         setRefreshToken(refreshToken)

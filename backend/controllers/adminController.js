@@ -551,8 +551,6 @@ const resetAdminPassword = async (req,res) => {
 
 
 
-
-
 const changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword, confirmPassword } = req.body;
@@ -684,7 +682,13 @@ const refreshAccessToken = async (req, res) => {
     return res
       .status(200)
       .cookie("refreshToken", refreshToken, options)
-    .json({ success: true, message: "New access and refresh tokens issued", accessToken, refreshToken, }); } catch (error) { console.error("❌ refreshAccessToken error:", error.message);
+      .json({
+        success: true,
+        message: "New access and refresh tokens issued",
+        accessToken,
+      });
+  } catch (error) {
+    console.error("❌ refreshAccessToken error:", error.message);
     return res.status(403).json({
       success: false,
       message: "Invalid or expired refresh token",
@@ -747,3 +751,5 @@ const logOutAdmin = async (req,res) => {
 export{
     registerAdmin ,verifyAdminOtp, resendAdminOtp, loginAdmin, verifyAdmin, forgotAdminPassword, resetAdminPassword, changePassword, refreshAccessToken, logOutAdmin
 }
+
+

@@ -5,9 +5,49 @@ const apiClient = axios.create({
   withCredentials: true,
 });
 
-let accessToken = null;
-let refreshToken = null;
-let userType = null;
+const AUTH_STORAGE_KEY = "authState";
+
+const getStoredAuthState = () => {
+  if (typeof window === "undefined") {
+    return { accessToken: null, userType: null };
+  }
+
+  try {
+    const rawAuthState = sessionStorage.getItem(AUTH_STORAGE_KEY);
+    if (!rawAuthState) {
+      return { accessToken: null, userType: null };
+    }
+
+    const parsedAuthState = JSON.parse(rawAuthState);
+    return {
+      accessToken: parsedAuthState?.accessToken || null,
+      userType: parsedAuthState?.userType || null,
+    };
+  } catch {
+    return { accessToken: null, userType: null };
+  }
+};
+
+const persistAuthState = (token, type) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (!token || !type) {
+    sessionStorage.removeItem(AUTH_STORAGE_KEY);
+    return;
+  }
+
+  sessionStorage.setItem(
+    AUTH_STORAGE_KEY,
+    JSON.stringify({ accessToken: token, userType: type })
+  );
+};
+
+const initialAuthState = getStoredAuthState();
+let accessToken = initialAuthState.accessToken;
+let _refreshToken = null;
+let userType = initialAuthState.userType;
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -26,17 +66,22 @@ const processQueue = (error, token = null) => {
 
 export const setAuthToken = (token, type = null) => {
   accessToken = token || null;
-  userType = type || null;
+  userType = type || userType || null;
   if (accessToken) {
     apiClient.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
   } else {
     delete apiClient.defaults.headers.common.Authorization;
   }
+  persistAuthState(accessToken, userType);
 };
 
 export const setRefreshToken = (token) => {
-  refreshToken = token || null;
+  _refreshToken = token || null;
 };
+
+if (accessToken) {
+  apiClient.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+}
 
 apiClient.interceptors.request.use((config) => {
   if (accessToken) {
@@ -69,7 +114,7 @@ apiClient.interceptors.response.use(
 
       try {
         // Determine refresh endpoint based on user type
-        const currentUserType = userType 
+        const currentUserType = userType;
         let refreshEndpoint = '';
 
         console.log('Attempting refresh for user type:', currentUserType);
@@ -96,7 +141,9 @@ apiClient.interceptors.response.use(
 
         // Update tokens (preserve userType)
         setAuthToken(newAccessToken, currentUserType);
-        setRefreshToken(newRefreshToken);
+        if (newRefreshToken) {
+          setRefreshToken(newRefreshToken);
+        }
 
         // Update original request header
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
@@ -117,7 +164,9 @@ apiClient.interceptors.response.use(
 
         // Redirect to login page
         if (typeof window !== 'undefined') {
-          window.location.href = '/admin-login';
+          const currentAuthType = userType;
+          const loginPath = currentAuthType === 'admin' ? '/admin-signin' : '/login';
+          window.location.href = loginPath;
         }
 
         return Promise.reject(refreshError);

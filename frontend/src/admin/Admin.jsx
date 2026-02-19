@@ -628,17 +628,23 @@ function Admin() {
           // Clear sessionStorage
           if (typeof window !== 'undefined') {
             sessionStorage.removeItem('accessToken')
+            sessionStorage.removeItem('adminOtpVerified')
+            sessionStorage.removeItem('adminPendingOtpToken')
           }
           
           // Redirect to login
-          navigate('/admin-signin')
+          navigate('/admin-signin', { replace: true })
         } catch (error) {
           console.error('Logout error:', error)
           // Clear tokens even if logout API fails
           setAuthToken(null)
           setRefreshToken(null)
           setIsLogoutConfirmOpen(false)
-          navigate('/admin-signin')
+          if (typeof window !== 'undefined') {
+            sessionStorage.removeItem('adminOtpVerified')
+            sessionStorage.removeItem('adminPendingOtpToken')
+          }
+          navigate('/admin-signin', { replace: true })
         }
       }}
     />

@@ -16,6 +16,10 @@ import {
   verifyOtp,
   verifyAdminToken,
 } from "../middlewares/adminMiddleware.js";
+import {
+  getCreatedSubAdmins,
+  updateCreatedSubAdmin,
+} from "../controllers/AdminManagementController/subAdminManagementController.js";
 import { otpRateLimiter } from "../middlewares/rateLimitMiddleware.js";
 
 const router = express.Router();
@@ -36,5 +40,9 @@ router.post("/change-admin-password",verifyAdminToken,changePassword);
 
 // // logout admin route
 router.post("/logOutAdmin",verifyAdminToken,logOutAdmin);
+
+// created sub-admin management routes
+router.get("/subadmins", verifyAdminToken, getCreatedSubAdmins);
+router.put("/subadmins/:id", verifyAdminToken, updateCreatedSubAdmin);
 
 export default router;

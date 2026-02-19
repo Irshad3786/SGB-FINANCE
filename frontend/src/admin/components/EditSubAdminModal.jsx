@@ -28,12 +28,20 @@ function EditSubAdminModal({ isOpen, onClose, subAdmin, onSave }) {
 
   useEffect(() => {
     if (subAdmin) {
+      const normalizedPermissions = (subAdmin.permissions || []).map(permission => ({
+        module: permission.module,
+        actions: {
+          view: Boolean(permission?.actions?.view),
+          edit: Boolean(permission?.actions?.edit)
+        }
+      }))
+
       setForm({
         name: subAdmin.name || '',
         phone: subAdmin.phone || '',
         roleName: subAdmin.roleName || '',
         status: subAdmin.status || 'active',
-        permissions: subAdmin.permissions || []
+        permissions: normalizedPermissions
       })
       setErrors({})
     }
@@ -49,17 +57,31 @@ function EditSubAdminModal({ isOpen, onClose, subAdmin, onSave }) {
 
   const handlePermissionChange = (moduleId, action) => {
     setForm(prev => {
-      const updatedPermissions = [...prev.permissions]
+      const updatedPermissions = prev.permissions.map(permission => ({
+        module: permission.module,
+        actions: {
+          view: Boolean(permission?.actions?.view),
+          edit: Boolean(permission?.actions?.edit)
+        }
+      }))
+
       const permissionIndex = updatedPermissions.findIndex(p => p.module === moduleId)
       
       if (permissionIndex >= 0) {
-        updatedPermissions[permissionIndex].actions[action] = !updatedPermissions[permissionIndex].actions[action]
+        const currentPermission = updatedPermissions[permissionIndex]
+        updatedPermissions[permissionIndex] = {
+          ...currentPermission,
+          actions: {
+            ...currentPermission.actions,
+            [action]: !currentPermission.actions[action]
+          }
+        }
       } else {
         updatedPermissions.push({
           module: moduleId,
           actions: {
-            view: action === 'view' ? true : false,
-            edit: action === 'edit' ? true : false
+            view: action === 'view',
+            edit: action === 'edit'
           }
         })
       }
@@ -88,14 +110,14 @@ function EditSubAdminModal({ isOpen, onClose, subAdmin, onSave }) {
     return newErrors
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const newErrors = validateForm()
 
     if (Object.keys(newErrors).length === 0) {
       setLoading(true)
-      setTimeout(() => {
-        onSave({
+      try {
+        await onSave({
           ...subAdmin,
           name: form.name,
           phone: form.phone,
@@ -103,9 +125,16 @@ function EditSubAdminModal({ isOpen, onClose, subAdmin, onSave }) {
           status: form.status,
           permissions: form.permissions
         })
-        setLoading(false)
+        setErrors({})
         onClose()
-      }, 1000)
+      } catch (error) {
+        setErrors(prev => ({
+          ...prev,
+          submit: error?.response?.data?.message || 'Failed to update sub-admin'
+        }))
+      } finally {
+        setLoading(false)
+      }
     } else {
       setErrors(newErrors)
     }
@@ -133,6 +162,12 @@ function EditSubAdminModal({ isOpen, onClose, subAdmin, onSave }) {
         {/* Content */}
         <div className="px-6 md:px-8 py-6 md:py-8">
           <form onSubmit={handleSubmit} className="space-y-5">
+            {errors.submit && (
+              <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm font-medium">
+                {errors.submit}
+              </div>
+            )}
+
             {/* Name and Phone Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               {/* Name */}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import apiClient, { setAuthToken, setRefreshToken } from '../api/axios'
 import Logo from './components/Logo'
@@ -11,7 +11,8 @@ import Loader from '../components/Loader'
 function AdminOtpLogin() {
   const location = useLocation()
   const navigate = useNavigate()
-  const otpToken = location.state?.otpToken
+  const stateOtpToken = location.state?.otpToken
+  const [otpToken, setOtpToken] = useState(stateOtpToken || '')
 
   const [otp, setOtp] = useState('')
   const [errors, setErrors] = useState('')
@@ -19,6 +20,28 @@ function AdminOtpLogin() {
   const [submitted, setSubmitted] = useState(false)
   const [timerExpired, setTimerExpired] = useState(false)
   const [resendLoading, setResendLoading] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const storedPendingOtpToken = sessionStorage.getItem('adminPendingOtpToken') || ''
+    const storedOtpVerified = sessionStorage.getItem('adminOtpVerified') === 'true'
+
+    if (stateOtpToken) {
+      sessionStorage.setItem('adminPendingOtpToken', stateOtpToken)
+      setOtpToken(stateOtpToken)
+      return
+    }
+
+    if (!stateOtpToken && storedPendingOtpToken) {
+      setOtpToken(storedPendingOtpToken)
+      return
+    }
+
+    if (storedOtpVerified) {
+      navigate('/admin', { replace: true })
+    }
+  }, [stateOtpToken, navigate])
 
   const handleSubmit = async (e) => {
    
@@ -46,13 +69,17 @@ function AdminOtpLogin() {
       if (refreshToken) {
         setRefreshToken(refreshToken)
       }
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('adminOtpVerified', 'true')
+        sessionStorage.removeItem('adminPendingOtpToken')
+      }
       console.log('OTP verified:', response.data)
       setSubmitted(true)
       setOtp('')
       
       setTimeout(() => {
         setLoading(false)
-        navigate('/admin')
+        navigate('/admin', { replace: true })
       }, 2000)
     } catch (error) {
       console.error('OTP verification error:', error.response?.data || error.message)

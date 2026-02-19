@@ -32,7 +32,19 @@ function AdminSignin() {
       )
 
       console.log('Login successful:', response.data)
-      navigate('/admin-login-otp', { state: { otpToken: response.data?.data?.otpToken } })
+      const receivedOtpToken = response.data?.data?.otpToken
+
+      if (!receivedOtpToken) {
+        setError('Unable to start OTP verification. Please try again.')
+        return
+      }
+
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('adminPendingOtpToken', receivedOtpToken)
+        sessionStorage.removeItem('adminOtpVerified')
+      }
+
+      navigate('/admin-login-otp', { state: { otpToken: receivedOtpToken }, replace: true })
       
     } catch (err) {
       console.error('Login error:', err)

@@ -1,64 +1,63 @@
 import React, { useState, useEffect } from 'react'
 import EditSubAdminModal from './EditSubAdminModal'
+import apiClient from '../../api/axios'
+import Loader from '../../components/Loader'
 
 function SubAdminList() {
-  const [subAdmins, setSubAdmins] = useState([
-    {
-      _id: '1',
-      name: 'John Doe',
-      email: 'financer@example.com',
-      phone: '9876543210',
-      roleName: 'Financer',
-      status: 'active',
-      permissions: [
-        { module: 'dashboard', actions: { view: true, edit: false } },
-        { module: 'finance', actions: { view: true, edit: true } }
-      ]
-    },
-    {
-      _id: '2',
-      name: 'Jane Smith',
-      email: 'dataentry@example.com',
-      phone: '9876543211',
-      roleName: 'Data Entry',
-      status: 'active',
-      permissions: [
-        { module: 'addEntry', actions: { view: true, edit: true } },
-        { module: 'users', actions: { view: true, edit: false } }
-      ]
-    },
-    {
-      _id: '3',
-      name: 'Mike Johnson',
-      email: 'collection@example.com',
-      phone: '9876543212',
-      roleName: 'Collection Agent',
-      status: 'inactive',
-      permissions: [
-        { module: 'finance', actions: { view: true, edit: false } },
-        { module: 'pendingPayments', actions: { view: true, edit: true } }
-      ]
-    }
-  ])
+  const [subAdmins, setSubAdmins] = useState([])
 
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [selectedSubAdmin, setSelectedSubAdmin] = useState(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [filterStatus, setFilterStatus] = useState('all')
   const [successMessage, setSuccessMessage] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
+
+  useEffect(() => {
+    const fetchSubAdmins = async () => {
+      setLoading(true)
+      setErrorMessage('')
+
+      try {
+        const response = await apiClient.get('/api/admin/subadmins')
+        setSubAdmins(response.data?.data || [])
+
+
+        
+      } catch (error) {
+        setErrorMessage(error.response?.data?.message || 'Failed to load sub-admins')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchSubAdmins()
+  }, [])
 
   const handleEditClick = (subAdmin) => {
     setSelectedSubAdmin(subAdmin)
     setIsEditModalOpen(true)
   }
 
-  const handleSave = (updatedSubAdmin) => {
+  const handleSave = async (updatedSubAdmin) => {
+    const response = await apiClient.put(
+      `/api/admin/subadmins/${updatedSubAdmin._id}`,
+      {
+        name: updatedSubAdmin.name,
+        phone: updatedSubAdmin.phone,
+        roleName: updatedSubAdmin.roleName,
+        status: updatedSubAdmin.status,
+        permissions: updatedSubAdmin.permissions || []
+      }
+    )
+
+    const savedSubAdmin = response.data?.data
     setSubAdmins(prev =>
       prev.map(admin =>
-        admin._id === updatedSubAdmin._id ? updatedSubAdmin : admin
+        admin._id === savedSubAdmin._id ? savedSubAdmin : admin
       )
     )
-    setSuccessMessage('SubAdmin updated successfully!')
+    setSuccessMessage(response.data?.message || 'SubAdmin updated successfully!')
     setTimeout(() => setSuccessMessage(''), 3000)
   }
 
@@ -71,6 +70,12 @@ function SubAdminList() {
       {successMessage && (
         <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg font-semibold">
           {successMessage}
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg font-semibold">
+          {errorMessage}
         </div>
       )}
 
@@ -87,7 +92,11 @@ function SubAdminList() {
         </select>
       </div>
 
-      {filteredSubAdmins.length === 0 ? (
+      {loading ? (
+        <div className="bg-gray-50 rounded-lg p-8 min-h-[260px] flex items-center justify-center">
+          <Loader fullScreen={false} message="Loading sub-admins..." />
+        </div>
+      ) : filteredSubAdmins.length === 0 ? (
         <div className="bg-gray-50 rounded-lg p-8 text-center">
           <p className="text-gray-600 font-medium">No subAdmins found</p>
         </div>

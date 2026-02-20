@@ -19,7 +19,6 @@ function RefinanceForm({ inputBase, labelClass }) {
     chassisNo: "",
     refinanceAmount: "",
     oldHaNumber: "",
-    agreementNo: "",
     dob: "",
     district: "",
     customDistrict: "",
@@ -76,16 +75,12 @@ function RefinanceForm({ inputBase, labelClass }) {
     setFiles((prev) => ({ ...prev, [key]: file }));
   };
 
-  const onSubmit = (e) => {
-    e.preventDefault();
+  const onSubmit = () => {
     console.log("refinance submit", { ...form, files });
   };
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="w-full bg-[#E0FCED] rounded-2xl p-6 sm:p-8 space-y-3"
-    >
+    <div className="w-full bg-[#E0FCED] rounded-2xl p-6 sm:p-8 space-y-3">
       <div className="flex items-center gap-3 pb-2 border-b">
         <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
@@ -98,6 +93,25 @@ function RefinanceForm({ inputBase, labelClass }) {
         <div>
           <p className="text-base font-semibold text-gray-900">Refinance</p>
           <p className="text-xs text-gray-500">Capture refinance details</p>
+        </div>
+      </div>
+
+      <div className="relative">
+        <label className={baseLabel}>Enter HA number</label>
+        <input
+          name="oldHaNumber"
+          value={form.oldHaNumber}
+          onChange={onChange}
+          placeholder="Enter HA number"
+          className={baseInput}
+        />
+        <div className="absolute left-3 top-11 -translate-y-1/2 text-gray-400">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+            <path
+              fill="#a6a6a6"
+              d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2m-1 14h-2v-6h2zm4 0h-2v-6h2z"
+            />
+          </svg>
         </div>
       </div>
 
@@ -300,39 +314,6 @@ function RefinanceForm({ inputBase, labelClass }) {
               d="m21.4 14.25l-7.15 7.15q-.3.3-.675.45t-.75.15t-.75-.15t-.675-.45l-8.825-8.825q-.275-.275-.425-.637T2 11.175V4q0-.825.588-1.412T4 2h7.175q.4 0 .775.163t.65.437l8.8 8.825q.3.3.438.675t.137.75t-.137.738t-.438.662M6.5 8q.625 0 1.063-.437T8 6.5t-.437-1.062T6.5 5t-1.062.438T5 6.5t.438 1.063T6.5 8"
             />
           </svg>
-        </div>
-      </div>
-
-      <div className="relative">
-        <label className={baseLabel}>old H.A number</label>
-        <input
-          name="oldHaNumber"
-          value={form.oldHaNumber}
-          onChange={onChange}
-          placeholder="Enter old H.A number"
-          className={baseInput}
-        />
-        <div className="absolute left-3 top-11 -translate-y-1/2 text-gray-400">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-            <path
-              fill="#a6a6a6"
-              d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2m-1 14h-2v-6h2zm4 0h-2v-6h2z"
-            />
-          </svg>
-        </div>
-      </div>
-
-      <div className="relative">
-        <label className={baseLabel}>agreement no</label>
-        <input
-          name="agreementNo"
-          value={form.agreementNo}
-          onChange={onChange}
-          placeholder="Enter agreement no"
-          className={baseInput}
-        />
-        <div className="absolute left-3 top-11 -translate-y-1/2 text-gray-400">
-          <svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" viewBox="0 0 56 56"><path fill="#a6a6a6" d="M8.746 37.703h7.149l-2.133 10.594a4 4 0 0 0-.07.75c0 1.148.796 1.781 1.898 1.781c1.125 0 1.945-.61 2.18-1.758l2.296-11.367h11.086L29.02 48.297c-.07.234-.093.516-.093.75c0 1.148.797 1.781 1.922 1.781s1.945-.61 2.18-1.758L35.3 37.703h8.367c1.289 0 2.18-.937 2.18-2.203c0-1.031-.703-1.875-1.758-1.875h-7.946L38.63 21.25h8.203c1.29 0 2.18-.937 2.18-2.203c0-1.031-.703-1.875-1.758-1.875H39.45l1.922-9.445c.023-.141.07-.446.07-.75c0-1.149-.82-1.805-1.945-1.805c-1.312 0-1.898.726-2.133 1.828l-2.062 10.172H24.215l1.922-9.445c.023-.141.07-.446.07-.75c0-1.149-.844-1.805-1.945-1.805c-1.336 0-1.946.726-2.157 1.828l-2.062 10.172h-7.687c-1.29 0-2.18.984-2.18 2.273c0 1.055.703 1.805 1.758 1.805h7.289l-2.485 12.375h-7.57c-1.29 0-2.18.984-2.18 2.273c0 1.055.703 1.805 1.758 1.805m12.14-4.078l2.509-12.375H34.48l-2.508 12.375Z" style={{width: '16px', height: '16px'}}/></svg>
         </div>
       </div>
 
@@ -722,7 +703,7 @@ function RefinanceForm({ inputBase, labelClass }) {
               className={baseInput}
             />
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M7.75 2.5a.75.75 0 0 0-1.5 0v1.58c-1.44.115-2.384.397-3.078 1.092c-.695.694-.977 1.639-1.093 3.078h19.842c-.116-1.44-.398-2.384-1.093-3.078c-.694-.695-1.639-.977-3.078-1.093V2.5a.75.75 0 0 0-1.5 0v1.513C15.585 4 14.839 4 14 4h-4c-.839 0-1.585 0-2.25.013"/><path fill="#a6a6a6" fill-rule="evenodd" d="M2 12c0-.839 0-1.585.013-2.25h19.974C22 10.415 22 11.161 22 12v2c0 3.771 0 5.657-1.172 6.828S17.771 22 14 22h-4c-3.771 0-5.657 0-6.828-1.172S2 17.771 2 14zm15 2a1 1 0 1 0 0-2a1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2a1 1 0 0 0 0 2m-4-5a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0 4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-6-3a1 1 0 1 0 0-2a1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2a1 1 0 0 0 0 2" clip-rule="evenodd"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M7.75 2.5a.75.75 0 0 0-1.5 0v1.58c-1.44.115-2.384.397-3.078 1.092c-.695.694-.977 1.639-1.093 3.078h19.842c-.116-1.44-.398-2.384-1.093-3.078c-.694-.695-1.639-.977-3.078-1.093V2.5a.75.75 0 0 0-1.5 0v1.513C15.585 4 14.839 4 14 4h-4c-.839 0-1.585 0-2.25.013"/><path fill="#a6a6a6" fillRule="evenodd" d="M2 12c0-.839 0-1.585.013-2.25h19.974C22 10.415 22 11.161 22 12v2c0 3.771 0 5.657-1.172 6.828S17.771 22 14 22h-4c-3.771 0-5.657 0-6.828-1.172S2 17.771 2 14zm15 2a1 1 0 1 0 0-2a1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2a1 1 0 0 0 0 2m-4-5a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0 4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-6-3a1 1 0 1 0 0-2a1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2a1 1 0 0 0 0 2" clipRule="evenodd"/></svg>
             </div>
           </div>
 
@@ -786,13 +767,14 @@ function RefinanceForm({ inputBase, labelClass }) {
 
       <div className="pt-2 flex justify-center">
         <button
-          type="submit"
+          type="button"
+          onClick={onSubmit}
           className="px-6 py-2 rounded-full bg-gradient-to-b from-[#bfff3a] to-[#40ff00] font-semibold shadow"
         >
           Save Refinance
         </button>
       </div>
-    </form>
+    </div>
   );
 }
 

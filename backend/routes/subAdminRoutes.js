@@ -7,6 +7,7 @@ import {
   refreshSubAdminToken,
   logOutSubAdmin,
 } from "../controllers/subAdminController.js";
+import { saveBuyerOrSeller } from "../controllers/SubAdminManagementController/buyerSellerManagementController.js";
 import { verifyAdminToken } from "../middlewares/adminMiddleware.js";
 import { verifySubAdminToken, verifySubAdminOtpToken } from "../middlewares/subAdminMiddleware.js";
 import { otpRateLimiter } from "../middlewares/rateLimitMiddleware.js";
@@ -28,5 +29,8 @@ router.post("/refresh-SubAdmin-Token", refreshSubAdminToken);
 
 // Logout route
 router.post("/logOutSubAdmin", verifySubAdminToken, logOutSubAdmin);
+
+// Sub-admin management route
+router.post("/management/save-buyer-seller", verifySubAdminToken, saveBuyerOrSeller);
 
 export default router;

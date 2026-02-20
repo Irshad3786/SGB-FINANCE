@@ -78,8 +78,8 @@ const buyerSchema = new mongoose.Schema({
         },
 
 
-}, { _id: false })
+})
 
-const Buyer = mongoose.model('Seller', buyerSchema);
+const Buyer = mongoose.models.Buyer || mongoose.model('Buyer', buyerSchema);
 
 export default Buyer;

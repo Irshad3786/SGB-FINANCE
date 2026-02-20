@@ -17,13 +17,7 @@ const sellerSchema = new mongoose.Schema({
     type: String,
     enum: ["available", "work", "sold"],
     default: "available"
-        },
-    workList: [{
-        name: String,
-        amount: Number,
-        date: Date,
-        modifiedDate: Date
-        }]
+        }
     },
 
     dateOfBirth: Date,
@@ -37,8 +31,8 @@ const sellerSchema = new mongoose.Schema({
     referralName: String,
     referralPhoneNo: String
 
-}, { _id: false })
+})
 
-const Seller = mongoose.model('Seller', sellerSchema);
+const Seller = mongoose.models.Seller || mongoose.model('Seller', sellerSchema);
 
 export default Seller;

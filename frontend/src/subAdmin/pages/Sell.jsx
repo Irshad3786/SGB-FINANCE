@@ -80,7 +80,7 @@ function Sell() {
         ...form,
       }
 
-      const response = await apiClient.post('/api/subadmin/management/save-buyer-seller', payload)
+      const response = await apiClient.post('/api/subadmin/management/save-seller', payload)
       console.log('seller saved:', response.data)
       alert('Seller saved successfully')
     } catch (error) {

@@ -59,6 +59,8 @@ const saveBuyerOrSeller = async (req, res) => {
       aadharBack,
       profile,
       guarantorPhoto,
+      isFinanced,
+      mode,
     } = req.body;
 
     if (!role || !["buyer", "seller"].includes(String(role).toLowerCase())) {
@@ -151,6 +153,13 @@ const saveBuyerOrSeller = async (req, res) => {
       }
     } else {
       const normalizedAgreementNo = normalizeText(agreementNo);
+      const normalizedMode = normalizeText(mode).toLowerCase();
+      const resolvedMode = ["refinance", "buy"].includes(normalizedMode)
+        ? normalizedMode
+        : "buy";
+
+      const normalizedChassisNo = normalizeText(chassisNo);
+      const normalizedVehicleNo = normalizeText(vehicleNo);
 
       if (normalizedAgreementNo) {
         const existingBuyer = await Buyer.findOne({ agreementNo: normalizedAgreementNo })
@@ -168,6 +177,7 @@ const saveBuyerOrSeller = async (req, res) => {
       const buyerPayload = {
         name: fullName,
         sowoco: soWoCo,
+        mode: resolvedMode,
         agreementNo: normalizedAgreementNo || undefined,
         phoneNo: phone,
         alternatePhoneNo: alternatePhone,
@@ -206,6 +216,21 @@ const saveBuyerOrSeller = async (req, res) => {
       };
 
       savedRecord = await Buyer.create(buyerPayload);
+
+      const sellerFilters = [];
+      if (normalizedChassisNo) {
+        sellerFilters.push({ "vehicle.chassisNo": normalizedChassisNo });
+      }
+      if (normalizedVehicleNo) {
+        sellerFilters.push({ "vehicle.vehicleNumber": normalizedVehicleNo });
+      }
+
+      if (sellerFilters.length > 0) {
+        await Seller.findOneAndUpdate(
+          { $or: sellerFilters },
+          { $set: { "vehicle.status": "sold" } }
+        );
+      }
     }
 
     const targetModel = String(role).toLowerCase() === "seller" ? Seller : Buyer;
@@ -244,4 +269,14 @@ const saveBuyerOrSeller = async (req, res) => {
   }
 };
 
-export { saveBuyerOrSeller };
+const saveBuyer = async (req, res) => {
+  req.body = { ...req.body, role: "buyer" };
+  return saveBuyerOrSeller(req, res);
+};
+
+const saveSeller = async (req, res) => {
+  req.body = { ...req.body, role: "seller" };
+  return saveBuyerOrSeller(req, res);
+};
+
+export { saveBuyer, saveSeller };

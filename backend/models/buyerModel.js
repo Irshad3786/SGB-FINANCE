@@ -3,6 +3,11 @@ import mongoose from 'mongoose';
 const buyerSchema = new mongoose.Schema({
     name: String,
     sowoco:String,
+    mode: {
+        type: String,
+        enum: ["refinance", "buy"],
+        default: "buy"
+    },
     agreementNo: { type: String, unique: true },
     phoneNo: String,
     alternatePhoneNo: String,

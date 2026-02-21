@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { apDistricts, apMandals } from "../constants/apLocations";
+import apiClient from "../../api/axios";
 
 function RefinanceForm({ inputBase, labelClass }) {
   const baseInput =
@@ -17,7 +18,6 @@ function RefinanceForm({ inputBase, labelClass }) {
     model: "",
     vehicleNo: "",
     chassisNo: "",
-    refinanceAmount: "",
     oldHaNumber: "",
     dob: "",
     district: "",
@@ -34,6 +34,12 @@ function RefinanceForm({ inputBase, labelClass }) {
     guarantorAddress: "",
     referralName: "",
     referralPhone: "",
+    isFinanced: false,
+    agreementNo: "",
+    financeAmount: "",
+    emiDate: "",
+    emiMonths: "",
+    emiAmount: "",
   });
 
   const [files, setFiles] = useState({
@@ -75,8 +81,22 @@ function RefinanceForm({ inputBase, labelClass }) {
     setFiles((prev) => ({ ...prev, [key]: file }));
   };
 
-  const onSubmit = () => {
-    console.log("refinance submit", { ...form, files });
+  const onSubmit = async () => {
+    try {
+      const payload = {
+        ...form,
+        oldHaNumber: form.oldHaNumber,
+        mode: "refinance",
+        isFinanced: true,
+      };
+
+      const response = await apiClient.post("/api/subadmin/management/save-buyer", payload);
+      console.log("refinance saved:", response.data);
+      alert("Refinance saved successfully");
+    } catch (error) {
+      console.error("refinance save error:", error?.response?.data || error.message);
+      alert(error?.response?.data?.message || "Failed to save refinance");
+    }
   };
 
   return (
@@ -293,25 +313,6 @@ function RefinanceForm({ inputBase, labelClass }) {
               fillRule="evenodd"
               d="M22.75 12.057c0 1.837 0 3.293-.153 4.432c-.158 1.172-.49 2.121-1.238 2.87c-.749.748-1.698 1.08-2.87 1.238c-1.14.153-2.595.153-4.433.153H9.944c-1.837 0-3.293 0-4.432-.153c-1.172-.158-2.121-.49-2.87-1.238c-.748-.749-1.08-1.698-1.238-2.87c-.153-1.14-.153-2.595-.153-4.433v-.926q.001-.575.008-1.096c.014-.975.05-1.81.145-2.523c.158-1.172.49-2.121 1.238-2.87c.749-.748 1.698-1.08 2.87-1.238c.716-.096 1.558-.132 2.541-.145l.697-.005a1 1 0 0 1 1.001.999V5a2.25 2.25 0 0 0 4.5 0v-.75c0-.552.448-1 1-.998c1.29.006 2.359.033 3.239.151c1.172.158 2.121.49 2.87 1.238c.748.749 1.08 1.698 1.238 2.87c.153 1.14.153 2.595.153 4.433zM8 9.75a.75.75 0 0 0 0 1.5h8a.75.75 0 0 0 0-1.5zm0 3.5a.75.75 0 0 0 0 1.5h5.5a.75.75 0 0 0 0-1.5z"
               clipRule="evenodd"
-            />
-          </svg>
-        </div>
-      </div>
-
-      <div className="relative">
-        <label className={baseLabel}>refinance amount</label>
-        <input
-          name="refinanceAmount"
-          value={form.refinanceAmount}
-          onChange={onChange}
-          placeholder="Enter refinance amount"
-          className={baseInput}
-        />
-        <div className="absolute left-3 top-11 -translate-y-1/2 text-gray-400">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-            <path
-              fill="#a6a6a6"
-              d="m21.4 14.25l-7.15 7.15q-.3.3-.675.45t-.75.15t-.75-.15t-.675-.45l-8.825-8.825q-.275-.275-.425-.637T2 11.175V4q0-.825.588-1.412T4 2h7.175q.4 0 .775.163t.65.437l8.8 8.825q.3.3.438.675t.137.75t-.137.738t-.438.662M6.5 8q.625 0 1.063-.437T8 6.5t-.437-1.062T6.5 5t-1.062.438T5 6.5t.438 1.063T6.5 8"
             />
           </svg>
         </div>
@@ -600,6 +601,68 @@ function RefinanceForm({ inputBase, labelClass }) {
           </svg>
         </div>
       </div>
+
+      <div className={`flex items-center gap-2 mt-4 ${form.isFinanced ? "py-8" : ""}`}>
+        <input
+          id="refi-financed"
+          type="checkbox"
+          className="w-4 h-4"
+          name="isFinanced"
+          checked={form.isFinanced}
+          onChange={onChange}
+        />
+        <label htmlFor="refi-financed" className="text-sm font-semibold text-[#27563C]">
+          add finance
+        </label>
+      </div>
+
+      {form.isFinanced && (
+        <>
+          <label className={baseLabel}>Agreement No</label>
+          <div className="relative">
+            <input
+              name="agreementNo"
+              value={form.agreementNo}
+              onChange={onChange}
+              placeholder="Enter agreement no"
+              className={baseInput}
+            />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" viewBox="0 0 56 56"><path fill="#a6a6a6" d="M8.746 37.703h7.149l-2.133 10.594a4 4 0 0 0-.07.75c0 1.148.796 1.781 1.898 1.781c1.125 0 1.945-.61 2.18-1.758l2.296-11.367h11.086L29.02 48.297c-.07.234-.093.516-.093.75c0 1.148.797 1.781 1.922 1.781s1.945-.61 2.18-1.758L35.3 37.703h8.367c1.289 0 2.18-.937 2.18-2.203c0-1.031-.703-1.875-1.758-1.875h-7.946L38.63 21.25h8.203c1.29 0 2.18-.937 2.18-2.203c0-1.031-.703-1.875-1.758-1.875H39.45l1.922-9.445c.023-.141.07-.446.07-.75c0-1.149-.82-1.805-1.945-1.805c-1.312 0-1.898.726-2.133 1.828l-2.062 10.172H24.215l1.922-9.445c.023-.141.07-.446.07-.75c0-1.149-.844-1.805-1.945-1.805c-1.336 0-1.946.726-2.157 1.828l-2.062 10.172h-7.687c-1.29 0-2.18.984-2.18 2.273c0 1.055.703 1.805 1.758 1.805h7.289l-2.485 12.375h-7.57c-1.29 0-2.18.984-2.18 2.273c0 1.055.703 1.805 1.758 1.805m12.14-4.078l2.509-12.375H34.48l-2.508 12.375Z" style={{width: '16px', height: '16px'}}/></svg>
+            </div>
+          </div>
+
+          <label className={baseLabel}>Finance Amount</label>
+          <div className="relative">
+            <input
+              name="financeAmount"
+              value={form.financeAmount}
+              onChange={onChange}
+              placeholder="Enter finance amount"
+              className={baseInput}
+            />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 16 16"><path fill="#a6a6a6" d="M1 4.25C1 3.56 1.56 3 2.25 3h9.5c.69 0 1.25.56 1.25 1.25v5.5c0 .69-.56 1.25-1.25 1.25h-9.5C1.56 11 1 10.44 1 9.75zm3 .25V4H3v.5a.5.5 0 0 1-.5.5H2v1h.5A1.5 1.5 0 0 0 4 4.5M9 7a2 2 0 1 0-4 0a2 2 0 0 0 4 0m2-3h-1v.5A1.5 1.5 0 0 0 11.5 6h.5V5h-.5a.5.5 0 0 1-.5-.5zM4 9.5A1.5 1.5 0 0 0 2.5 8H2v1h.5a.5.5 0 0 1 .5.5v.5h1zm7 .5v-.5a.5.5 0 0 1 .5-.5h.5V8h-.5A1.5 1.5 0 0 0 10 9.5v.5zm-6.5 3a1.5 1.5 0 0 1-1.427-1.036Q3.281 12 3.5 12h8.25A2.25 2.25 0 0 0 14 9.75V5.085A1.5 1.5 0 0 1 15 6.5v3.25A3.25 3.25 0 0 1 11.75 13z"/></svg></div>
+          </div>
+
+          <label className={baseLabel}>Emi Date</label>
+          <div className="relative">
+            <input name="emiDate" value={form.emiDate} onChange={onChange} type="date" className={baseInput + " py-2"} />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M6.94 2c.416 0 .753.324.753.724v1.46c.668-.012 1.417-.012 2.26-.012h4.015c.842 0 1.591 0 2.259.013v-1.46c0-.4.337-.725.753-.725s.753.324.753.724V4.25c1.445.111 2.394.384 3.09 1.055c.698.67.982 1.582 1.097 2.972L22 9H2v-.724c.116-1.39.4-2.302 1.097-2.972s1.645-.944 3.09-1.055V2.724c0-.4.337-.724.753-.724"/><path fill="#a6a6a6" d="M22 14v-2c0-.839-.004-2.335-.017-3H2.01c-.013.665-.01 2.161-.01 3v2c0 3.771 0 5.657 1.172 6.828S6.228 22 10 22h4c3.77 0 5.656 0 6.828-1.172S22 17.772 22 14" opacity="0.5"/><path fill="#a6a6a6" d="M18 17a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-5 4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-5 4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0"/></svg></div>
+          </div>
+
+          <label className={baseLabel}>Months</label>
+          <div className="relative">
+            <input name="emiMonths" value={form.emiMonths} onChange={onChange} placeholder="Enter months" className={baseInput} />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M3 10.5V6q0-.425.288-.712T4 5h3.325q.425 0 .713.288T8.325 6v4.5q0 .425-.287.713t-.713.287H4q-.425 0-.712-.288T3 10.5m7.325 1q-.425 0-.712-.288t-.288-.712V6q0-.425.288-.712T10.325 5h3.35q.425 0 .713.288t.287.712v4.5q0 .425-.288.713t-.712.287zm6.35 0q-.425 0-.712-.288t-.288-.712V6q0-.425.288-.712T16.675 5H20q.425 0 .713.288T21 6v4.5q0 .425-.288.713T20 11.5zM7.325 19H4q-.425 0-.712-.288T3 18v-4.5q0-.425.288-.712T4 12.5h3.325q.425 0 .713.288t.287.712V18q0 .425-.287.713T7.325 19m3 0q-.425 0-.712-.288T9.324 18v-4.5q0-.425.288-.712t.712-.288h3.35q.425 0 .713.288t.287.712V18q0 .425-.288.713t-.712.287zm6.35 0q-.425 0-.712-.288T15.675 18v-4.5q0-.425.288-.712t.712-.288H20q.425 0 .713.288T21 13.5V18q0 .425-.288.713T20 19z"/></svg></div>
+          </div>
+
+          <label className={baseLabel}>Emi Amount</label>
+          <div className="relative">
+            <input name="emiAmount" value={form.emiAmount} onChange={onChange} placeholder="Amount" className={baseInput} />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M19 5.25H5A1.76 1.76 0 0 0 3.25 7v10A1.76 1.76 0 0 0 5 18.75h14A1.76 1.76 0 0 0 20.75 17V7A1.76 1.76 0 0 0 19 5.25M19.25 7v1.67h-.21a1.5 1.5 0 0 1-.36 0h-.13a2 2 0 0 1-.33-.1h-.12a1.3 1.3 0 0 1-.38-.28a1.58 1.58 0 0 1-.47-1.12a1.5 1.5 0 0 1 .06-.41H19a.25.25 0 0 1 .25.24M5 6.75h1.69a1.5 1.5 0 0 1 .06.41a1.58 1.58 0 0 1-.47 1.12a1.5 1.5 0 0 1-.38.28h-.13a1.1 1.1 0 0 1-.31.1h-.14a1.5 1.5 0 0 1-.36 0h-.21V7A.25.25 0 0 1 5 6.75M4.75 17v-1.67h.21a1.5 1.5 0 0 1 .36 0h.13a1.3 1.3 0 0 1 .33.1h.12a1.5 1.5 0 0 1 .38.28a1.58 1.58 0 0 1 .47 1.12a1.5 1.5 0 0 1-.06.41H5a.25.25 0 0 1-.25-.24m3.47.25a3 3 0 0 0 0-.41a3 3 0 0 0-.91-2.18a2.6 2.6 0 0 0-.49-.39l-.17-.11a3 3 0 0 0-.36-.16l-.2-.08a3.3 3.3 0 0 0-.53-.11a1.6 1.6 0 0 0-.31 0h-.5v-3.59h.85a3 3 0 0 0 .4-.1l.22-.07a2.5 2.5 0 0 0 .44-.2l.16-.09a3.4 3.4 0 0 0 .52-.42a3 3 0 0 0 .91-2.18a3 3 0 0 0 0-.41h7.56a3 3 0 0 0 0 .41a3 3 0 0 0 .91 2.18a3 3 0 0 0 .52.42l.16.09a2.5 2.5 0 0 0 .44.2l.22.07a3 3 0 0 0 .41.09h.84v3.56h-.5a1.6 1.6 0 0 0-.31 0a3.3 3.3 0 0 0-.53.11l-.2.08a3 3 0 0 0-.39.18l-.17.11a2.6 2.6 0 0 0-.49.39a3 3 0 0 0-.91 2.18a3 3 0 0 0 0 .41Zm10.78 0h-1.69a1.5 1.5 0 0 1-.06-.41a1.58 1.58 0 0 1 .47-1.12a1.3 1.3 0 0 1 .38-.28h.12a2 2 0 0 1 .33-.1h.13a1.5 1.5 0 0 1 .36 0h.21V17a.25.25 0 0 1-.25.25"/><path fill="#a6a6a6" d="M12 8.5a3.5 3.5 0 1 0 3.5 3.5A3.5 3.5 0 0 0 12 8.5m0 5.5a2 2 0 1 1 2-2a2 2 0 0 1-2 2"/></svg></div>
+          </div>
+        </>
+      )}
 
       <div className={`flex items-center gap-2 mt-4 ${showGuarantor ? "py-8" : ""}`}>
         <input

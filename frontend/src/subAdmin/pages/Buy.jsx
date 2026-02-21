@@ -96,10 +96,11 @@ function Buy() {
         try {
           const payload = {
             role,
+            mode: 'buy',
             ...form,
           }
 
-          const response = await apiClient.post('/api/subadmin/management/save-buyer-seller', payload)
+          const response = await apiClient.post('/api/subadmin/management/save-buyer', payload)
           console.log('buyer saved:', response.data)
           alert('Buyer saved successfully')
         } catch (error) {

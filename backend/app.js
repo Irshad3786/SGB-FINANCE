@@ -11,25 +11,12 @@ const app = express();
 // ✅ CORS CONFIGURATION
 
 function configureCORS() {
-  const allowedOrigins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://192.168.0.5:5173",
-    process.env.CORS_ORIGIN,
-  ].filter(Boolean);
+  const corsOptions = {
+    origin: true,
+    credentials: true,
+  };
 
-  app.use(
-    cors({
-      origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
-          callback(null, true);
-        } else {
-          callback(new Error("Not allowed by CORS"));
-        }
-      },
-      credentials: true,
-    })
-  );
+  app.use(cors(corsOptions));
 }
 
 // Call CORS configuration early

@@ -17,6 +17,38 @@ const normalizeText = (value) => {
   return String(value).trim();
 };
 
+const buildEmiSchedule = ({ emiAmount, months, emiStartDate }) => {
+  const monthlyAmount = toNumber(emiAmount);
+  const totalMonths = toNumber(months);
+  const startDate = emiStartDate ? new Date(emiStartDate) : null;
+
+  if (
+    !monthlyAmount ||
+    !totalMonths ||
+    totalMonths <= 0 ||
+    !startDate ||
+    Number.isNaN(startDate.getTime())
+  ) {
+    return [];
+  }
+
+  return Array.from({ length: totalMonths }, (_, index) => {
+    const emiDate = new Date(startDate);
+    emiDate.setMonth(startDate.getMonth() + index);
+
+    return {
+      emiNo: index + 1,
+      emiDate,
+      amount: monthlyAmount,
+      paid: false,
+      paidDate: null,
+      paidAmount: 0,
+      bookNo: "",
+      pageNo: "",
+    };
+  });
+};
+
 const saveBuyerOrSeller = async (req, res) => {
   try {
     const {
@@ -45,6 +77,7 @@ const saveBuyerOrSeller = async (req, res) => {
       haNumber,
       financeAmount,
       emiDate,
+      emiStartDate,
       emiMonths,
       emiAmount,
       pendingAmount,
@@ -157,6 +190,12 @@ const saveBuyerOrSeller = async (req, res) => {
       const resolvedMode = ["refinance", "buy"].includes(normalizedMode)
         ? normalizedMode
         : "buy";
+      const resolvedEmiStartDate = emiStartDate || emiDate;
+      const emiSchedule = buildEmiSchedule({
+        emiAmount,
+        months: emiMonths,
+        emiStartDate: resolvedEmiStartDate,
+      });
 
       const normalizedChassisNo = normalizeText(chassisNo);
       const normalizedVehicleNo = normalizeText(vehicleNo);
@@ -207,7 +246,8 @@ const saveBuyerOrSeller = async (req, res) => {
           financeAmount: toNumber(financeAmount),
           emiAmount: toNumber(emiAmount),
           months: toNumber(emiMonths),
-          emiStartDate: emiDate || undefined,
+          emiStartDate: resolvedEmiStartDate || undefined,
+          emiDates: emiSchedule,
         },
         ...(resolvedMode === "buy"
           ? {

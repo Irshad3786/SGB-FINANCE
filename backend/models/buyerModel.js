@@ -61,9 +61,10 @@ const buyerSchema = new mongoose.Schema({
         emiDates: [{
         emiNo: Number,
         emiDate: Date,
+        amount: { type: Number, default: 0 },
         paid: { type: Boolean, default: false },
-        paidDate: Date,
-        paidAmount: Number,
+        paidDate: { type: Date, default: null },
+        paidAmount: { type: Number, default: 0 },
         bookNo: String,
         pageNo: String,
         }],

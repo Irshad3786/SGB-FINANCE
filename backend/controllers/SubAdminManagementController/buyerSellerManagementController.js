@@ -209,10 +209,14 @@ const saveBuyerOrSeller = async (req, res) => {
           months: toNumber(emiMonths),
           emiStartDate: emiDate || undefined,
         },
-        dpPayment: {
-          amount: toNumber(pendingAmount),
-          dueDate: pendingDate || undefined,
-        },
+        ...(resolvedMode === "buy"
+          ? {
+              dpPayment: {
+                amount: toNumber(pendingAmount),
+                dueDate: pendingDate || undefined,
+              },
+            }
+          : {}),
       };
 
       savedRecord = await Buyer.create(buyerPayload);

@@ -1,5 +1,16 @@
 import mongoose from 'mongoose';
 
+const dpPaymentSchema = new mongoose.Schema({
+    amount: Number,
+    dueDate: Date,
+    commitmentDate: Date,
+    status: {
+        type: String,
+        enum: ["pending", "paid", "overdue"],
+        default: "pending"
+    }
+}, { _id: false });
+
 const buyerSchema = new mongoose.Schema({
     name: String,
     sowoco:String,
@@ -70,18 +81,10 @@ const buyerSchema = new mongoose.Schema({
         }
         },
 
-        dpPayment:{
-            amount: Number,
-            dueDate: Date,
-            commitmentDate: Date,
-
-            status: {
-                type: String,
-                enum: ["pending", "paid", "overdue"],
-                default: "pending"
-            }
+        dpPayment: {
+            type: dpPaymentSchema,
+            default: undefined,
         },
-
 
 })
 

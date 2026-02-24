@@ -30,18 +30,23 @@ const getUserData = async (req, res) => {
       .lean();
 
     const buyers = await Buyer.find({})
-      .select("name phoneNo aadharNo dateOfBirth fullAddress soldamount oldHAnumber finance guarantor referralName referralPhoneNo")
+      .select("name phoneNo aadharNo dateOfBirth fullAddress soldamount oldHAnumber vehicle finance guarantor referralName referralPhoneNo")
       .lean();
 
     const buyerByVehicleOrChassis = new Map();
 
     buyers.forEach((buyer) => {
-      const buyerVehicleKey = normalizeKey(buyer?.oldHAnumber);
-      if (!buyerVehicleKey) return;
+      const buyerMatchKeys = [
+        normalizeKey(buyer?.vehicle?.vehicleNumber),
+        normalizeKey(buyer?.vehicle?.chassisNo),
+        normalizeKey(buyer?.oldHAnumber),
+      ].filter(Boolean);
 
-      if (!buyerByVehicleOrChassis.has(buyerVehicleKey)) {
-        buyerByVehicleOrChassis.set(buyerVehicleKey, buyer);
-      }
+      buyerMatchKeys.forEach((buyerKey) => {
+        if (!buyerByVehicleOrChassis.has(buyerKey)) {
+          buyerByVehicleOrChassis.set(buyerKey, buyer);
+        }
+      });
     });
 
     const records = sellers

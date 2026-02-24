@@ -184,6 +184,27 @@ const saveBuyerOrSeller = async (req, res) => {
         await Seller.collection.dropIndex("agreementNo_1").catch(() => null);
         savedRecord = await Seller.create(sellerPayload);
       }
+
+      const buyerFilters = [];
+      if (normalizedChassisNo) {
+        buyerFilters.push({ "vehicle.chassisNo": normalizedChassisNo });
+        buyerFilters.push({ oldHAnumber: normalizedChassisNo });
+      }
+      if (normalizedVehicleNo) {
+        buyerFilters.push({ "vehicle.vehicleNumber": normalizedVehicleNo });
+        buyerFilters.push({ oldHAnumber: normalizedVehicleNo });
+      }
+
+      if (buyerFilters.length > 0) {
+        const matchedBuyer = await Buyer.findOne({ $or: buyerFilters })
+          .select("_id")
+          .lean();
+
+        if (matchedBuyer) {
+          savedRecord.vehicle.status = "sold";
+          await savedRecord.save();
+        }
+      }
     } else {
       const normalizedAgreementNo = normalizeText(agreementNo);
       const normalizedMode = normalizeText(mode).toLowerCase();

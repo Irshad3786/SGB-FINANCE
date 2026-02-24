@@ -233,6 +233,13 @@ const saveBuyerOrSeller = async (req, res) => {
         profile,
         referralName,
         referralPhoneNo: referralPhone,
+        vehicle: {
+          vehicleName,
+          vehicleNumber: normalizedVehicleNo || undefined,
+          model,
+          chassisNo: normalizedChassisNo || undefined,
+          bikePrice: toNumber(saleAmount),
+        },
         guarantor: {
           fullName: guarantorName,
           sowoco: guarantorSoWoCo,

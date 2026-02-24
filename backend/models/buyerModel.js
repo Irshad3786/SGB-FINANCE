@@ -39,6 +39,14 @@ const buyerSchema = new mongoose.Schema({
     referralName: String,
     referralPhoneNo: String,
 
+    vehicle: {
+        vehicleName: String,
+        vehicleNumber: String,
+        model: String,
+        chassisNo: String,
+        bikePrice: Number,
+    },
+
     guarantor:{
         fullName: String,
         sowoco:String,

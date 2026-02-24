@@ -4,6 +4,8 @@ import cors from "cors";
 import adminRoutes from "./routes/adminRoutes.js";
 import subAdminRoutes from "./routes/subAdminRoutes.js"
 import userRoute from "./routes/userRoutes.js"
+import buyerSellerManagementRoutes from "./routes/subAdminManagementRoutes/buyerSellerManagementRoutes.js";
+import userDataRoutes from "./routes/subAdminManagementRoutes/userDataRoutes.js";
 
 const app = express();
 
@@ -31,6 +33,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/admin", adminRoutes);
 app.use("/api/subadmin", subAdminRoutes);
 app.use("/api/user", userRoute);
+
+//subadmin-management routes
+app.use("/api/subadmin/management", buyerSellerManagementRoutes);
+app.use("/api/subadmin/management", userDataRoutes);
 
 export { app, configureCORS };
 

@@ -1,22 +1,40 @@
 import React, { useState, useEffect } from 'react'
-import EditUserModal from '../components/EditUserModal' // added import
+import EditUserModal from '../components/EditUserModal'
+import apiClient from '../../api/axios'
 
 function Users () {
-  const initialUsers = [
-    { id: 1, seller: 'MOHAMMAD IRSHAD', buyerName: 'RAJU K', vehicle: 'AP39DZ9786', vehicleName: 'Hero Splendor', model: 'Splendor 2020', chassis: 'MBLHAW10655DD40552', soldAmount: '35,000', buyAmount: '35,000', date: '30-10-2025', dob: '13-01-2000', phone: '9182278505', aadhaar: '5014 0694 9073', address: 'Ramapuram road, rosaiah colony Chirala, vetapalem mandal 523155 - Andhra pradesh', financeAmount: '25000', emiAmount: '3500', emiMonths: '15', emiDate: '12-10-2025', guarantorName: 'MOHAMMAD IRSHAD', guarantorPhone: '9182278505', guarantorAadhaar: '5014 0694 9073', guarantorAddress: 'Ramapuram road, rosaiah colony Chirala, vetapalem mandal 523155', referenceName: 'SURESH MAHESH', referencePhone: '9182278505' },
-    { id: 2, seller: 'SURESH', buyerName: '', vehicle: 'AP39YZ8512', vehicleName: 'Bajaj Pulsar', model: 'Pulsar NS200', chassis: 'MBLHAW10655DD11111', soldAmount: '35,000', buyAmount: '', date: '30-10-2025', dob: '02-05-1992', phone: '9123456780', aadhaar: '1234 5678 9012', address: '1-2-3, Some street, City', financeAmount: '', emiAmount: '', emiMonths: '', emiDate: '', guarantorName: '', guarantorPhone: '', guarantorAadhaar: '', guarantorAddress: '', referenceName: 'RAMESH', referencePhone: '9000000000' },
-    { id: 3, seller: 'RAHUL', buyerName: 'MANU', vehicle: 'AP27AZ9865', vehicleName: 'TVS Apache', model: 'Apache RTR 160', chassis: 'MBLHAW10655DD22222', soldAmount: '35,000', buyAmount: '35,000', date: '30-10-2025', dob: '08-08-1996', phone: '9190909090', aadhaar: '2222 3333 4444', address: 'Block 5, Some Area', financeAmount: '20000', emiAmount: '2200', emiMonths: '12', emiDate: '01-11-2025', guarantorName: 'SANTHOS', guarantorPhone: '9191919191', guarantorAadhaar: '3333 4444 5555', guarantorAddress: 'Guarantor address', referenceName: 'KUMAR', referencePhone: '9111111111' },
-    { id: 4, seller: 'KARTHIK', buyerName: '', vehicle: 'AP27NN3658', vehicleName: 'Honda Activa', model: 'Activa 5G', chassis: 'MBLHAW10655DD33333', soldAmount: '35,000', buyAmount: '', date: '30-10-2025', dob: '20-12-1988', phone: '9166666666', aadhaar: '4444 5555 6666', address: 'Some other address', financeAmount: '', emiAmount: '', emiMonths: '', emiDate: '', guarantorName: '', guarantorPhone: '', guarantorAadhaar: '', guarantorAddress: '', referenceName: 'RAJU', referencePhone: '9222222222' },
-    { id: 5, seller: 'PRADEEP', buyerName: 'SAI', vehicle: 'AP26VV2654', vehicleName: 'Royal Enfield', model: 'Classic 350', chassis: 'MBLHAW10655DD44444', soldAmount: '35,000', buyAmount: '35,000', date: '30-10-2025', dob: '01-03-1990', phone: '9155555555', aadhaar: '5555 6666 7777', address: 'Address line here', financeAmount: '15000', emiAmount: '1800', emiMonths: '10', emiDate: '15-12-2025', guarantorName: 'VINOD', guarantorPhone: '9144444444', guarantorAadhaar: '6666 7777 8888', guarantorAddress: 'Guarantor addr', referenceName: 'SURESH MAHESH', referencePhone: '9182278505' },
-    { id: 6, seller: 'MOULALI', buyerName: '', vehicle: 'AP39XX7508', vehicleName: 'Yamaha FZ', model: 'FZ-S V3', chassis: 'MBLHAW10655DD55555', soldAmount: '35,000', buyAmount: '', date: '30-10-2025', dob: '17-07-1994', phone: '9133333333', aadhaar: '7777 8888 9999', address: 'Another address', financeAmount: '', emiAmount: '', emiMonths: '', emiDate: '', guarantorName: '', guarantorPhone: '', guarantorAadhaar: '', guarantorAddress: '', referenceName: '', referencePhone: '' },
-  ]
-
   const [modalUser, setModalUser] = useState(null)
-  const [users, setUsers] = useState(initialUsers) // useState for users so edits persist
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [editOpen, setEditOpen] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({ from: '', to: '', status: 'all' })
   const [deleteUserId, setDeleteUserId] = useState(null)
+
+  // Fetch user data from API
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const response = await apiClient.get('/api/subadmin/management/users')
+        if (response.data?.success && response.data?.data) {
+          setUsers(response.data.data)
+          
+        } else {
+          setError('Failed to fetch users')
+        }
+      } catch (err) {
+        console.error('Error fetching users:', err)
+        setError(err.response?.data?.message || 'Failed to fetch user data')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUsers()
+  }, [])
 
   useEffect(() => {
     function onKey(e) {
@@ -49,6 +67,26 @@ function Users () {
         .no-scrollbar{-ms-overflow-style:none; scrollbar-width:none;}
       `}</style>
 
+      {/* Loading state */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="inline-block animate-spin w-8 h-8 border-4 border-gray-300 border-t-blue-500 rounded-full mb-3"></div>
+            <p className="text-gray-600">Loading user data...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error state */}
+      {error && !loading && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <p className="text-red-700 text-sm"><strong>Error:</strong> {error}</p>
+        </div>
+      )}
+
+      {/* Main content (only show if not loading) */}
+      {!loading && (
+        <>
       <div className="md:flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
           <button onClick={() => setShowFilters(s => !s)} aria-expanded={showFilters} className="flex items-center gap-2 px-4 py-2 border font-semibold rounded-lg shadow hover:shadow-md transition-shadow bg-white text-base">
@@ -418,6 +456,8 @@ function Users () {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
 
     </div>

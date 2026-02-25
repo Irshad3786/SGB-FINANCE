@@ -19,7 +19,7 @@ const createDisplayDate = (mongoId) => {
 
 const getUserData = async (req, res) => {
   try {
-    const { vehicleNumber = "", chassisNo = "", search = "" } = req.query;
+    const { vehicleNumber = "", chassisNo = "", search = "", page = 1, limit = 10 } = req.query;
 
     const normalizedVehicle = normalizeKey(vehicleNumber);
     const normalizedChassis = normalizeKey(chassisNo);
@@ -72,6 +72,18 @@ const getUserData = async (req, res) => {
           soldAmount: seller?.vehicle?.bikePrice ?? null,
           buyAmount: matchedBuyer?.soldamount ?? null,
           date: createDisplayDate(seller?._id),
+          sellerDob: seller?.dateOfBirth || null,
+          buyerDob: matchedBuyer?.dateOfBirth || null,
+          sellerPhone: seller?.phoneNo || "",
+          buyerPhone: matchedBuyer?.phoneNo || "",
+          sellerAadhaar: seller?.aadharNo || "",
+          buyerAadhaar: matchedBuyer?.aadharNo || "",
+          sellerAddress: seller?.fullAddress || "",
+          buyerAddress: matchedBuyer?.fullAddress || "",
+          sellerReferenceName: seller?.referralName || "",
+          sellerReferencePhone: seller?.referralPhoneNo || "",
+          buyerReferenceName: matchedBuyer?.referralName || "",
+          buyerReferencePhone: matchedBuyer?.referralPhoneNo || "",
           dob: seller?.dateOfBirth || matchedBuyer?.dateOfBirth || null,
           phone: seller?.phoneNo || matchedBuyer?.phoneNo || "",
           aadhaar: seller?.aadharNo || matchedBuyer?.aadharNo || "",
@@ -79,7 +91,11 @@ const getUserData = async (req, res) => {
           financeAmount: matchedBuyer?.finance?.financeAmount ?? null,
           emiAmount: matchedBuyer?.finance?.emiAmount ?? null,
           emiMonths: matchedBuyer?.finance?.months ?? null,
-          emiDate: matchedBuyer?.finance?.emiDate ?? null,
+          emiDate:
+            matchedBuyer?.finance?.emiDate ??
+            matchedBuyer?.finance?.emiStartDate ??
+            matchedBuyer?.finance?.emiDates?.[0]?.emiDate ??
+            null,
           guarantorName: matchedBuyer?.guarantor?.fullName || "",
           guarantorPhone: matchedBuyer?.guarantor?.phoneNo || "",
           guarantorAadhaar: matchedBuyer?.guarantor?.aadharNo || "",
@@ -114,6 +130,14 @@ const getUserData = async (req, res) => {
         return false;
       });
 
+    const parsedPage = Math.max(1, Number.parseInt(page, 10) || 1);
+    const parsedLimit = Math.max(1, Number.parseInt(limit, 10) || 10);
+    const totalRecords = records.length;
+    const totalPages = Math.max(1, Math.ceil(totalRecords / parsedLimit));
+    const safePage = Math.min(parsedPage, totalPages);
+    const startIndex = (safePage - 1) * parsedLimit;
+    const paginatedRecords = records.slice(startIndex, startIndex + parsedLimit);
+
     return res.status(200).json({
       success: true,
       message: "User data fetched successfully",
@@ -121,9 +145,19 @@ const getUserData = async (req, res) => {
         vehicleNumber,
         chassisNo,
         search,
+        page: safePage,
+        limit: parsedLimit,
       },
-      total: records.length,
-      data: records,
+      total: totalRecords,
+      pagination: {
+        page: safePage,
+        limit: parsedLimit,
+        totalRecords,
+        totalPages,
+        hasNextPage: safePage < totalPages,
+        hasPrevPage: safePage > 1,
+      },
+      data: paginatedRecords,
     });
   } catch (error) {
     return res.status(500).json({

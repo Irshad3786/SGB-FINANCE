@@ -3,6 +3,7 @@ import EditUserModal from '../components/EditUserModal'
 import apiClient from '../../api/axios'
 
 function Users () {
+  const PAGE_SIZE = 10
   const [modalUser, setModalUser] = useState(null)
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -11,6 +12,15 @@ function Users () {
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({ from: '', to: '', status: 'all' })
   const [deleteUserId, setDeleteUserId] = useState(null)
+  const [page, setPage] = useState(1)
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: PAGE_SIZE,
+    totalRecords: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPrevPage: false,
+  })
 
   // Fetch user data from API
   useEffect(() => {
@@ -18,10 +28,22 @@ function Users () {
       try {
         setLoading(true)
         setError(null)
-        const response = await apiClient.get('/api/subadmin/management/users')
+        const response = await apiClient.get('/api/subadmin/management/users', {
+          params: {
+            page,
+            limit: PAGE_SIZE,
+          },
+        })
         if (response.data?.success && response.data?.data) {
           setUsers(response.data.data)
-          
+          setPagination(response.data?.pagination || {
+            page,
+            limit: PAGE_SIZE,
+            totalRecords: response.data?.total || 0,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPrevPage: page > 1,
+          })
         } else {
           setError('Failed to fetch users')
         }
@@ -34,7 +56,7 @@ function Users () {
     }
 
     fetchUsers()
-  }, [])
+  }, [page])
 
   useEffect(() => {
     function onKey(e) {
@@ -258,9 +280,21 @@ function Users () {
 
         {/* Pagination / footer */}
         <div className="mt-4 flex justify-end items-center gap-3">
-          <button className="px-3 py-1 rounded-full bg-gray-100 text-xs">previous</button>
-          <div className="text-xs">1</div>
-          <button className="px-3 py-1 rounded-full bg-gray-100 text-xs">next</button>
+          <button
+            onClick={() => setPage(prev => Math.max(1, prev - 1))}
+            disabled={!pagination.hasPrevPage || loading}
+            className="px-3 py-1 rounded-full bg-gray-100 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            previous
+          </button>
+          <div className="text-xs">{pagination.page} / {pagination.totalPages}</div>
+          <button
+            onClick={() => setPage(prev => prev + 1)}
+            disabled={!pagination.hasNextPage || loading}
+            className="px-3 py-1 rounded-full bg-gray-100 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            next
+          </button>
         </div>
       </div>
 
@@ -344,16 +378,16 @@ function Users () {
                       <h5 className="text-sm font-semibold mb-2">Customer Details</h5>
                       <div className="text-sm text-gray-700 space-y-1">
                         <div><strong>Name:</strong> {modalUser.seller}</div>
-                        <div><strong>DOB:</strong> {modalUser.dob || '-'}</div>
-                        <div><strong>Phone:</strong> {modalUser.phone || '-'}</div>
-                        <div className="flex items-center gap-2"><strong>Aadhar No:</strong> <span>{modalUser.aadhaar || '-'}</span> <span className="ml-2 text-xs bg-yellow-100 px-2 py-0.5 rounded">view</span></div>
-                        <div><strong>Address:</strong> <div className="text-xs text-gray-600">{modalUser.address || '-'}</div></div>
+                        <div><strong>DOB:</strong> {modalUser.sellerDob || '-'}</div>
+                        <div><strong>Phone:</strong> {modalUser.sellerPhone || '-'}</div>
+                        <div className="flex items-center gap-2"><strong>Aadhar No:</strong> <span>{modalUser.sellerAadhaar || '-'}</span> <span className="ml-2 text-xs bg-yellow-100 px-2 py-0.5 rounded">view</span></div>
+                        <div><strong>Address:</strong> <div className="text-xs text-gray-600">{modalUser.sellerAddress || '-'}</div></div>
                         <div><strong>Sold Amount:</strong> {modalUser.soldAmount}</div>
                       </div>
                     </div>
                     <div className="w-full bg-white rounded-xl p-4 shadow">
                       <h5 className="text-sm font-semibold mb-2">Reference</h5>
-                      <div className="text-sm text-gray-700">Name: {modalUser.referenceName || '—'}<br/>Phone: {modalUser.referencePhone || '—'}</div>
+                      <div className="text-sm text-gray-700">Name: {modalUser.sellerReferenceName || '—'}<br/>Phone: {modalUser.sellerReferencePhone || '—'}</div>
                     </div>
                   </div>
                 </div>
@@ -366,10 +400,10 @@ function Users () {
                       <h5 className="text-sm font-semibold mb-2">Customer Details</h5>
                       <div className="text-sm text-gray-700 space-y-1">
                         <div><strong>Name:</strong> {modalUser.buyerName || '-'}</div>
-                        <div><strong>DOB:</strong> {modalUser.dob || '-'}</div>
-                        <div><strong>Phone:</strong> {modalUser.phone || '-'}</div>
-                        <div className="flex items-center gap-2"><strong>Aadhar No:</strong> <span>{modalUser.aadhaar || '-'}</span> <span className="ml-2 text-xs bg-yellow-100 px-2 py-0.5 rounded">view</span></div>
-                        <div><strong>Address:</strong> <div className="text-xs text-gray-600">{modalUser.address || '-'}</div></div>
+                        <div><strong>DOB:</strong> {modalUser.buyerDob || '-'}</div>
+                        <div><strong>Phone:</strong> {modalUser.buyerPhone || '-'}</div>
+                        <div className="flex items-center gap-2"><strong>Aadhar No:</strong> <span>{modalUser.buyerAadhaar || '-'}</span> <span className="ml-2 text-xs bg-yellow-100 px-2 py-0.5 rounded">view</span></div>
+                        <div><strong>Address:</strong> <div className="text-xs text-gray-600">{modalUser.buyerAddress || '-'}</div></div>
                         <div><strong>Buy Amount:</strong> {modalUser.buyAmount || '-'}</div>
                         {/* vehicle details shown above in Vehicle Details */}
                       </div>
@@ -379,13 +413,13 @@ function Users () {
                       <div className="text-sm text-gray-700 space-y-1">
                         <div><strong>Finance Amount:</strong> {modalUser.financeAmount || '-'}</div>
                         <div><strong>EMI Amount:</strong> {modalUser.emiAmount || '-'}</div>
-                        <div><strong>EMI Months:</strong> {modalUser.emiMonths || '15'}</div>
+                        <div><strong>EMI Months:</strong> {modalUser.emiMonths ?? '-'}</div>
                         <div><strong>EMI Date:</strong> {modalUser.emiDate || '-'}</div>
                       </div>
                     </div>
                     <div className="w-full bg-white rounded-xl p-4 shadow">
                       <h5 className="text-sm font-semibold mb-2">Reference</h5>
-                      <div className="text-sm text-gray-700">Name: {modalUser.referenceName || '—'}<br/>Phone: {modalUser.referencePhone || '—'}</div>
+                      <div className="text-sm text-gray-700">Name: {modalUser.buyerReferenceName || '—'}<br/>Phone: {modalUser.buyerReferencePhone || '—'}</div>
                     </div>
                     <div className="w-full bg-white rounded-xl p-4 shadow">
                       <h5 className="text-sm font-semibold mb-2">Guarantor Details</h5>

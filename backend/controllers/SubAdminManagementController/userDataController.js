@@ -49,7 +49,9 @@ const getUserData = async (req, res) => {
       });
     });
 
-    const records = sellers
+    const matchedBuyerIds = new Set();
+
+    const sellerRecords = sellers
       .map((seller, index) => {
         const sellerVehicleKey = normalizeKey(seller?.vehicle?.vehicleNumber);
         const sellerChassisKey = normalizeKey(seller?.vehicle?.chassisNo);
@@ -58,6 +60,10 @@ const getUserData = async (req, res) => {
           buyerByVehicleOrChassis.get(sellerVehicleKey) ||
           buyerByVehicleOrChassis.get(sellerChassisKey) ||
           null;
+
+        if (matchedBuyer?._id) {
+          matchedBuyerIds.add(String(matchedBuyer._id));
+        }
 
         return {
           id: index + 1,
@@ -106,7 +112,61 @@ const getUserData = async (req, res) => {
           sellerData: seller,
           buyerData: matchedBuyer,
         };
-      })
+      });
+
+    const unmatchedBuyerRecords = buyers
+      .filter((buyer) => buyer?._id && !matchedBuyerIds.has(String(buyer._id)))
+      .map((buyer, index) => {
+        return {
+          id: sellerRecords.length + index + 1,
+          sellerId: null,
+          buyerId: buyer?._id,
+          seller: "",
+          buyerName: buyer?.name || "",
+          vehicle: buyer?.vehicle?.vehicleNumber || "",
+          vehicleName: buyer?.vehicle?.vehicleName || "",
+          model: buyer?.vehicle?.model || "",
+          chassis: buyer?.vehicle?.chassisNo || "",
+          soldAmount: null,
+          buyAmount: buyer?.soldamount ?? null,
+          date: createDisplayDate(buyer?._id),
+          sellerDob: null,
+          buyerDob: buyer?.dateOfBirth || null,
+          sellerPhone: "",
+          buyerPhone: buyer?.phoneNo || "",
+          sellerAadhaar: "",
+          buyerAadhaar: buyer?.aadharNo || "",
+          sellerAddress: "",
+          buyerAddress: buyer?.fullAddress || "",
+          sellerReferenceName: "",
+          sellerReferencePhone: "",
+          buyerReferenceName: buyer?.referralName || "",
+          buyerReferencePhone: buyer?.referralPhoneNo || "",
+          dob: buyer?.dateOfBirth || null,
+          phone: buyer?.phoneNo || "",
+          aadhaar: buyer?.aadharNo || "",
+          address: buyer?.fullAddress || "",
+          financeAmount: buyer?.finance?.financeAmount ?? null,
+          emiAmount: buyer?.finance?.emiAmount ?? null,
+          emiMonths: buyer?.finance?.months ?? null,
+          emiDate:
+            buyer?.finance?.emiDate ??
+            buyer?.finance?.emiStartDate ??
+            buyer?.finance?.emiDates?.[0]?.emiDate ??
+            null,
+          guarantorName: buyer?.guarantor?.fullName || "",
+          guarantorPhone: buyer?.guarantor?.phoneNo || "",
+          guarantorAadhaar: buyer?.guarantor?.aadharNo || "",
+          guarantorAddress: buyer?.guarantor?.address || "",
+          referenceName: buyer?.referralName || "",
+          referencePhone: buyer?.referralPhoneNo || "",
+          status: "seller pending",
+          sellerData: null,
+          buyerData: buyer,
+        };
+      });
+
+    const records = [...sellerRecords, ...unmatchedBuyerRecords]
       .filter((record) => {
         if (!normalizedVehicle && !normalizedChassis && !normalizedSearch) return true;
 

@@ -169,6 +169,7 @@ function Users () {
                   <option value="all">All</option>
                   <option value="completed">Completed</option>
                   <option value="pending">Buyer Pending</option>
+                  <option value="seller-pending">Seller Pending</option>
                 </select>
               </div>
             </div>
@@ -207,10 +208,15 @@ function Users () {
                   <td className="py-3 px-3 text-xs">{u.buyAmount || '-'}</td>
                   <td className="py-3 px-3 text-xs">{u.date}</td>
                   <td className="py-3 px-3">
-                    {u.buyerName ? (
+                    {u.status === 'completed' ? (
                       <span className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs">
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#166534" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         <span className="capitalize text-xs">completed</span>
+                      </span>
+                    ) : u.status === 'seller pending' ? (
+                      <span className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#1e40af" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 3v6"/><path d="m12 15l0 6"/><path d="m5 12l6 0"/><path d="m13 12l6 0"/></g></svg>
+                        <span className="capitalize text-xs">seller pending</span>
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs">
@@ -245,10 +251,15 @@ function Users () {
                   <div className="text-xs font-semibold">{u.id}. {u.seller}</div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {u.buyerName ? (
+                  {u.status === 'completed' ? (
                     <span className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs">
                       <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#166534" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       <span className="capitalize text-xs">completed</span>
+                    </span>
+                  ) : u.status === 'seller pending' ? (
+                    <span className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20"height="20" viewBox="0 0 24 24"><g fill="none" stroke="#1e40af" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 3v6"/><path d="m12 15l0 6"/><path d="m5 12l6 0"/><path d="m13 12l6 0"/></g></svg>
+                      <span className="capitalize text-xs">seller pending</span>
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs">

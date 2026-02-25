@@ -114,6 +114,7 @@ const saveBuyerOrSeller = async (req, res) => {
     const resolvedMandal = pickLocation(mandal, customMandal);
 
     let savedRecord;
+    let wasUpdated = false;
 
     if (String(role).toLowerCase() === "seller") {
       const normalizedChassisNo = normalizeText(chassisNo);
@@ -220,8 +221,40 @@ const saveBuyerOrSeller = async (req, res) => {
 
       const normalizedChassisNo = normalizeText(chassisNo);
       const normalizedVehicleNo = normalizeText(vehicleNo);
+      const normalizedOldHaNumber = normalizeText(oldHaNumber || haNumber);
 
-      if (normalizedAgreementNo) {
+      let matchedBuyerForRefinance = null;
+      if (resolvedMode === "refinance") {
+        const refinanceFilters = [];
+
+        if (normalizedVehicleNo) {
+          refinanceFilters.push({ "vehicle.vehicleNumber": normalizedVehicleNo });
+        }
+
+        if (normalizedChassisNo) {
+          refinanceFilters.push({ "vehicle.chassisNo": normalizedChassisNo });
+        }
+
+        if (normalizedOldHaNumber) {
+          refinanceFilters.push({ oldHAnumber: normalizedOldHaNumber });
+          refinanceFilters.push({ agreementNo: normalizedOldHaNumber });
+        }
+
+        if (refinanceFilters.length > 0) {
+          matchedBuyerForRefinance = await Buyer.findOne({ $or: refinanceFilters })
+            .select("_id")
+            .lean();
+        }
+      }
+
+      if (resolvedMode === "refinance" && !matchedBuyerForRefinance) {
+        return res.status(404).json({
+          success: false,
+          message: "Buyer not found for this vehicle. Please create buyer first.",
+        });
+      }
+
+      if (normalizedAgreementNo && !matchedBuyerForRefinance) {
         const existingBuyer = await Buyer.findOne({ agreementNo: normalizedAgreementNo })
           .select("_id agreementNo")
           .lean();
@@ -287,7 +320,16 @@ const saveBuyerOrSeller = async (req, res) => {
           : {}),
       };
 
-      savedRecord = await Buyer.create(buyerPayload);
+      if (matchedBuyerForRefinance) {
+        savedRecord = await Buyer.findByIdAndUpdate(
+          matchedBuyerForRefinance._id,
+          { $set: buyerPayload },
+          { new: true, runValidators: true }
+        );
+        wasUpdated = true;
+      } else {
+        savedRecord = await Buyer.create(buyerPayload);
+      }
 
       const sellerFilters = [];
       if (normalizedChassisNo) {
@@ -307,9 +349,9 @@ const saveBuyerOrSeller = async (req, res) => {
 
     const targetModel = String(role).toLowerCase() === "seller" ? Seller : Buyer;
 
-    return res.status(201).json({
+    return res.status(wasUpdated ? 200 : 201).json({
       success: true,
-      message: `${role} saved successfully`,
+      message: wasUpdated ? `${role} updated successfully` : `${role} saved successfully`,
       data: savedRecord,
       meta: {
         database: mongoose.connection?.name,

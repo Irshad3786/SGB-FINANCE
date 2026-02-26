@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import RefinanceForm from '../components/RefinanceForm'
 import { apDistricts, apMandals } from '../constants/apLocations'
 import apiClient from '../../api/axios'
+import { useToast } from '../../components/ToastProvider'
 
 function Buy() {
     const [role, setRole] = useState('buyer')
@@ -60,6 +61,7 @@ function Buy() {
       const [showRefinance, setShowRefinance] = useState(false)
     
       const inputBase = 'w-full pl-10 px-3 py-2 rounded-xl border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a] pr-4 text-sm'
+      const { showToast } = useToast()
     
       function onChange(e) {
         const { name, value } = e.target
@@ -102,42 +104,62 @@ function Buy() {
 
           const response = await apiClient.post('/api/subadmin/management/save-buyer', payload)
           console.log('buyer saved:', response.data)
-          alert(response.data?.message || 'Buyer saved successfully')
+          showToast({
+            type: 'success',
+            title: 'Success',
+            message: response.data?.message || 'Buyer saved successfully'
+          })
         } catch (error) {
           const errorData = error?.response?.data
           const requiresRewriteConfirm =
             errorData?.requiresConfirmation && errorData?.code === 'VEHICLE_DATA_EXISTS'
 
           if (requiresRewriteConfirm) {
+            const overwritePayload = {
+              role,
+              mode: 'buy',
+              ...form,
+              overwriteExisting: true,
+            }
+
             const shouldRewrite = window.confirm(
-              errorData?.message || 'This vehicle data is already exists. Do you want to rewrite it?'
+              errorData?.message || 'This vehicle data already exists. Do you want to rewrite it?'
             )
 
             if (!shouldRewrite) {
+              showToast({
+                type: 'info',
+                title: 'Cancelled',
+                message: 'Rewrite request cancelled'
+              })
               return
             }
 
             try {
-              const overwritePayload = {
-                role,
-                mode: 'buy',
-                ...form,
-                overwriteExisting: true,
-              }
-
               const overwriteResponse = await apiClient.post('/api/subadmin/management/save-buyer', overwritePayload)
               console.log('buyer rewritten:', overwriteResponse.data)
-              alert(overwriteResponse.data?.message || 'Buyer details rewritten successfully')
-              return
+              showToast({
+                type: 'success',
+                title: 'Success',
+                message: overwriteResponse.data?.message || 'Buyer details rewritten successfully'
+              })
             } catch (overwriteError) {
               console.error('buyer rewrite error:', overwriteError?.response?.data || overwriteError.message)
-              alert(overwriteError?.response?.data?.message || 'Failed to rewrite buyer details')
-              return
+              showToast({
+                type: 'error',
+                title: 'Error',
+                message: overwriteError?.response?.data?.message || 'Failed to rewrite buyer details'
+              })
             }
+            return
           }
 
           console.error('buyer save error:', errorData || error.message)
-          alert(errorData?.message || 'Failed to save buyer')
+          showToast({
+            type: 'error',
+            title: 'Error',
+            message: errorData?.message || 'Failed to save buyer'
+          })
         }
       }
     
@@ -783,6 +805,7 @@ function Buy() {
           </div>
         )}
       </form>
+
     </div>
   )
 }

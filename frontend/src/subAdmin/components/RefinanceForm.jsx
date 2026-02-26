@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apDistricts, apMandals } from "../constants/apLocations";
 import apiClient from "../../api/axios";
+import { useToast } from "../../components/ToastProvider";
 
 function RefinanceForm({ inputBase, labelClass }) {
   const baseInput =
@@ -50,6 +51,7 @@ function RefinanceForm({ inputBase, labelClass }) {
   });
 
   const [showGuarantor, setShowGuarantor] = useState(false);
+  const { showToast } = useToast();
 
   const onChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -92,10 +94,18 @@ function RefinanceForm({ inputBase, labelClass }) {
 
       const response = await apiClient.post("/api/subadmin/management/save-buyer", payload);
       console.log("refinance saved:", response.data);
-      alert("Refinance saved successfully");
+      showToast({
+        type: "success",
+        title: "Success",
+        message: response.data?.message || "Refinance saved successfully",
+      });
     } catch (error) {
       console.error("refinance save error:", error?.response?.data || error.message);
-      alert(error?.response?.data?.message || "Failed to save refinance");
+      showToast({
+        type: "error",
+        title: "Error",
+        message: error?.response?.data?.message || "Failed to save refinance",
+      });
     }
   };
 

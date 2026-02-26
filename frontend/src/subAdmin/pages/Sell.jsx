@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import RefinanceForm from '../components/RefinanceForm'
 import { apDistricts, apMandals } from '../constants/apLocations'
 import apiClient from '../../api/axios'
+import { useToast } from '../../components/ToastProvider'
 
 function Sell() {
   const [role, setRole] = useState('seller')
@@ -41,6 +42,7 @@ function Sell() {
   const [showRefinance, setShowRefinance] = useState(false)
 
   const inputBase = 'w-full pl-10 px-3 py-2 rounded-xl border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a] pr-4 text-sm'
+  const { showToast } = useToast()
 
   function onChange(e) {
     const { name, value } = e.target
@@ -82,10 +84,18 @@ function Sell() {
 
       const response = await apiClient.post('/api/subadmin/management/save-seller', payload)
       console.log('seller saved:', response.data)
-      alert('Seller saved successfully')
+      showToast({
+        type: 'success',
+        title: 'Success',
+        message: response.data?.message || 'Seller saved successfully'
+      })
     } catch (error) {
       console.error('seller save error:', error?.response?.data || error.message)
-      alert(error?.response?.data?.message || 'Failed to save seller')
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error?.response?.data?.message || 'Failed to save seller'
+      })
     }
   }
 
@@ -556,6 +566,7 @@ function Sell() {
           </div>
         )}
       </form>
+
     </div>
   )
 }

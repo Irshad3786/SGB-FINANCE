@@ -102,10 +102,42 @@ function Buy() {
 
           const response = await apiClient.post('/api/subadmin/management/save-buyer', payload)
           console.log('buyer saved:', response.data)
-          alert('Buyer saved successfully')
+          alert(response.data?.message || 'Buyer saved successfully')
         } catch (error) {
-          console.error('buyer save error:', error?.response?.data || error.message)
-          alert(error?.response?.data?.message || 'Failed to save buyer')
+          const errorData = error?.response?.data
+          const requiresRewriteConfirm =
+            errorData?.requiresConfirmation && errorData?.code === 'VEHICLE_DATA_EXISTS'
+
+          if (requiresRewriteConfirm) {
+            const shouldRewrite = window.confirm(
+              errorData?.message || 'This vehicle data is already exists. Do you want to rewrite it?'
+            )
+
+            if (!shouldRewrite) {
+              return
+            }
+
+            try {
+              const overwritePayload = {
+                role,
+                mode: 'buy',
+                ...form,
+                overwriteExisting: true,
+              }
+
+              const overwriteResponse = await apiClient.post('/api/subadmin/management/save-buyer', overwritePayload)
+              console.log('buyer rewritten:', overwriteResponse.data)
+              alert(overwriteResponse.data?.message || 'Buyer details rewritten successfully')
+              return
+            } catch (overwriteError) {
+              console.error('buyer rewrite error:', overwriteError?.response?.data || overwriteError.message)
+              alert(overwriteError?.response?.data?.message || 'Failed to rewrite buyer details')
+              return
+            }
+          }
+
+          console.error('buyer save error:', errorData || error.message)
+          alert(errorData?.message || 'Failed to save buyer')
         }
       }
     

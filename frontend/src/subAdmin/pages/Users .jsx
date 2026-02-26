@@ -215,7 +215,7 @@ function Users () {
                       </span>
                     ) : u.status === 'seller pending' ? (
                       <span className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="#1e40af" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 3v6"/><path d="m12 15l0 6"/><path d="m5 12l6 0"/><path d="m13 12l6 0"/></g></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#90b5e2" d="m21.41 11.41l-8.83-8.83c-.37-.37-.88-.58-1.41-.58H4c-1.1 0-2 .9-2 2v7.17c0 .53.21 1.04.59 1.41l8.83 8.83c.78.78 2.05.78 2.83 0l7.17-7.17c.78-.78.78-2.04-.01-2.83M6.5 8C5.67 8 5 7.33 5 6.5S5.67 5 6.5 5S8 5.67 8 6.5S7.33 8 6.5 8"/></svg>
                         <span className="capitalize text-xs">seller pending</span>
                       </span>
                     ) : (
@@ -258,7 +258,7 @@ function Users () {
                     </span>
                   ) : u.status === 'seller pending' ? (
                     <span className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20"height="20" viewBox="0 0 24 24"><g fill="none" stroke="#1e40af" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 3v6"/><path d="m12 15l0 6"/><path d="m5 12l6 0"/><path d="m13 12l6 0"/></g></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#90b5e2" d="m21.41 11.41l-8.83-8.83c-.37-.37-.88-.58-1.41-.58H4c-1.1 0-2 .9-2 2v7.17c0 .53.21 1.04.59 1.41l8.83 8.83c.78.78 2.05.78 2.83 0l7.17-7.17c.78-.78.78-2.04-.01-2.83M6.5 8C5.67 8 5 7.33 5 6.5S5.67 5 6.5 5S8 5.67 8 6.5S7.33 8 6.5 8"/></svg>
                       <span className="capitalize text-xs">seller pending</span>
                     </span>
                   ) : (

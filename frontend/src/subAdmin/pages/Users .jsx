@@ -20,7 +20,7 @@ function Users () {
   const [error, setError] = useState(null)
   const [editOpen, setEditOpen] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
-  const [filters, setFilters] = useState({ from: getTodayInputDate(), to: '', status: 'all' })
+  const [filters, setFilters] = useState({ from: '', to: getTodayInputDate(), status: 'all' })
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [deleteUserId, setDeleteUserId] = useState(null)
@@ -60,7 +60,7 @@ function Users () {
         params.search = trimmedSearch
       }
 
-      if (filters.to) {
+      if (filters.from && filters.to) {
         params.from = filters.from
         params.to = filters.to
       }
@@ -69,15 +69,34 @@ function Users () {
         params,
       })
       if (response.data?.success && response.data?.data) {
-        setUsers(response.data.data)
-        setPagination(response.data?.pagination || {
-          page: targetPage,
-          limit: PAGE_SIZE,
-          totalRecords: response.data?.total || 0,
-          totalPages: 1,
-          hasNextPage: false,
-          hasPrevPage: targetPage > 1,
+        const responsePagination = response.data?.pagination || {}
+        const responseData = Array.isArray(response.data?.data) ? response.data.data : []
+        const limit = PAGE_SIZE
+        const serverTotalRecords = Number(responsePagination.totalRecords) > 0
+          ? Number(responsePagination.totalRecords)
+          : Number(response.data?.total) || responseData.length
+
+        const isUnpaginatedPayload = responseData.length > limit
+
+        const totalRecords = isUnpaginatedPayload ? responseData.length : serverTotalRecords
+        const totalPages = Math.max(1, Math.ceil(totalRecords / limit))
+        const currentPage = Math.min(Math.max(1, targetPage), totalPages)
+        const startIndex = (currentPage - 1) * limit
+        const pageData = isUnpaginatedPayload
+          ? responseData.slice(startIndex, startIndex + limit)
+          : responseData
+
+        setUsers(pageData)
+        setPagination({
+          page: currentPage,
+          limit,
+          totalRecords,
+          totalPages,
+          hasNextPage: currentPage < totalPages,
+          hasPrevPage: currentPage > 1,
         })
+
+        setPage(prevPage => (prevPage === currentPage ? prevPage : currentPage))
       } else {
         setError('Failed to fetch users')
       }
@@ -95,6 +114,12 @@ function Users () {
   const handleFilterChange = (key, value) => {
     setPage(1)
     setFilters(prev => ({ ...prev, [key]: value }))
+  }
+
+  const handleCloseFilters = () => {
+    setPage(1)
+    setFilters(prev => ({ ...prev, from: '', to: getTodayInputDate() }))
+    setShowFilters(false)
   }
 
   // Fetch user data from API
@@ -260,7 +285,7 @@ function Users () {
             </div>
 
             <div className="ml-auto">
-              <button onClick={() => setShowFilters(false)} className="px-3 py-1 text-xs bg-white  rounded">Close</button>
+              <button onClick={handleCloseFilters} className="px-3 py-1 text-xs bg-white  rounded">Close</button>
             </div>
           </div>
         )}

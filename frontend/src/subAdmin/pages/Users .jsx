@@ -1,16 +1,28 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import EditUserModal from '../components/EditUserModal'
 import apiClient from '../../api/axios'
+import { useToast } from '../../components/ToastProvider'
+
+const getTodayInputDate = () => {
+  const date = new Date()
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 function Users () {
   const PAGE_SIZE = 10
+  const { showToast } = useToast()
   const [modalUser, setModalUser] = useState(null)
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [editOpen, setEditOpen] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
-  const [filters, setFilters] = useState({ from: '', to: '', status: 'all' })
+  const [filters, setFilters] = useState({ from: getTodayInputDate(), to: '', status: 'all' })
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
   const [deleteUserId, setDeleteUserId] = useState(null)
   const [page, setPage] = useState(1)
   const [pagination, setPagination] = useState({
@@ -21,42 +33,74 @@ function Users () {
     hasNextPage: false,
     hasPrevPage: false,
   })
+  const isInitialLoadRef = useRef(true)
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setSearch(searchInput)
+    }, 350)
+
+    return () => clearTimeout(timeoutId)
+  }, [searchInput])
+
+  const fetchUsers = useCallback(async (targetPage) => {
+    try {
+      if (isInitialLoadRef.current) {
+        setLoading(true)
+      }
+      setError(null)
+      const params = {
+        page: targetPage,
+        limit: PAGE_SIZE,
+        status: filters.status,
+      }
+
+      const trimmedSearch = search.trim()
+      if (trimmedSearch) {
+        params.search = trimmedSearch
+      }
+
+      if (filters.to) {
+        params.from = filters.from
+        params.to = filters.to
+      }
+
+      const response = await apiClient.get('/api/subadmin/management/users', {
+        params,
+      })
+      if (response.data?.success && response.data?.data) {
+        setUsers(response.data.data)
+        setPagination(response.data?.pagination || {
+          page: targetPage,
+          limit: PAGE_SIZE,
+          totalRecords: response.data?.total || 0,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: targetPage > 1,
+        })
+      } else {
+        setError('Failed to fetch users')
+      }
+    } catch (err) {
+      console.error('Error fetching users:', err)
+      setError(err.response?.data?.message || 'Failed to fetch user data')
+    } finally {
+      if (isInitialLoadRef.current) {
+        setLoading(false)
+        isInitialLoadRef.current = false
+      }
+    }
+  }, [filters.from, filters.to, filters.status, search])
+
+  const handleFilterChange = (key, value) => {
+    setPage(1)
+    setFilters(prev => ({ ...prev, [key]: value }))
+  }
 
   // Fetch user data from API
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        const response = await apiClient.get('/api/subadmin/management/users', {
-          params: {
-            page,
-            limit: PAGE_SIZE,
-          },
-        })
-        if (response.data?.success && response.data?.data) {
-          setUsers(response.data.data)
-          setPagination(response.data?.pagination || {
-            page,
-            limit: PAGE_SIZE,
-            totalRecords: response.data?.total || 0,
-            totalPages: 1,
-            hasNextPage: false,
-            hasPrevPage: page > 1,
-          })
-        } else {
-          setError('Failed to fetch users')
-        }
-      } catch (err) {
-        console.error('Error fetching users:', err)
-        setError(err.response?.data?.message || 'Failed to fetch user data')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchUsers()
-  }, [page])
+    fetchUsers(page)
+  }, [page, fetchUsers])
 
   useEffect(() => {
     function onKey(e) {
@@ -66,11 +110,47 @@ function Users () {
     return () => window.removeEventListener('keydown', onKey)
   }, [modalUser])
 
-  function handleSave(updated) {
-    if (!updated || !updated.id) return
-    setUsers(prev => prev.map(u => (u.id === updated.id ? { ...u, ...updated } : u)))
-    setModalUser(updated)
-    setEditOpen(false)
+  async function handleSave(updated) {
+    if (!updated || !updated.id || !modalUser) return
+
+    const {
+      sellerProfile,
+      sellerAadhaarFront,
+      sellerAadhaarBack,
+      buyerProfile,
+      buyerAadhaarFront,
+      buyerAadhaarBack,
+      ...editablePayload
+    } = updated
+
+    const payload = {
+      ...editablePayload,
+      sellerId: modalUser.sellerId || null,
+      buyerId: modalUser.buyerId || null,
+    }
+
+    try {
+      setError(null)
+      const response = await apiClient.put('/api/subadmin/management/users', payload)
+      setEditOpen(false)
+
+      const mergedModalUser = {
+        ...modalUser,
+        ...editablePayload,
+        vehicle: editablePayload.vehicleNumber ?? modalUser.vehicle,
+      }
+      setModalUser(mergedModalUser)
+
+      await fetchUsers(page)
+      showToast({
+        type: 'success',
+        title: 'Saved',
+        message: response?.data?.message || 'User details updated successfully',
+      })
+    } catch (err) {
+      console.error('Error updating user:', err)
+      setError(err.response?.data?.message || 'Failed to update user data')
+    }
   }
 
   function handleDelete() {
@@ -136,6 +216,11 @@ function Users () {
               type="search"
               name="search"
               placeholder="Search users..."
+              value={searchInput}
+              onChange={(e) => {
+                setPage(1)
+                setSearchInput(e.target.value)
+              }}
               className="w-full pl-10 pr-3 py-3 rounded-3xl border border-transparent bg-white/90 text-xs focus:outline-none focus:ring-2 focus:ring-[#bff86a] shadow-[1px_2px_9px_-4px_rgba(0,_0,_0,_0.7)]"
             />
           </div>
@@ -154,9 +239,9 @@ function Users () {
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 16 16"><path fill="#a6a6a6" d="M5.75 7.5a.75.75 0 1 0 0 1.5a.75.75 0 0 0 0-1.5m1.5.75A.75.75 0 0 1 8 7.5h2.25a.75.75 0 0 1 0 1.5H8a.75.75 0 0 1-.75-.75M5.75 9.5a.75.75 0 0 0 0 1.5H8a.75.75 0 0 0 0-1.5z"/><path fill="#a6a6a6" fill-rule="evenodd" d="M4.75 1a.75.75 0 0 0-.75.75V3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2V1.75a.75.75 0 0 0-1.5 0V3h-5V1.75A.75.75 0 0 0 4.75 1M3.5 7a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1z" clip-rule="evenodd"/></svg>              </span>
               <div className="flex items-center gap-2">
                 <label className="text-[12px] text-gray-500">Date range</label>
-                <input type="date" value={filters.from} onChange={(e)=> setFilters(f=>({...f, from: e.target.value}))} className="text-xs border rounded px-2 py-1" />
+                <input type="date" value={filters.from} onChange={(e)=> handleFilterChange('from', e.target.value)} className="text-xs border rounded px-2 py-1" />
                 <span className="text-gray-400">—</span>
-                <input type="date" value={filters.to} onChange={(e)=> setFilters(f=>({...f, to: e.target.value}))} className="text-xs border rounded px-2 py-1" />
+                <input type="date" value={filters.to} onChange={(e)=> handleFilterChange('to', e.target.value)} className="text-xs border rounded px-2 py-1" />
               </div>
             </div>
 
@@ -165,11 +250,11 @@ function Users () {
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M15 16.69V13h1.5v2.82l2.44 1.41l-.75 1.3zM19.5 3.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2L7.5 3.5L6 2L4.5 3.5L3 2v20l1.5-1.5L6 22l1.5-1.5L9 22l1.58-1.58c.14.19.3.36.47.53A7.001 7.001 0 0 0 21 11.1V2zM11.1 11c-.6.57-1.07 1.25-1.43 2H6v-2zm-2.03 4c-.07.33-.07.66-.07 1s0 .67.07 1H6v-2zM18 9H6V7h12zm2.85 7c0 .64-.12 1.27-.35 1.86c-.26.58-.62 1.14-1.07 1.57c-.43.45-.99.81-1.57 1.07c-.59.23-1.22.35-1.86.35c-2.68 0-4.85-2.17-4.85-4.85c0-1.29.51-2.5 1.42-3.43c.93-.91 2.14-1.42 3.43-1.42c2.67 0 4.85 2.17 4.85 4.85"/></svg>              </span>
               <div className="flex items-center gap-2">
                 <label className="text-[12px] text-gray-500">Status</label>
-                <select value={filters.status} onChange={(e)=> setFilters(f=>({...f, status: e.target.value}))} className="text-xs border rounded px-2 py-1">
+                <select value={filters.status} onChange={(e)=> handleFilterChange('status', e.target.value)} className="text-xs border rounded px-2 py-1">
                   <option value="all">All</option>
                   <option value="completed">Completed</option>
-                  <option value="pending">Buyer Pending</option>
-                  <option value="seller-pending">Seller Pending</option>
+                  <option value="buyer pending">Buyer Pending</option>
+                  <option value="seller pending">Seller Pending</option>
                 </select>
               </div>
             </div>
@@ -294,17 +379,23 @@ function Users () {
           <button
             onClick={() => setPage(prev => Math.max(1, prev - 1))}
             disabled={!pagination.hasPrevPage || loading}
-            className="px-3 py-1 rounded-full bg-gray-100 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1 rounded-full bg-gray-100 text-xs disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
           >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+              <path fill="#a6a6a6" d="m4 10l9 9l1.4-1.5L7 10l7.4-7.5L13 1z"/>
+            </svg>
             previous
           </button>
           <div className="text-xs">{pagination.page} / {pagination.totalPages}</div>
           <button
             onClick={() => setPage(prev => prev + 1)}
             disabled={!pagination.hasNextPage || loading}
-            className="px-3 py-1 rounded-full bg-gray-100 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1 rounded-full bg-gray-100 text-xs disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
           >
             next
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+              <path fill="#a6a6a6" d="M7 1L5.6 2.5L13 10l-7.4 7.5L7 19l9-9z"/>
+            </svg>
           </button>
         </div>
       </div>

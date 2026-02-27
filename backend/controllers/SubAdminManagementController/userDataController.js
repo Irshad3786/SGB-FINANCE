@@ -17,13 +17,51 @@ const createDisplayDate = (mongoId) => {
   return `${day}-${month}-${year}`;
 };
 
+const createTimestampDate = (mongoId) => {
+  if (!mongoId || typeof mongoId.getTimestamp !== "function") return null;
+  const createdAt = mongoId.getTimestamp();
+  return createdAt || null;
+};
+
+const normalizeStatusValue = (value) => {
+  if (!value) return "";
+  return String(value).trim().toLowerCase().replace(/-/g, " ");
+};
+
+const parseDateBoundary = (value, boundary = "start") => {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  if (boundary === "end") {
+    parsed.setHours(23, 59, 59, 999);
+  } else {
+    parsed.setHours(0, 0, 0, 0);
+  }
+
+  return parsed;
+};
+
 const getUserData = async (req, res) => {
   try {
-    const { vehicleNumber = "", chassisNo = "", search = "", page = 1, limit = 10 } = req.query;
+    const {
+      vehicleNumber = "",
+      chassisNo = "",
+      search = "",
+      from = "",
+      to = "",
+      status = "all",
+      page = 1,
+      limit = 10,
+    } = req.query;
 
     const normalizedVehicle = normalizeKey(vehicleNumber);
     const normalizedChassis = normalizeKey(chassisNo);
     const normalizedSearch = normalizeKey(search);
+    const normalizedStatus = normalizeStatusValue(status);
+    const fromDate = parseDateBoundary(from, "start");
+    const toDate = parseDateBoundary(to, "end");
+    const shouldApplyDateRange = Boolean(fromDate && toDate);
 
     const sellers = await Seller.find({})
       .select("fullName phoneNo aadharNo dateOfBirth fullAddress vehicle referralName referralPhoneNo")
@@ -78,6 +116,7 @@ const getUserData = async (req, res) => {
           soldAmount: seller?.vehicle?.bikePrice ?? null,
           buyAmount: matchedBuyer?.soldamount ?? null,
           date: createDisplayDate(seller?._id),
+          createdAtDate: createTimestampDate(seller?._id),
           sellerDob: seller?.dateOfBirth || null,
           buyerDob: matchedBuyer?.dateOfBirth || null,
           sellerPhone: seller?.phoneNo || "",
@@ -130,6 +169,7 @@ const getUserData = async (req, res) => {
           soldAmount: null,
           buyAmount: buyer?.soldamount ?? null,
           date: createDisplayDate(buyer?._id),
+          createdAtDate: createTimestampDate(buyer?._id),
           sellerDob: null,
           buyerDob: buyer?.dateOfBirth || null,
           sellerPhone: "",
@@ -168,12 +208,36 @@ const getUserData = async (req, res) => {
 
     const records = [...sellerRecords, ...unmatchedBuyerRecords]
       .filter((record) => {
+        if (normalizedStatus && normalizedStatus !== "all") {
+          const recordStatus = normalizeStatusValue(record.status);
+          if (recordStatus !== normalizedStatus) {
+            return false;
+          }
+        }
+
+        if (shouldApplyDateRange) {
+          if (!record.createdAtDate) {
+            return false;
+          }
+
+          const recordDate = new Date(record.createdAtDate);
+          if (recordDate < fromDate || recordDate > toDate) {
+            return false;
+          }
+        }
+
         if (!normalizedVehicle && !normalizedChassis && !normalizedSearch) return true;
 
         const recordVehicle = normalizeKey(record.vehicle);
         const recordChassis = normalizeKey(record.chassis);
         const sellerName = normalizeKey(record.seller);
         const buyerName = normalizeKey(record.buyerName);
+        const sellerPhone = normalizeKey(record.sellerPhone);
+        const buyerPhone = normalizeKey(record.buyerPhone);
+        const sellerAddress = normalizeKey(record.sellerAddress);
+        const buyerAddress = normalizeKey(record.buyerAddress);
+        const soldAmount = normalizeKey(record.soldAmount);
+        const buyAmount = normalizeKey(record.buyAmount);
 
         if (normalizedVehicle && recordVehicle === normalizedVehicle) return true;
         if (normalizedChassis && recordChassis === normalizedChassis) return true;
@@ -183,7 +247,13 @@ const getUserData = async (req, res) => {
             recordVehicle.includes(normalizedSearch) ||
             recordChassis.includes(normalizedSearch) ||
             sellerName.includes(normalizedSearch) ||
-            buyerName.includes(normalizedSearch)
+            buyerName.includes(normalizedSearch) ||
+            sellerPhone.includes(normalizedSearch) ||
+            buyerPhone.includes(normalizedSearch) ||
+            sellerAddress.includes(normalizedSearch) ||
+            buyerAddress.includes(normalizedSearch) ||
+            soldAmount.includes(normalizedSearch) ||
+            buyAmount.includes(normalizedSearch)
           );
         }
 
@@ -205,6 +275,9 @@ const getUserData = async (req, res) => {
         vehicleNumber,
         chassisNo,
         search,
+        from,
+        to,
+        status,
         page: safePage,
         limit: parsedLimit,
       },
@@ -228,4 +301,144 @@ const getUserData = async (req, res) => {
   }
 };
 
-export { getUserData };
+const setIfProvided = (target, key, value, transform) => {
+  if (value === undefined) return;
+  target[key] = typeof transform === "function" ? transform(value) : value;
+};
+
+const toNullableDate = (value) => {
+  if (value === null || value === "") return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+};
+
+const toNullableNumber = (value) => {
+  if (value === null || value === "") return null;
+  const number = Number(value);
+  return Number.isNaN(number) ? undefined : number;
+};
+
+const updateUserData = async (req, res) => {
+  try {
+    const {
+      sellerId,
+      buyerId,
+      vehicleName,
+      vehicleNumber,
+      vehicle,
+      model,
+      chassis,
+      seller,
+      sellerPhone,
+      sellerAadhaar,
+      sellerDob,
+      sellerAddress,
+      sellerReferenceName,
+      sellerReferencePhone,
+      soldAmount,
+      buyerName,
+      buyerPhone,
+      buyerAadhaar,
+      buyerDob,
+      buyerAddress,
+      buyerReferenceName,
+      buyerReferencePhone,
+      buyAmount,
+      financeAmount,
+      emiAmount,
+      emiMonths,
+      emiDate,
+      guarantorName,
+      guarantorPhone,
+      guarantorAadhaar,
+      guarantorAddress,
+    } = req.body || {};
+
+    if (!sellerId && !buyerId) {
+      return res.status(400).json({
+        success: false,
+        message: "sellerId or buyerId is required",
+      });
+    }
+
+    const normalizedVehicleNumber = vehicleNumber ?? vehicle;
+
+    const sellerSet = {};
+    const buyerSet = {};
+
+    setIfProvided(sellerSet, "fullName", seller);
+    setIfProvided(sellerSet, "phoneNo", sellerPhone);
+    setIfProvided(sellerSet, "aadharNo", sellerAadhaar);
+    setIfProvided(sellerSet, "dateOfBirth", sellerDob, toNullableDate);
+    setIfProvided(sellerSet, "fullAddress", sellerAddress);
+    setIfProvided(sellerSet, "referralName", sellerReferenceName);
+    setIfProvided(sellerSet, "referralPhoneNo", sellerReferencePhone);
+    setIfProvided(sellerSet, "vehicle.vehicleName", vehicleName);
+    setIfProvided(sellerSet, "vehicle.vehicleNumber", normalizedVehicleNumber);
+    setIfProvided(sellerSet, "vehicle.model", model);
+    setIfProvided(sellerSet, "vehicle.chassisNo", chassis);
+    setIfProvided(sellerSet, "vehicle.bikePrice", soldAmount, toNullableNumber);
+
+    setIfProvided(buyerSet, "name", buyerName);
+    setIfProvided(buyerSet, "phoneNo", buyerPhone);
+    setIfProvided(buyerSet, "aadharNo", buyerAadhaar);
+    setIfProvided(buyerSet, "dateOfBirth", buyerDob, toNullableDate);
+    setIfProvided(buyerSet, "fullAddress", buyerAddress);
+    setIfProvided(buyerSet, "referralName", buyerReferenceName);
+    setIfProvided(buyerSet, "referralPhoneNo", buyerReferencePhone);
+    setIfProvided(buyerSet, "soldamount", buyAmount, toNullableNumber);
+    setIfProvided(buyerSet, "vehicle.vehicleName", vehicleName);
+    setIfProvided(buyerSet, "vehicle.vehicleNumber", normalizedVehicleNumber);
+    setIfProvided(buyerSet, "vehicle.model", model);
+    setIfProvided(buyerSet, "vehicle.chassisNo", chassis);
+    setIfProvided(buyerSet, "finance.financeAmount", financeAmount, toNullableNumber);
+    setIfProvided(buyerSet, "finance.emiAmount", emiAmount, toNullableNumber);
+    setIfProvided(buyerSet, "finance.months", emiMonths, toNullableNumber);
+    setIfProvided(buyerSet, "finance.emiDate", emiDate, toNullableDate);
+    setIfProvided(buyerSet, "finance.emiStartDate", emiDate, toNullableDate);
+    setIfProvided(buyerSet, "guarantor.fullName", guarantorName);
+    setIfProvided(buyerSet, "guarantor.phoneNo", guarantorPhone);
+    setIfProvided(buyerSet, "guarantor.aadharNo", guarantorAadhaar);
+    setIfProvided(buyerSet, "guarantor.address", guarantorAddress);
+
+    const operations = [];
+
+    if (sellerId && Object.keys(sellerSet).length > 0) {
+      operations.push(
+        Seller.findByIdAndUpdate(sellerId, { $set: sellerSet }, { new: true }).lean()
+      );
+    }
+
+    if (buyerId && Object.keys(buyerSet).length > 0) {
+      operations.push(
+        Buyer.findByIdAndUpdate(buyerId, { $set: buyerSet }, { new: true }).lean()
+      );
+    }
+
+    if (operations.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No editable fields were provided",
+      });
+    }
+
+    await Promise.all(operations);
+
+    return res.status(200).json({
+      success: true,
+      message: "User data updated successfully",
+      data: {
+        sellerId: sellerId || null,
+        buyerId: buyerId || null,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update user data",
+      error: error.message,
+    });
+  }
+};
+
+export { getUserData, updateUserData };

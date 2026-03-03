@@ -11,6 +11,13 @@ const dpPaymentSchema = new mongoose.Schema({
     }
 }, { _id: false });
 
+const usedSpareSchema = new mongoose.Schema({
+    title: String,
+    amount: Number,
+    enteredDate: Date,
+    modifiedDate: Date,
+}, { _id: false });
+
 const buyerSchema = new mongoose.Schema({
     name: String,
     sowoco:String,
@@ -45,6 +52,11 @@ const buyerSchema = new mongoose.Schema({
         model: String,
         chassisNo: String,
         bikePrice: Number,
+        usedSpares: {
+            type: [usedSpareSchema],
+            default: [],
+        },
+        
     },
 
     guarantor:{

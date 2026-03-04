@@ -1,111 +1,158 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import apiClient from '../../api/axios';
+import { useToast } from '../../components/ToastProvider';
 
 function VehicleStock() {
   const [query, setQuery] = useState("");
   const [modalItem, setModalItem] = useState(null);
   const [addingWorkTo, setAddingWorkTo] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ page: 1, limit: 9, totalRecords: 0, totalPages: 1, hasPrev: false, hasNext: false });
+  const [showSoldConfirm, setShowSoldConfirm] = useState(false);
+  const [selectedSoldVehicle, setSelectedSoldVehicle] = useState(null);
   const [newWork, setNewWork] = useState({ title: "", amount: "", date: "", lastModified: "" });
   const [editingWork, setEditingWork] = useState(null);
   const [editedWork, setEditedWork] = useState({ index: null, title: "", amount: "", date: "", lastModified: "" });
-  const [stock, setStock] = useState([
-    {
-      id: 1,
-      modelName: "SPLENDOR PLUS",
-      regNo: "AP39D29786",
-      chassisNo: "MBLHA10W55DFB2156",
-      modelYear: 2022,
-      bikePrice: 45000,
-      workCost: 15000,
-      sellerName: "Rajesh Kumar",
-      sellerPhone: "+91 98765 43210",
-      sellerEmail: "rajesh@example.com",
-      workDetails: [
-        { name: "Engine Oil", amount: 700, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "General Service", amount: 1500, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "Tyres", amount: 5000, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "Battery", amount: 2000, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "Labour", amount: 4000, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "Miscellaneous", amount: 1800, date: "2024-12-20", lastModified: "2024-12-20" },
-      ],
-    },
-    {
-      id: 2,
-      modelName: "SPLENDOR PLUS",
-      regNo: "AP39DZ9786",
-      chassisNo: "MBLHA10W55DFB2156",
-      modelYear: 2022,
-      bikePrice: 45000,
-      workCost: 15000,
-      sellerName: "Priya Singh",
-      sellerPhone: "+91 98765 43211",
-      sellerEmail: "priya@example.com",
-      workDetails: [
-        { name: "Engine Oil", amount: 700, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "General Service", amount: 1500, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "Tyres", amount: 5000, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "Battery", amount: 2000, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "Labour", amount: 4000, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "Miscellaneous", amount: 1800, date: "2024-12-20", lastModified: "2024-12-20" },
-      ],
-    },
-    {
-      id: 3,
-      modelName: "SPLENDOR PLUS",
-      regNo: "AP39DZ9786",
-      chassisNo: "MBLHA10W55DFB2156",
-      modelYear: 2022,
-      bikePrice: 45000,
-      workCost: 15000,
-      sellerName: "Amit Patel",
-      sellerPhone: "+91 98765 43212",
-      sellerEmail: "amit@example.com",
-      workDetails: [
-        { name: "Engine Oil", amount: 700, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "General Service", amount: 1500, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "Tyres", amount: 5000, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "Battery", amount: 2000, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "Labour", amount: 4000, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "Miscellaneous", amount: 1800, date: "2024-12-20", lastModified: "2024-12-20" },
-      ],
-    },
-    {
-      id: 4,
-      modelName: "SPLENDOR PLUS",
-      regNo: "AP39DZ9786",
-      chassisNo: "MBLHA10W55DFB2156",
-      modelYear: 2022,
-      bikePrice: 45000,
-      workCost: 15000,
-      sellerName: "Deepak Sharma",
-      sellerPhone: "+91 98765 43213",
-      sellerEmail: "deepak@example.com",
-      workDetails: [
-        { name: "Engine Oil", amount: 700, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "General Service", amount: 1500, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "Tyres", amount: 5000, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "Battery", amount: 2000, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "Labour", amount: 4000, date: "2024-12-20", lastModified: "2024-12-20" },
-        { name: "Miscellaneous", amount: 1800, date: "2024-12-20", lastModified: "2024-12-20" },
-      ],
-    },
-  ]);
+  const [stock, setStock] = useState([]);
+  const { showToast } = useToast();
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return stock;
-    return stock.filter((s) =>
-      [s.modelName, s.regNo, s.chassisNo]
-        .join(" ")
-        .toLowerCase()
-        .includes(q)
-    );
-  }, [query, stock]);
+  useEffect(() => {
+    setPage(1);
+  }, [query]);
+
+  useEffect(() => {
+    const fetchVehicleStock = async () => {
+      try {
+        setLoading(true);
+        const response = await apiClient.get('/api/subadmin/management/vehicle-stock', {
+          params: {
+            search: query,
+            page,
+            limit: 9,
+          },
+        });
+        setStock(response?.data?.data || []);
+        setPagination(response?.data?.pagination || { page: 1, limit: 9, totalRecords: 0, totalPages: 1, hasPrev: false, hasNext: false });
+      } catch (error) {
+        showToast({
+          type: 'error',
+          title: 'Error',
+          message: error?.response?.data?.message || 'Failed to load vehicle stock',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVehicleStock();
+  }, [showToast, query, page]);
 
   const inr = (n) =>
     Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 
   const totalWork = (details) =>
     details.reduce((sum, d) => sum + Number(d.amount || 0), 0);
+
+  const handleMarkSold = async (sellerId) => {
+    try {
+      await apiClient.patch(`/api/subadmin/management/vehicle-stock/${sellerId}/sold`);
+      setStock((prev) => prev.filter((item) => item.id !== sellerId));
+      if (modalItem?.id === sellerId) {
+        setModalItem(null);
+      }
+      showToast({ type: 'success', title: 'Sold', message: 'Vehicle marked as sold' });
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error?.response?.data?.message || 'Failed to mark vehicle as sold',
+      });
+    }
+  };
+
+  const openSoldConfirm = (item) => {
+    setSelectedSoldVehicle(item);
+    setShowSoldConfirm(true);
+  };
+
+  const closeSoldConfirm = () => {
+    setShowSoldConfirm(false);
+    setSelectedSoldVehicle(null);
+  };
+
+  const confirmMarkSold = async () => {
+    if (!selectedSoldVehicle?.id) return;
+    await handleMarkSold(selectedSoldVehicle.id);
+    closeSoldConfirm();
+  };
+
+  const applyUpdatedWork = (sellerId, workDetails, workCost) => {
+    setStock((prev) =>
+      prev.map((item) =>
+        item.id === sellerId ? { ...item, workDetails, workCost } : item
+      )
+    );
+
+    setModalItem((prev) => {
+      if (!prev || prev.id !== sellerId) return prev;
+      return { ...prev, workDetails, workCost };
+    });
+  };
+
+  const handleUpdateSpare = async (index, originalWork) => {
+    if (!editedWork.title || editedWork.amount === "") return;
+
+    try {
+      const response = await apiClient.put(
+        `/api/subadmin/management/vehicle-stock/${modalItem.id}/spares/${index}`,
+        {
+          title: editedWork.title,
+          amount: Number(editedWork.amount),
+          date: editedWork.date || originalWork.date,
+        }
+      );
+
+      const data = response?.data?.data;
+      applyUpdatedWork(modalItem.id, data?.workDetails || [], Number(data?.workCost || 0));
+      setEditingWork(null);
+      setEditedWork({ index: null, title: "", amount: "", date: "", lastModified: "" });
+      showToast({ type: 'success', title: 'Updated', message: 'Spare updated successfully' });
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error?.response?.data?.message || 'Failed to update spare',
+      });
+    }
+  };
+
+  const handleAddSpare = async () => {
+    if (!newWork.title || newWork.amount === "") return;
+
+    try {
+      const response = await apiClient.post(
+        `/api/subadmin/management/vehicle-stock/${modalItem.id}/spares`,
+        {
+          title: newWork.title,
+          amount: Number(newWork.amount),
+          date: newWork.date,
+        }
+      );
+
+      const data = response?.data?.data;
+      applyUpdatedWork(modalItem.id, data?.workDetails || [], Number(data?.workCost || 0));
+      setNewWork({ title: "", amount: "", date: "", lastModified: "" });
+      setAddingWorkTo(null);
+      showToast({ type: 'success', title: 'Added', message: 'Spare added successfully' });
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error?.response?.data?.message || 'Failed to add spare',
+      });
+    }
+  };
 
   return (
     <div className="px-4 md:px-6 py-4">
@@ -127,15 +174,18 @@ function VehicleStock() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="search user"
+              placeholder="search vehicle"
               className="h-10 w-56 md:w-64 rounded-full bg-gray-100 border border-gray-200 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400"
             />
           </div>
         </div>
       </div>
 
+      {loading ? (
+        <div className="text-sm text-gray-500">Loading vehicle stock...</div>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filtered.map((item) => {
+        {stock.map((item) => {
           const total = item.bikePrice + item.workCost;
           return (
             <div
@@ -152,7 +202,7 @@ function VehicleStock() {
                 <div className="text-[10px] text-gray-500 leading-tight">
                   {item.chassisNo}
                 </div>
-                <div className="text-[10px] text-gray-500">Model: {item.modelYear}</div>
+                <div className="text-[10px] text-gray-500">Model: {item.modelYear || '-'}</div>
               </div>
 
               <div className="mt-3 text-[12px] md:text-sm">
@@ -191,14 +241,46 @@ function VehicleStock() {
                   <div className="text-gray-700">
                     <span className="font-semibold">Total</span> :
                   </div>
-                  <div className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[11px] font-semibold">
-                    {inr(total)}
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openSoldConfirm(item)}
+                      className="px-2 py-0.5 rounded-full bg-gray-900 text-white text-[11px] font-semibold hover:bg-black"
+                    >
+                      Sold
+                    </button>
+                    <div className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[11px] font-semibold">
+                      {inr(total)}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           );
         })}
+      </div>
+      )}
+
+      <div className="mt-5 flex items-center justify-end gap-3">
+        <button
+          type="button"
+          onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+          disabled={!pagination?.hasPrev}
+          className="px-3 py-1 rounded-full bg-gray-100 text-xs disabled:opacity-50"
+        >
+          previous
+        </button>
+        <div className="text-xs text-gray-600">
+          {pagination?.page || page} / {pagination?.totalPages || 1}
+        </div>
+        <button
+          type="button"
+          onClick={() => setPage((prev) => prev + 1)}
+          disabled={!pagination?.hasNext}
+          className="px-3 py-1 rounded-full bg-gray-100 text-xs disabled:opacity-50"
+        >
+          next
+        </button>
       </div>
 
       {modalItem && (
@@ -256,31 +338,7 @@ function VehicleStock() {
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => {
-                              if (editedWork.title && editedWork.amount) {
-                                const today = new Date().toISOString().split('T')[0];
-                                const updatedStock = stock.map((v) => {
-                                  if (v.id === modalItem.id) {
-                                    const newDetails = [...v.workDetails];
-                                    newDetails[idx] = {
-                                      name: editedWork.title,
-                                      amount: Number(editedWork.amount),
-                                      date: editedWork.date || w.date,
-                                      lastModified: today,
-                                    };
-                                    return { ...v, workDetails: newDetails };
-                                  }
-                                  return v;
-                                });
-                                setStock(updatedStock);
-                                setModalItem({
-                                  ...modalItem,
-                                  workDetails: updatedStock.find((v) => v.id === modalItem.id).workDetails,
-                                });
-                                setEditingWork(null);
-                                setEditedWork({ index: null, title: "", amount: "", date: "", lastModified: "" });
-                              }
-                            }}
+                            onClick={() => handleUpdateSpare(idx, w)}
                             className="flex-1 h-7 rounded bg-lime-400 text-gray-800 text-xs font-semibold hover:bg-lime-500"
                           >
                             Save
@@ -372,35 +430,7 @@ function VehicleStock() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => {
-                        if (newWork.title && newWork.amount) {
-                          const today = new Date().toISOString().split('T')[0];
-                          const updatedStock = stock.map((v) => {
-                            if (v.id === modalItem.id) {
-                              return {
-                                ...v,
-                                workDetails: [
-                                  ...v.workDetails,
-                                  { 
-                                    name: newWork.title, 
-                                    amount: Number(newWork.amount),
-                                    date: newWork.date || today,
-                                    lastModified: today,
-                                  },
-                                ],
-                              };
-                            }
-                            return v;
-                          });
-                          setStock(updatedStock);
-                          setModalItem({
-                            ...modalItem,
-                            workDetails: updatedStock.find((v) => v.id === modalItem.id).workDetails,
-                          });
-                          setNewWork({ title: "", amount: "", date: "", lastModified: "" });
-                          setAddingWorkTo(null);
-                        }
-                      }}
+                      onClick={handleAddSpare}
                       className="flex-1 h-8 rounded bg-lime-400 text-gray-800 text-xs font-semibold hover:bg-lime-500"
                     >
                       Add
@@ -436,6 +466,39 @@ function VehicleStock() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSoldConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={closeSoldConfirm}
+          />
+          <div className="relative bg-white w-[90%] max-w-md rounded-2xl border shadow-xl p-6">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Confirm Sold
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Are you sure this vehicle is sold? It will be removed from this list.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={closeSoldConfirm}
+                  className="flex-1 h-10 rounded-lg border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmMarkSold}
+                  className="flex-1 h-10 rounded-lg bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] text-gray-800 font-semibold hover:shadow-lg transition-shadow"
+                >
+                  Confirm
+                </button>
+              </div>
             </div>
           </div>
         </div>

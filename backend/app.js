@@ -6,6 +6,8 @@ import subAdminRoutes from "./routes/subAdminRoutes.js"
 import userRoute from "./routes/userRoutes.js"
 import buyerSellerManagementRoutes from "./routes/subAdminManagementRoutes/buyerSellerManagementRoutes.js";
 import userDataRoutes from "./routes/subAdminManagementRoutes/userDataRoutes.js";
+import vehicleStockRoute from "./routes/subAdminManagementRoutes/vehicleStockRoute.js";
+import pendingPaymentsRoute from "./routes/subAdminManagementRoutes/pendingPaymentsRoute.js";
 
 const app = express();
 
@@ -37,6 +39,8 @@ app.use("/api/user", userRoute);
 //subadmin-management routes
 app.use("/api/subadmin/management", buyerSellerManagementRoutes);
 app.use("/api/subadmin/management", userDataRoutes);
+app.use("/api/subadmin/management", vehicleStockRoute);
+app.use("/api/subadmin/management", pendingPaymentsRoute);
 
 export { app, configureCORS };
 

@@ -1,5 +1,12 @@
 import mongoose from 'mongoose';
 
+const sellerUsedSpareSchema = new mongoose.Schema({
+    title: String,
+    amount: Number,
+    enteredDate: Date,
+    modifiedDate: Date,
+}, { _id: false });
+
 const sellerSchema = new mongoose.Schema({
     fullName: String,
     sowoco:String,
@@ -13,6 +20,10 @@ const sellerSchema = new mongoose.Schema({
     model: String,
     chassisNo: { type: String, unique: true },
     bikePrice: Number,
+    usedSpares: {
+    type: [sellerUsedSpareSchema],
+    default: [],
+        },
     status: {
     type: String,
     enum: ["available", "work", "sold"],

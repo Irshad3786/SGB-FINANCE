@@ -1,97 +1,110 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import apiClient from '../../api/axios';
+import { useToast } from '../../components/ToastProvider';
 
 function PendingDownpayment() {
   const [query, setQuery] = useState("");
+  const [editingAmount, setEditingAmount] = useState(null);
+  const [amountValue, setAmountValue] = useState("");
   const [editingCommitment, setEditingCommitment] = useState(null);
   const [commitmentDate, setCommitmentDate] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [filterCommitmentDate, setFilterCommitmentDate] = useState("");
-  
-  const [pendingPayments, setPendingPayments] = useState([
-    {
-      id: 1,
-      name: "Rajesh Kumar",
-      phoneNumber: "+91 98765 43210",
-      address: "123, MG Road, Bangalore, Karnataka - 560001",
-      downpaymentAmount: 15000,
-      paymentDueDate: "2024-12-25",
-      commitmentDate: "2024-12-20",
-    },
-    {
-      id: 2,
-      name: "Priya Singh",
-      phoneNumber: "+91 98765 43211",
-      address: "456, Park Street, Kolkata, West Bengal - 700016",
-      downpaymentAmount: 20000,
-      paymentDueDate: "2024-12-28",
-      commitmentDate: "2024-12-22",
-    },
-    {
-      id: 3,
-      name: "Amit Patel",
-      phoneNumber: "+91 98765 43212",
-      address: "789, FC Road, Pune, Maharashtra - 411004",
-      downpaymentAmount: 18000,
-      paymentDueDate: "2024-12-30",
-      commitmentDate: "2024-12-24",
-    },
-    {
-      id: 4,
-      name: "Deepak Sharma",
-      phoneNumber: "+91 98765 43213",
-      address: "321, Civil Lines, Delhi - 110054",
-      downpaymentAmount: 25000,
-      paymentDueDate: "2025-01-02",
-      commitmentDate: "2024-12-26",
-    },
-    {
-      id: 5,
-      name: "Sneha Reddy",
-      phoneNumber: "+91 98765 43214",
-      address: "654, Banjara Hills, Hyderabad, Telangana - 500034",
-      downpaymentAmount: 22000,
-      paymentDueDate: "2025-01-05",
-      commitmentDate: "2024-12-28",
-    },
-  ]);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, totalRecords: 0, totalPages: 1, hasPrev: false, hasNext: false });
+  const [pendingPayments, setPendingPayments] = useState([]);
+  const { showToast } = useToast();
 
-  const filteredPayments = pendingPayments.filter((payment) => {
-    const q = query.trim().toLowerCase();
-    let matches = true;
+  useEffect(() => {
+    setPage(1);
+  }, [query, filterCommitmentDate]);
 
-    // Search filter
-    if (q) {
-      matches = matches && (
-        payment.name.toLowerCase().includes(q) ||
-        payment.phoneNumber.toLowerCase().includes(q) ||
-        payment.address.toLowerCase().includes(q)
-      );
-    }
+  useEffect(() => {
+    const fetchPendingPayments = async () => {
+      try {
+        setLoading(true);
+        const response = await apiClient.get('/api/subadmin/management/pending-payments', {
+          params: {
+            search: query,
+            commitmentDate: filterCommitmentDate,
+            page,
+            limit: 10,
+          },
+        });
+        setPendingPayments(response?.data?.data || []);
+        setPagination(response?.data?.pagination || { page: 1, limit: 10, totalRecords: 0, totalPages: 1, hasPrev: false, hasNext: false });
+      } catch (error) {
+        showToast({
+          type: 'error',
+          title: 'Error',
+          message: error?.response?.data?.message || 'Failed to fetch pending payments',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // Commitment date filter
-    if (filterCommitmentDate) {
-      matches = matches && payment.commitmentDate === filterCommitmentDate;
-    }
-
-    return matches;
-  });
+    fetchPendingPayments();
+  }, [showToast, query, filterCommitmentDate, page]);
 
   const inr = (n) =>
     Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 
-  const handleCommitmentUpdate = (id) => {
-    if (commitmentDate) {
-      setPendingPayments(
-        pendingPayments.map((payment) =>
-          payment.id === id
-            ? { ...payment, commitmentDate: commitmentDate }
-            : payment
+  const handleAmountUpdate = async (id) => {
+    const parsedAmount = Number(amountValue);
+    if (Number.isNaN(parsedAmount) || parsedAmount <= 0) {
+      showToast({ type: 'error', title: 'Error', message: 'Enter valid amount greater than 0' });
+      return;
+    }
+
+    try {
+      const response = await apiClient.patch(`/api/subadmin/management/pending-payments/${id}/amount`, {
+        amount: parsedAmount,
+      });
+
+      const updatedAmount = Number(response?.data?.data?.amount ?? parsedAmount);
+      setPendingPayments((prev) =>
+        prev.map((payment) =>
+          payment.id === id ? { ...payment, downpaymentAmount: updatedAmount } : payment
+        )
+      );
+      setEditingAmount(null);
+      setAmountValue("");
+      showToast({ type: 'success', title: 'Updated', message: 'Pending amount updated' });
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error?.response?.data?.message || 'Failed to update amount',
+      });
+    }
+  };
+
+  const handleCommitmentUpdate = async (id) => {
+    if (!commitmentDate) return;
+
+    try {
+      await apiClient.patch(`/api/subadmin/management/pending-payments/${id}/commitment-date`, {
+        commitmentDate,
+      });
+
+      setPendingPayments((prev) =>
+        prev.map((payment) =>
+          payment.id === id ? { ...payment, commitmentDate } : payment
         )
       );
       setEditingCommitment(null);
       setCommitmentDate("");
+      showToast({ type: 'success', title: 'Updated', message: 'Commitment date updated' });
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error?.response?.data?.message || 'Failed to update commitment date',
+      });
     }
   };
 
@@ -102,10 +115,25 @@ function PendingDownpayment() {
     }
   };
 
-  const handleConfirmPaid = () => {
-    setPendingPayments(pendingPayments.filter((payment) => payment.id !== selectedPaymentId));
-    setShowConfirmModal(false);
-    setSelectedPaymentId(null);
+  const handleConfirmPaid = async () => {
+    if (!selectedPaymentId) return;
+
+    try {
+      await apiClient.patch(`/api/subadmin/management/pending-payments/${selectedPaymentId}/status`, {
+        status: 'paid',
+      });
+
+      setPendingPayments((prev) => prev.filter((payment) => payment.id !== selectedPaymentId));
+      setShowConfirmModal(false);
+      setSelectedPaymentId(null);
+      showToast({ type: 'success', title: 'Success', message: 'Payment marked as paid' });
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error?.response?.data?.message || 'Failed to update payment status',
+      });
+    }
   };
 
   const handleCancelPaid = () => {
@@ -119,12 +147,6 @@ function PendingDownpayment() {
     const diffTime = due - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
-  };
-
-  const getStatusColor = (daysRemaining) => {
-    if (daysRemaining < 0) return "bg-red-100 text-red-700";
-    if (daysRemaining <= 3) return "bg-orange-100 text-orange-700";
-    return "bg-green-100 text-green-700";
   };
 
   return (
@@ -143,7 +165,7 @@ function PendingDownpayment() {
             className="h-10 px-4 rounded-full bg-gray-100 border border-gray-200 flex items-center gap-2 text-sm font-semibold hover:bg-gray-200 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-              <path fill="#a6a6a6" fill-rule="evenodd" d="M5 3h14L8.816 13.184a2.7 2.7 0 0 0-.778-1.086c-.228-.198-.547-.377-1.183-.736l-2.913-1.64c-.949-.533-1.423-.8-1.682-1.23C2 8.061 2 7.541 2 6.503v-.69c0-1.326 0-1.99.44-2.402C2.878 3 3.585 3 5 3" clip-rule="evenodd"/>
+              <path fill="#a6a6a6" fillRule="evenodd" d="M5 3h14L8.816 13.184a2.7 2.7 0 0 0-.778-1.086c-.228-.198-.547-.377-1.183-.736l-2.913-1.64c-.949-.533-1.423-.8-1.682-1.23C2 8.061 2 7.541 2 6.503v-.69c0-1.326 0-1.99.44-2.402C2.878 3 3.585 3 5 3" clipRule="evenodd"/>
               <path fill="#a6a6a6" d="M22 6.504v-.69c0-1.326 0-1.99-.44-2.402C21.122 3 20.415 3 19 3L8.815 13.184q.075.193.121.403c.064.285.064.619.064 1.286v2.67c0 .909 0 1.364.252 1.718c.252.355.7.53 1.594.88c1.879.734 2.818 1.101 3.486.683S15 19.452 15 17.542v-2.67c0-.666 0-1 .063-1.285a2.68 2.68 0 0 1 .9-1.49c.227-.197.545-.376 1.182-.735l2.913-1.64c.948-.533 1.423-.8 1.682-1.23c.26-.43.26-.95.26-1.988" opacity="0.5"/>
             </svg>
             Filter
@@ -179,7 +201,7 @@ function PendingDownpayment() {
         <div className="mt-2 mb-4 w-full md:w-fit bg-[#f0f0fa] rounded-lg p-3 shadow flex flex-col md:flex-row items-center gap-3">
           <div className="flex items-center gap-2 text-xs text-gray-700">
             <span className="shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 16 16"><path fill="#a6a6a6" d="M5.75 7.5a.75.75 0 1 0 0 1.5a.75.75 0 0 0 0-1.5m1.5.75A.75.75 0 0 1 8 7.5h2.25a.75.75 0 0 1 0 1.5H8a.75.75 0 0 1-.75-.75M5.75 9.5a.75.75 0 0 0 0 1.5H8a.75.75 0 0 0 0-1.5z"/><path fill="#a6a6a6" fill-rule="evenodd" d="M4.75 1a.75.75 0 0 0-.75.75V3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2V1.75a.75.75 0 0 0-1.5 0V3h-5V1.75A.75.75 0 0 0 4.75 1M3.5 7a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1z" clip-rule="evenodd"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 16 16"><path fill="#a6a6a6" d="M5.75 7.5a.75.75 0 1 0 0 1.5a.75.75 0 0 0 0-1.5m1.5.75A.75.75 0 0 1 8 7.5h2.25a.75.75 0 0 1 0 1.5H8a.75.75 0 0 1-.75-.75M5.75 9.5a.75.75 0 0 0 0 1.5H8a.75.75 0 0 0 0-1.5z"/><path fill="#a6a6a6" fillRule="evenodd" d="M4.75 1a.75.75 0 0 0-.75.75V3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2V1.75a.75.75 0 0 0-1.5 0V3h-5V1.75A.75.75 0 0 0 4.75 1M3.5 7a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1z" clipRule="evenodd"/></svg>
             </span>
             <div className="flex items-center gap-2">
               <label className="text-[12px] text-gray-500">Commitment date</label>
@@ -199,6 +221,12 @@ function PendingDownpayment() {
         </div>
       )}
 
+      {loading ? (
+        <div className="bg-white rounded-2xl shadow-sm border p-6 text-sm text-gray-500">
+          Loading pending payments...
+        </div>
+      ) : (
+      <>
       <div className="bg-white rounded-2xl shadow-sm border overflow-hidden hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -228,14 +256,14 @@ function PendingDownpayment() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredPayments.length === 0 ? (
+              {pendingPayments.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="px-4 py-8 text-center text-gray-500">
                     No pending payments found
                   </td>
                 </tr>
               ) : (
-                filteredPayments.map((payment) => {
+                pendingPayments.map((payment) => {
                   const daysRemaining = getDaysRemaining(payment.paymentDueDate);
                   return (
                     <tr key={payment.id} className="hover:bg-gray-50">
@@ -248,8 +276,58 @@ function PendingDownpayment() {
                       <td className="px-4 py-3 text-sm text-gray-700 max-w-xs">
                         {payment.address}
                       </td>
-                      <td className="px-4 py-3 text-sm font-semibold text-gray-900">
-                        ₹{inr(payment.downpaymentAmount)}
+                      <td className="px-4 py-3 text-sm">
+                        {editingAmount === payment.id ? (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              min="1"
+                              value={amountValue}
+                              onChange={(e) => setAmountValue(e.target.value)}
+                              className="h-7 w-24 px-2 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-lime-400"
+                            />
+                            <button
+                              onClick={() => handleAmountUpdate(payment.id)}
+                              className="h-7 px-2 rounded bg-lime-400 text-gray-800 text-xs font-semibold hover:bg-lime-500"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingAmount(null);
+                                setAmountValue("");
+                              }}
+                              className="h-7 px-2 rounded border border-gray-300 text-gray-700 text-xs font-semibold hover:bg-gray-50"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-gray-900">₹{inr(payment.downpaymentAmount)}</span>
+                            <button
+                              onClick={() => {
+                                setEditingAmount(payment.id);
+                                setAmountValue(String(payment.downpaymentAmount || ""));
+                              }}
+                              className="h-6 w-6 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center"
+                              title="Edit amount"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
                         {payment.paymentDueDate}
@@ -311,7 +389,7 @@ function PendingDownpayment() {
                       <td className="px-4 py-3 text-sm">
                         <select
                           onChange={(e) => handleStatusChange(payment.id, e.target.value)}
-                          defaultValue="Pending"
+                          value="Pending"
                           className={`px-3 py-1.5 rounded-lg text-xs font-semibold border-2 focus:outline-none focus:ring-2 focus:ring-lime-400 ${
                             daysRemaining < 0
                               ? "bg-red-50 text-red-700 border-red-200"
@@ -341,12 +419,12 @@ function PendingDownpayment() {
 
       {/* Mobile cards */}
       <div className="md:hidden grid grid-cols-1 gap-4">
-        {filteredPayments.length === 0 ? (
+        {pendingPayments.length === 0 ? (
           <div className="bg-white border rounded-xl shadow-sm p-4 text-center text-gray-500">
             No pending payments found
           </div>
         ) : (
-          filteredPayments.map((payment) => {
+          pendingPayments.map((payment) => {
             const daysRemaining = getDaysRemaining(payment.paymentDueDate);
             const statusClass =
               daysRemaining < 0
@@ -375,9 +453,59 @@ function PendingDownpayment() {
                 </div>
 
                 <div className="flex flex-wrap gap-3 text-sm text-gray-700">
-                  <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg flex-1 min-w-[140px]">
-                    <span className="text-xs text-gray-500">Amount</span>
-                    <span className="text-sm font-semibold text-gray-900">₹{inr(payment.downpaymentAmount)}</span>
+                  <div className="bg-gray-50 px-3 py-2 rounded-lg flex-1 min-w-[140px]">
+                    <div className="text-xs text-gray-500 mb-1">Amount</div>
+                    {editingAmount === payment.id ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min="1"
+                          value={amountValue}
+                          onChange={(e) => setAmountValue(e.target.value)}
+                          className="h-8 w-24 px-2 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-lime-400"
+                        />
+                        <button
+                          onClick={() => handleAmountUpdate(payment.id)}
+                          className="h-8 px-2 rounded bg-lime-400 text-gray-800 text-xs font-semibold hover:bg-lime-500"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingAmount(null);
+                            setAmountValue("");
+                          }}
+                          className="h-8 px-2 rounded border border-gray-300 text-gray-700 text-xs font-semibold hover:bg-gray-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-gray-900">₹{inr(payment.downpaymentAmount)}</span>
+                        <button
+                          onClick={() => {
+                            setEditingAmount(payment.id);
+                            setAmountValue(String(payment.downpaymentAmount || ""));
+                          }}
+                          className="h-6 w-6 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center"
+                          title="Edit amount"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg flex-1 min-w-[140px]">
                     <span className="text-xs text-gray-500">Due</span>
@@ -445,7 +573,7 @@ function PendingDownpayment() {
                   <div className="text-xs text-gray-500">Status</div>
                   <select
                     onChange={(e) => handleStatusChange(payment.id, e.target.value)}
-                    defaultValue="Pending"
+                    value="Pending"
                     className={`w-full px-3 py-2 rounded-lg text-sm font-semibold border-2 focus:outline-none focus:ring-2 focus:ring-lime-400 ${statusClass}`}
                   >
                     <option value="Pending">
@@ -463,6 +591,30 @@ function PendingDownpayment() {
           })
         )}
       </div>
+      </>
+      )}
+
+      <div className="mt-5 flex items-center justify-end gap-3">
+        <button
+          type="button"
+          onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+          disabled={!pagination?.hasPrev}
+          className="px-3 py-1 rounded-full bg-gray-100 text-xs disabled:opacity-50"
+        >
+          previous
+        </button>
+        <div className="text-xs text-gray-600">
+          {pagination?.page || page} / {pagination?.totalPages || 1}
+        </div>
+        <button
+          type="button"
+          onClick={() => setPage((prev) => prev + 1)}
+          disabled={!pagination?.hasNext}
+          className="px-3 py-1 rounded-full bg-gray-100 text-xs disabled:opacity-50"
+        >
+          next
+        </button>
+      </div>
 
       <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border shadow-sm p-4">
@@ -474,7 +626,7 @@ function PendingDownpayment() {
         <div className="bg-white rounded-xl border shadow-sm p-4">
           <div className="text-sm text-gray-500 mb-1">Total Customers</div>
           <div className="text-2xl font-bold text-gray-900">
-            {pendingPayments.length}
+            {pagination?.totalRecords || pendingPayments.length}
           </div>
         </div>
         <div className="bg-white rounded-xl border shadow-sm p-4">

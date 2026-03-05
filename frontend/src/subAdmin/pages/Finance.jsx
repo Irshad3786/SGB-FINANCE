@@ -1,20 +1,89 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import apiClient from '../../api/axios'
+import { useToast } from '../../components/ToastProvider'
+
+const defaultPagination = {
+  page: 1,
+  limit: 9,
+  totalRecords: 0,
+  totalPages: 1,
+  hasPrev: false,
+  hasNext: false,
+}
+
+const toInr = (value) => Number(value || 0).toLocaleString('en-IN')
 
 function Finance() {
   const navigate = useNavigate()
-  const financeData = [
-    { id: 1, seller: 'MOHAMMAD IRSHAD', buyerName: 'RAJU K', vehicle: 'AP39DZ9786', phoneNo: '9182278505', financeAmount: '25000', emiDate: '12-10-2025', emi: '3500', age: '32', address: 'Ramapuram Road rosaiah colony Chirala, vetapalem mandal 523157', agreementNo: 'HA454', vehiclePrice: '55,000', charges: '15,000', totalAmount: '50,000', emiSchedule: [{ sno: 1, emi: 3500, paidAmount: 3400, emiDate: '30-01-2025', paidDate: '30-01-2025', peningAmount: 100 }, { sno: 2, emi: 3500, paidAmount: 3400, emiDate: '30-01-2025', paidDate: '30-01-2025', peningAmount: 100 }, { sno: 3, emi: 3500, paidAmount: 3400, emiDate: '30-01-2025', paidDate: '30-01-2025', peningAmount: 100 }, { sno: 4, emi: 3500, paidAmount: 3400, emiDate: '30-01-2025', paidDate: '30-01-2025', peningAmount: 100 }, { sno: 5, emi: 3500, paidAmount: 3400, emiDate: '30-01-2025', paidDate: '30-01-2025', peningAmount: 100 }, { sno: 6, emi: 3500, paidAmount: 3400, emiDate: '30-01-2025', paidDate: '30-01-2025', peningAmount: 100 }], totalPaid: '20400', totalPending: '600', vehicleName: 'Hero Splendor', chassisNo: 'MBLHASD55544DD51410', vehicleModel: '2022' },
-    { id: 2, seller: 'SURESH', buyerName: '', vehicle: 'AP39YZ8512', phoneNo: '9123456780', financeAmount: '', emiDate: '', emi: '', age: '', address: '', agreementNo: '', vehiclePrice: '', charges: '', totalAmount: '', emiSchedule: [], totalPaid: '', totalPending: '', vehicleName: '', chassisNo: '', vehicleModel: '' },
-    { id: 3, seller: 'RAHUL', buyerName: 'MANU', vehicle: 'AP27AZ9865', phoneNo: '9190909090', financeAmount: '20000', emiDate: '01-11-2025', emi: '2200', age: '28', address: 'Block 5, Some Area', agreementNo: 'HA455', vehiclePrice: '48,000', charges: '12,000', totalAmount: '45,000', emiSchedule: [], totalPaid: '', totalPending: '', vehicleName: 'TVS Apache', chassisNo: 'MBLHASD55544DD22222', vehicleModel: '2021' },
-    { id: 4, seller: 'KARTHIK', buyerName: '', vehicle: 'AP27NN3658', phoneNo: '9166666666', financeAmount: '', emiDate: '', emi: '', age: '', address: '', agreementNo: '', vehiclePrice: '', charges: '', totalAmount: '', emiSchedule: [], totalPaid: '', totalPending: '', vehicleName: '', chassisNo: '', vehicleModel: '' },
-    { id: 5, seller: 'PRADEEP', buyerName: 'SAI', vehicle: 'AP26VV2654', phoneNo: '9155555555', financeAmount: '15000', emiDate: '15-12-2025', emi: '1800', age: '30', address: 'Address line here', agreementNo: 'HA456', vehiclePrice: '42,000', charges: '10,000', totalAmount: '40,000', emiSchedule: [], totalPaid: '', totalPending: '', vehicleName: 'Royal Enfield', chassisNo: 'MBLHASD55544DD33333', vehicleModel: '2020' },
-    { id: 6, seller: 'MOULALI', buyerName: '', vehicle: 'AP39XX7508', phoneNo: '9133333333', financeAmount: '', emiDate: '', emi: '', age: '', address: '', agreementNo: '', vehiclePrice: '', charges: '', totalAmount: '', emiSchedule: [], totalPaid: '', totalPending: '', vehicleName: '', chassisNo: '', vehicleModel: '' },
-  ]
+  const { showToast } = useToast()
 
+  const [financeData, setFinanceData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [pagination, setPagination] = useState(defaultPagination)
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({ from: '', to: '', status: 'all' })
   const [modalData, setModalData] = useState(null)
+  const [openingStatementId, setOpeningStatementId] = useState('')
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearch(search.trim())
+      setPage(1)
+    }, 400)
+
+    return () => window.clearTimeout(timeout)
+  }, [search])
+
+  useEffect(() => {
+    const fetchFinanceList = async () => {
+      try {
+        setLoading(true)
+        const response = await apiClient.get('/api/subadmin/management/finance', {
+          params: {
+            search: debouncedSearch,
+            page,
+            limit: 9,
+            status: filters.status,
+            from: filters.from,
+            to: filters.to,
+          },
+        })
+
+        setFinanceData(response?.data?.data || [])
+        setPagination(response?.data?.pagination || defaultPagination)
+      } catch (error) {
+        showToast({
+          type: 'error',
+          title: 'Error',
+          message: error?.response?.data?.message || 'Failed to fetch finance data',
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchFinanceList()
+  }, [showToast, debouncedSearch, page, filters.status, filters.from, filters.to])
+
+  const handleViewStatement = async (buyerId) => {
+    try {
+      setOpeningStatementId(buyerId)
+      const response = await apiClient.get(`/api/subadmin/management/finance/${buyerId}`)
+      setModalData(response?.data?.data || null)
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error?.response?.data?.message || 'Failed to fetch finance statement',
+      })
+    } finally {
+      setOpeningStatementId('')
+    }
+  }
 
   return (
     <div className="p-6">
@@ -66,6 +135,8 @@ function Finance() {
               id="finance-search"
               type="search"
               name="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Search finance..."
               className="w-full pl-10 pr-3 py-3 rounded-3xl border border-transparent bg-white/90 text-xs focus:outline-none focus:ring-2 focus:ring-[#bff86a] shadow-[1px_2px_9px_-4px_rgba(0,_0,_0,_0.7)]"
             />
@@ -78,13 +149,13 @@ function Finance() {
         <div className="mt-2 mb-4 md:mt-0 w-full md:w-fit bg-[#f0f0fa] rounded-lg p-3 shadow flex flex-col md:flex-row items-center gap-3">
           <div className="flex items-center gap-2 text-xs text-gray-700">
             <span className="shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 16 16"><path fill="#a6a6a6" d="M5.75 7.5a.75.75 0 1 0 0 1.5a.75.75 0 0 0 0-1.5m1.5.75A.75.75 0 0 1 8 7.5h2.25a.75.75 0 0 1 0 1.5H8a.75.75 0 0 1-.75-.75M5.75 9.5a.75.75 0 0 0 0 1.5H8a.75.75 0 0 0 0-1.5z"/><path fill="#a6a6a6" fill-rule="evenodd" d="M4.75 1a.75.75 0 0 0-.75.75V3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2V1.75a.75.75 0 0 0-1.5 0V3h-5V1.75A.75.75 0 0 0 4.75 1M3.5 7a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1z" clip-rule="evenodd"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 16 16"><path fill="#a6a6a6" d="M5.75 7.5a.75.75 0 1 0 0 1.5a.75.75 0 0 0 0-1.5m1.5.75A.75.75 0 0 1 8 7.5h2.25a.75.75 0 0 1 0 1.5H8a.75.75 0 0 1-.75-.75M5.75 9.5a.75.75 0 0 0 0 1.5H8a.75.75 0 0 0 0-1.5z"/><path fill="#a6a6a6" fillRule="evenodd" d="M4.75 1a.75.75 0 0 0-.75.75V3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2V1.75a.75.75 0 0 0-1.5 0V3h-5V1.75A.75.75 0 0 0 4.75 1M3.5 7a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1z" clipRule="evenodd"/></svg>
             </span>
             <div className="flex items-center gap-2">
               <label className="text-[12px] text-gray-500">Date range</label>
-              <input type="date" value={filters.from} onChange={(e)=> setFilters(f=>({...f, from: e.target.value}))} className="text-xs border rounded px-2 py-1" />
+              <input type="date" value={filters.from} onChange={(e)=> { setFilters(f=>({...f, from: e.target.value})); setPage(1) }} className="text-xs border rounded px-2 py-1" />
               <span className="text-gray-400">—</span>
-              <input type="date" value={filters.to} onChange={(e)=> setFilters(f=>({...f, to: e.target.value}))} className="text-xs border rounded px-2 py-1" />
+              <input type="date" value={filters.to} onChange={(e)=> { setFilters(f=>({...f, to: e.target.value})); setPage(1) }} className="text-xs border rounded px-2 py-1" />
             </div>
           </div>
 
@@ -94,7 +165,7 @@ function Finance() {
             </span>
             <div className="flex items-center gap-2">
               <label className="text-[12px] text-gray-500">Status</label>
-              <select value={filters.status} onChange={(e)=> setFilters(f=>({...f, status: e.target.value}))} className="text-xs border rounded px-2 py-1">
+              <select value={filters.status} onChange={(e)=> { setFilters(f=>({...f, status: e.target.value})); setPage(1) }} className="text-xs border rounded px-2 py-1">
                 <option value="all">All</option>
                 <option value="active">Active</option>
                 <option value="completed">Completed</option>
@@ -125,18 +196,26 @@ function Finance() {
               </tr>
             </thead>
             <tbody>
-              {financeData.map(f => (
+              {loading ? (
+                <tr>
+                  <td colSpan={8} className="py-6 px-3 text-center text-sm text-gray-500">Loading finance data...</td>
+                </tr>
+              ) : financeData.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-6 px-3 text-center text-sm text-gray-500">No finance records found</td>
+                </tr>
+              ) : financeData.map((f, index) => (
                 <tr key={f.id} className="border-b last:border-b-0">
-                  <td className="py-3 px-3 text-xs">{f.id}</td>
+                  <td className="py-3 px-3 text-xs">{(pagination.page - 1) * pagination.limit + index + 1}</td>
                   <td className="py-3 px-3 text-xs">{f.seller}</td>
                   <td className="py-3 px-3 text-xs">{f.vehicle}</td>
                   <td className="py-3 px-3 text-xs">{f.phoneNo}</td>
-                  <td className="py-3 px-3 text-xs">{f.financeAmount || '-'}</td>
+                  <td className="py-3 px-3 text-xs">{f.financeAmount ? `₹ ${toInr(f.financeAmount)}` : '-'}</td>
                   <td className="py-3 px-3 text-xs">{f.emiDate || '-'}</td>
-                  <td className="py-3 px-3 text-xs">{f.emi || '-'}</td>
+                  <td className="py-3 px-3 text-xs">{f.emi ? `₹ ${toInr(f.emi)}` : '-'}</td>
                   <td className="py-3 px-3">
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setModalData(f)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View Finance Statement">
+                      <button onClick={() => handleViewStatement(f.id)} disabled={openingStatementId === f.id} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50" title="View Finance Statement">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="currentColor"/><path fill="currentColor" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5"/></svg>
                       </button>
                     </div>
@@ -149,22 +228,26 @@ function Finance() {
 
         {/* Mobile cards */}
         <div className="block md:hidden space-y-3">
-          {financeData.map(f => (
+          {loading ? (
+            <div className="text-sm text-gray-500 text-center py-3">Loading finance data...</div>
+          ) : financeData.length === 0 ? (
+            <div className="text-sm text-gray-500 text-center py-3">No finance records found</div>
+          ) : financeData.map((f, index) => (
             <div key={f.id} className="bg-white rounded-lg shadow p-3">
               <div className="flex items-center justify-between">
-                <div className="text-xs font-semibold">{f.id}. {f.seller}</div>
+                <div className="text-xs font-semibold">{(pagination.page - 1) * pagination.limit + index + 1}. {f.seller}</div>
               </div>
 
               <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-700">
                 <div><span className="text-[10px] text-gray-400">Vehicle</span><div className="font-medium">{f.vehicle}</div></div>
                 <div><span className="text-[10px] text-gray-400">Phone</span><div className="font-medium">{f.phoneNo}</div></div>
-                <div><span className="text-[10px] text-gray-400">Finance Amount</span><div className="font-medium">{f.financeAmount || '-'}</div></div>
-                <div><span className="text-[10px] text-gray-400">EMI</span><div className="font-medium">{f.emi || '-'}</div></div>
+                <div><span className="text-[10px] text-gray-400">Finance Amount</span><div className="font-medium">{f.financeAmount ? `₹ ${toInr(f.financeAmount)}` : '-'}</div></div>
+                <div><span className="text-[10px] text-gray-400">EMI</span><div className="font-medium">{f.emi ? `₹ ${toInr(f.emi)}` : '-'}</div></div>
                 <div className="col-span-2"><span className="text-[10px] text-gray-400">EMI Date</span><div className="font-medium">{f.emiDate || '-'}</div></div>
               </div>
 
               <div className="mt-3 flex items-center justify-end gap-2">
-                <button onClick={() => setModalData(f)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View Finance Statement"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="currentColor"/><path fill="currentColor" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5"/></svg></button>
+                <button onClick={() => handleViewStatement(f.id)} disabled={openingStatementId === f.id} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50" title="View Finance Statement"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="currentColor"/><path fill="currentColor" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5"/></svg></button>
               </div>
             </div>
           ))}
@@ -172,9 +255,21 @@ function Finance() {
 
         {/* Pagination */}
         <div className="mt-4 flex justify-end items-center gap-3">
-          <button className="px-3 py-1 rounded-full bg-gray-100 text-xs">previous</button>
-          <div className="text-xs">1</div>
-          <button className="px-3 py-1 rounded-full bg-gray-100 text-xs">next</button>
+          <button
+            disabled={!pagination.hasPrev || loading}
+            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+            className="px-3 py-1 rounded-full bg-gray-100 text-xs disabled:opacity-50"
+          >
+            previous
+          </button>
+          <div className="text-xs">{pagination.page} / {pagination.totalPages}</div>
+          <button
+            disabled={!pagination.hasNext || loading}
+            onClick={() => setPage((prev) => prev + 1)}
+            className="px-3 py-1 rounded-full bg-gray-100 text-xs disabled:opacity-50"
+          >
+            next
+          </button>
         </div>
       </div>
 
@@ -202,7 +297,6 @@ function Finance() {
                     <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-300">Party Details</h3>
                     <div className="text-sm text-gray-700 space-y-2">
                       <div className="font-semibold text-gray-900">{modalData.seller}</div>
-                      <div className="text-gray-600">s/o ramakrishna</div>
                       <div className="text-gray-600">Age : {modalData.age}</div>
                       <div className="text-gray-600">Phone No: {modalData.phoneNo}</div>
                       <div className="text-gray-600">Address: {modalData.address}</div>
@@ -211,9 +305,13 @@ function Finance() {
                   {/* Party Image - Right side */}
                   <div className="shrink-0">
                     <div className="bg-white border-2 border-gray-300 rounded-lg p-3 flex flex-col items-center">
-                      <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-2">
-                        <span className="text-xs text-gray-500 text-center">Party<br/>Img</span>
-                      </div>
+                      {modalData.partyPhoto ? (
+                        <img src={modalData.partyPhoto} alt="Party" className="w-28 h-28 rounded-lg object-cover mb-2" />
+                      ) : (
+                        <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-2">
+                          <span className="text-xs text-gray-500 text-center">Party<br/>Img</span>
+                        </div>
+                      )}
                       <span className="text-xs text-gray-600 font-semibold">Party</span>
                     </div>
                   </div>
@@ -226,19 +324,22 @@ function Finance() {
                   <div className="flex-1">
                     <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-300">Guarantor Details</h3>
                     <div className="text-sm text-gray-700 space-y-2">
-                      <div className="font-semibold text-gray-900">{modalData.seller}</div>
-                      <div className="text-gray-600">s/o ramakrishna</div>
-                      <div className="text-gray-600">Age : {modalData.age}</div>
-                      <div className="text-gray-600">Phone No: {modalData.phoneNo}</div>
-                      <div className="text-gray-600">Address: {modalData.address}</div>
+                      <div className="font-semibold text-gray-900">{modalData.guarantorName || '-'}</div>
+                      <div className="text-gray-600">Age : {modalData.guarantorAge || '-'}</div>
+                      <div className="text-gray-600">Phone No: {modalData.guarantorPhoneNo || '-'}</div>
+                      <div className="text-gray-600">Address: {modalData.guarantorAddress || '-'}</div>
                     </div>
                   </div>
                   {/* Guarantor Image - Right side */}
                   <div className="shrink-0">
                     <div className="bg-white border-2 border-gray-300 rounded-lg p-3 flex flex-col items-center">
-                      <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-2">
-                        <span className="text-xs text-gray-500 text-center">Guarantor<br/>Img</span>
-                      </div>
+                      {modalData.guarantorPhoto ? (
+                        <img src={modalData.guarantorPhoto} alt="Guarantor" className="w-28 h-28 rounded-lg object-cover mb-2" />
+                      ) : (
+                        <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-2">
+                          <span className="text-xs text-gray-500 text-center">Guarantor<br/>Img</span>
+                        </div>
+                      )}
                       <span className="text-xs text-gray-600 font-semibold">Guarantor</span>
                     </div>
                   </div>
@@ -275,19 +376,19 @@ function Finance() {
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-white rounded-lg p-4 shadow-sm">
                   <div className="text-xs text-gray-500 font-semibold mb-2">VEHICLE PRICE</div>
-                  <div className="text-lg font-bold text-gray-900">₹ {modalData.vehiclePrice}</div>
+                  <div className="text-lg font-bold text-gray-900">₹ {toInr(modalData.vehiclePrice)}</div>
                 </div>
                 <div className="bg-white rounded-lg p-4 shadow-sm">
                   <div className="text-xs text-gray-500 font-semibold mb-2">FINANCE AMOUNT</div>
-                  <div className="text-lg font-bold text-gray-900">₹ {modalData.financeAmount}</div>
+                  <div className="text-lg font-bold text-gray-900">₹ {toInr(modalData.financeAmount)}</div>
                 </div>
                 <div className="bg-white rounded-lg p-4 shadow-sm">
                   <div className="text-xs text-gray-500 font-semibold mb-2">CHARGES & INTEREST</div>
-                  <div className="text-lg font-bold text-gray-900">₹ {modalData.charges}</div>
+                  <div className="text-lg font-bold text-gray-900">₹ {toInr(modalData.charges)}</div>
                 </div>
                 <div className="bg-white rounded-lg p-4 shadow-sm border-2 border-purple-300">
                   <div className="text-xs text-gray-500 font-semibold mb-2">TOTAL AMOUNT</div>
-                  <div className="text-lg font-bold text-purple-900">₹ {modalData.totalAmount}</div>
+                  <div className="text-lg font-bold text-purple-900">₹ {toInr(modalData.totalAmount)}</div>
                 </div>
               </div>
             </div>
@@ -295,16 +396,16 @@ function Finance() {
             {/* EMI Schedule */}
             {modalData.emiSchedule && modalData.emiSchedule.length > 0 && (
               <div className="mb-8">
-                <h3 className="text-xl font-bold text-gray-800 mb-4 pb-3 border-b border-gray-300">EMI Schedule : ₹ {modalData.emi} x 6 months</h3>
+                <h3 className="text-xl font-bold text-gray-800 mb-4 pb-3 border-b border-gray-300">EMI Schedule : ₹ {toInr(modalData.emi)} x {modalData.months || modalData.emiSchedule.length} months</h3>
                 <div className="overflow-x-auto rounded-lg border border-gray-200">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-gray-800 text-white">
                         <th className="px-4 py-3 text-left font-semibold">SNO</th>
-                        <th className="px-4 py-3 text-left font-semibold">EMI</th>
-                        <th className="px-4 py-3 text-left font-semibold">PAID AMOUNT</th>
                         <th className="px-4 py-3 text-left font-semibold">EMI DATE</th>
+                        <th className="px-4 py-3 text-left font-semibold">EMI</th>
                         <th className="px-4 py-3 text-left font-semibold">PAID DATE</th>
+                        <th className="px-4 py-3 text-left font-semibold">PAID AMOUNT</th>
                         <th className="px-4 py-3 text-left font-semibold">PENDING</th>
                       </tr>
                     </thead>
@@ -312,11 +413,11 @@ function Finance() {
                       {modalData.emiSchedule.map((schedule, idx) => (
                         <tr key={schedule.sno} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                           <td className="px-4 py-3 font-semibold text-gray-900">{schedule.sno}</td>
-                          <td className="px-4 py-3 text-gray-700">₹ {schedule.emi}</td>
-                          <td className="px-4 py-3 text-gray-700">₹ {schedule.paidAmount}</td>
                           <td className="px-4 py-3 text-gray-700">{schedule.emiDate}</td>
+                          <td className="px-4 py-3 text-gray-700">₹ {toInr(schedule.emi)}</td>
                           <td className="px-4 py-3 text-gray-700">{schedule.paidDate}</td>
-                          <td className="px-4 py-3 font-semibold text-red-600">₹ {schedule.peningAmount}</td>
+                          <td className="px-4 py-3 text-gray-700">₹ {toInr(schedule.paidAmount)}</td>
+                          <td className="px-4 py-3 font-semibold text-red-600">₹ {toInr(schedule.pendingAmount ?? schedule.peningAmount)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -329,12 +430,12 @@ function Finance() {
             <div className="bg-gray-100 rounded-xl p-6 flex justify-between items-center">
               <div>
                 <div className="text-xs text-gray-500 font-semibold mb-1">TOTAL PAID</div>
-                <div className="text-2xl font-bold text-green-600">₹ {modalData.totalPaid}</div>
+                <div className="text-2xl font-bold text-green-600">₹ {toInr(modalData.totalPaid)}</div>
               </div>
               <div className="h-12 w-px bg-gray-300"></div>
               <div>
                 <div className="text-xs text-gray-500 font-semibold mb-1">PENDING AMOUNT</div>
-                <div className="text-2xl font-bold text-red-600">₹ {modalData.totalPending}</div>
+                <div className="text-2xl font-bold text-red-600">₹ {toInr(modalData.totalPending)}</div>
               </div>
             </div>
           </div>

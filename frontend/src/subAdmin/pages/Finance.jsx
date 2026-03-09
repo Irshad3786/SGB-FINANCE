@@ -14,6 +14,21 @@ const defaultPagination = {
 
 const toInr = (value) => Number(value || 0).toLocaleString('en-IN')
 
+const formatBalance = (value) => {
+  const amount = Number(value || 0)
+  if (amount < 0) {
+    return `(${toInr(Math.abs(amount))})`
+  }
+  return toInr(amount)
+}
+
+const getBalanceClass = (balance) => {
+  const amount = Number(balance || 0)
+  if (amount < 0) return 'text-green-600'
+  if (amount > 0) return 'text-red-600'
+  return 'text-black'
+}
+
 function Finance() {
   const navigate = useNavigate()
   const { showToast } = useToast()
@@ -84,6 +99,63 @@ function Finance() {
       setOpeningStatementId('')
     }
   }
+
+  const getStatementRows = (emiSchedule = [], paymentEntries = []) => {
+    let runningBalance = 0
+    const entries = Array.isArray(paymentEntries) ? paymentEntries : []
+
+    const rows = emiSchedule.map((schedule, idx) => {
+      const paymentEntry = entries[idx] || null
+      const paidAmt = Number(paymentEntry?.amount ?? 0)
+      const paidDate = paymentEntry?.paidDate || '-'
+      const receiptNo = paymentEntry?.bookNo && paymentEntry?.pageNo
+        ? `${paymentEntry.bookNo}/${paymentEntry.pageNo}`
+        : '-'
+
+      const instAmount = Number(schedule?.emi || 0)
+      runningBalance += instAmount - paidAmt
+
+      return {
+        instNo: Number(schedule?.sno || idx + 1),
+        instDate: schedule?.emiDate || '-',
+        instAmount,
+        paidDate,
+        paidAmt,
+        balance: runningBalance,
+        receiptNo,
+      }
+    })
+
+    const extraEntries = entries.slice(emiSchedule.length)
+    extraEntries.forEach((entry, index) => {
+      const paidAmt = Number(entry?.amount || 0)
+      const receiptNo = entry?.bookNo && entry?.pageNo
+        ? `${entry.bookNo}/${entry.pageNo}`
+        : '-'
+      runningBalance -= paidAmt
+
+      rows.push({
+        instNo: emiSchedule.length + index + 1,
+        instDate: '',
+        instAmount: '',
+        paidDate: entry?.paidDate || '-',
+        paidAmt,
+        balance: runningBalance,
+        receiptNo,
+      })
+    })
+
+    return rows
+  }
+
+  const statementRows = modalData
+    ? getStatementRows(modalData.emiSchedule, modalData.paymentEntries)
+    : []
+  const statementTotalPaid = statementRows.reduce((sum, row) => sum + Number(row?.paidAmt || 0), 0)
+  const statementBalance = statementRows.length > 0
+    ? Number(statementRows[statementRows.length - 1]?.balance || 0)
+    : 0
+  const statementPending = Math.max(statementBalance, 0)
 
   return (
     <div className="p-6">
@@ -401,23 +473,27 @@ function Finance() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-gray-800 text-white">
-                        <th className="px-4 py-3 text-left font-semibold">SNO</th>
-                        <th className="px-4 py-3 text-left font-semibold">EMI DATE</th>
-                        <th className="px-4 py-3 text-left font-semibold">EMI</th>
+                        <th className="px-4 py-3 text-left font-semibold">INST.NO</th>
+                        <th className="px-4 py-3 text-left font-semibold">INST.DATE</th>
+                        <th className="px-4 py-3 text-left font-semibold">INST.AMOUNT</th>
                         <th className="px-4 py-3 text-left font-semibold">PAID DATE</th>
-                        <th className="px-4 py-3 text-left font-semibold">PAID AMOUNT</th>
-                        <th className="px-4 py-3 text-left font-semibold">PENDING</th>
+                        <th className="px-4 py-3 text-left font-semibold">PAID AMT.</th>
+                        <th className="px-4 py-3 text-left font-semibold">BALANCE</th>
+                        <th className="px-4 py-3 text-left font-semibold">RECEIPT NO.</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {modalData.emiSchedule.map((schedule, idx) => (
-                        <tr key={schedule.sno} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                          <td className="px-4 py-3 font-semibold text-gray-900">{schedule.sno}</td>
-                          <td className="px-4 py-3 text-gray-700">{schedule.emiDate}</td>
-                          <td className="px-4 py-3 text-gray-700">₹ {toInr(schedule.emi)}</td>
+                      {statementRows.map((schedule, idx) => (
+                        <tr key={`${schedule.instNo}-${idx}`} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                          <td className="px-4 py-3 font-semibold text-gray-900">{schedule.instNo}</td>
+                          <td className="px-4 py-3 text-gray-700">{schedule.instDate}</td>
+                          <td className="px-4 py-3 text-gray-700">{schedule.instAmount === '' ? '' : `₹ ${toInr(schedule.instAmount)}`}</td>
                           <td className="px-4 py-3 text-gray-700">{schedule.paidDate}</td>
-                          <td className="px-4 py-3 text-gray-700">₹ {toInr(schedule.paidAmount)}</td>
-                          <td className="px-4 py-3 font-semibold text-red-600">₹ {toInr(schedule.pendingAmount ?? schedule.peningAmount)}</td>
+                          <td className="px-4 py-3 text-gray-700">₹ {toInr(schedule.paidAmt)}</td>
+                          <td className={`px-4 py-3 font-semibold ${getBalanceClass(schedule.balance)}`}>
+                            {formatBalance(schedule.balance)}
+                          </td>
+                          <td className="px-4 py-3 text-gray-700">{schedule.receiptNo}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -430,12 +506,12 @@ function Finance() {
             <div className="bg-gray-100 rounded-xl p-6 flex justify-between items-center">
               <div>
                 <div className="text-xs text-gray-500 font-semibold mb-1">TOTAL PAID</div>
-                <div className="text-2xl font-bold text-green-600">₹ {toInr(modalData.totalPaid)}</div>
+                <div className="text-2xl font-bold text-green-600">₹ {toInr(statementTotalPaid)}</div>
               </div>
               <div className="h-12 w-px bg-gray-300"></div>
               <div>
                 <div className="text-xs text-gray-500 font-semibold mb-1">PENDING AMOUNT</div>
-                <div className="text-2xl font-bold text-red-600">₹ {toInr(modalData.totalPending)}</div>
+                <div className="text-2xl font-bold text-red-600">₹ {toInr(statementPending)}</div>
               </div>
             </div>
           </div>

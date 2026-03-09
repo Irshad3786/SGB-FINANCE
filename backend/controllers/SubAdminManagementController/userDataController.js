@@ -318,6 +318,44 @@ const toNullableNumber = (value) => {
   return Number.isNaN(number) ? undefined : number;
 };
 
+const isValidDate = (value) => value instanceof Date && !Number.isNaN(value.getTime());
+
+const addMonthsSafe = (date, monthsToAdd) => {
+  const base = new Date(date);
+  const day = base.getDate();
+  base.setMonth(base.getMonth() + monthsToAdd);
+
+  // Keep EMI due dates stable for month-ends (e.g. 31st -> last day of target month).
+  if (base.getDate() < day) {
+    base.setDate(0);
+  }
+
+  return base;
+};
+
+const buildEmiSchedule = ({ startDate, months, emiAmount, existingSchedule = [] }) => {
+  const safeMonths = Math.max(0, Number(months) || 0);
+  const safeAmount = Number(emiAmount) || 0;
+
+  if (!isValidDate(startDate) || safeMonths <= 0) return existingSchedule;
+
+  return Array.from({ length: safeMonths }, (_, index) => {
+    const previous = existingSchedule[index] || {};
+    const paidAmount = Number(previous?.paidAmount || 0);
+
+    return {
+      emiNo: index + 1,
+      emiDate: addMonthsSafe(startDate, index),
+      amount: safeAmount,
+      paid: Boolean(previous?.paid) || paidAmount >= safeAmount,
+      paidDate: previous?.paidDate || null,
+      paidAmount,
+      bookNo: previous?.bookNo || "",
+      pageNo: previous?.pageNo || "",
+    };
+  });
+};
+
 const updateUserData = async (req, res) => {
   try {
     const {
@@ -365,6 +403,8 @@ const updateUserData = async (req, res) => {
 
     const sellerSet = {};
     const buyerSet = {};
+    const shouldSyncEmiSchedule =
+      emiAmount !== undefined || emiMonths !== undefined || emiDate !== undefined;
 
     setIfProvided(sellerSet, "fullName", seller);
     setIfProvided(sellerSet, "phoneNo", sellerPhone);
@@ -410,6 +450,40 @@ const updateUserData = async (req, res) => {
     }
 
     if (buyerId && Object.keys(buyerSet).length > 0) {
+      if (shouldSyncEmiSchedule) {
+        const existingBuyer = await Buyer.findById(buyerId)
+          .select("finance.emiAmount finance.months finance.emiDate finance.emiStartDate finance.emiDates")
+          .lean();
+
+        if (existingBuyer?.finance) {
+          const currentFinance = existingBuyer.finance;
+          const nextEmiAmount =
+            buyerSet["finance.emiAmount"] !== undefined
+              ? buyerSet["finance.emiAmount"]
+              : Number(currentFinance?.emiAmount || 0);
+          const nextMonths =
+            buyerSet["finance.months"] !== undefined
+              ? buyerSet["finance.months"]
+              : Number(currentFinance?.months || currentFinance?.emiDates?.length || 0);
+          const nextStartDate =
+            buyerSet["finance.emiStartDate"] !== undefined
+              ? buyerSet["finance.emiStartDate"]
+              : currentFinance?.emiStartDate ||
+                currentFinance?.emiDate ||
+                currentFinance?.emiDates?.[0]?.emiDate ||
+                null;
+
+          const schedule = buildEmiSchedule({
+            startDate: nextStartDate,
+            months: nextMonths,
+            emiAmount: nextEmiAmount,
+            existingSchedule: currentFinance?.emiDates || [],
+          });
+
+          buyerSet["finance.emiDates"] = schedule;
+        }
+      }
+
       operations.push(
         Buyer.findByIdAndUpdate(buyerId, { $set: buyerSet }, { new: true }).lean()
       );

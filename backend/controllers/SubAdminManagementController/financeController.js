@@ -25,11 +25,32 @@ const calculateAge = (dateOfBirth) => {
 	return age;
 };
 
-const mapEmiSchedule = (emiDates = []) => {
+const calculateEmiProgress = (emiDates = []) => {
+	let carryForward = 0;
+
 	return emiDates.map((schedule, index) => {
 		const emiValue = Number(schedule?.amount || 0);
 		const paidAmount = Number(schedule?.paidAmount || 0);
-		const pendingAmount = Math.max(emiValue - paidAmount, 0);
+		const availableAmount = paidAmount + carryForward;
+		const pendingAmount = Math.max(emiValue - availableAmount, 0);
+		carryForward = Math.max(availableAmount - emiValue, 0);
+
+		return {
+			schedule,
+			index,
+			emiValue,
+			paidAmount,
+			pendingAmount,
+			carryForward,
+		};
+	});
+};
+
+const mapEmiSchedule = (emiDates = []) => {
+	const emiProgress = calculateEmiProgress(emiDates);
+
+	return emiProgress.map((item) => {
+		const { schedule, index, emiValue, paidAmount, pendingAmount } = item;
 
 		return {
 			sno: Number(schedule?.emiNo || index + 1),
@@ -37,10 +58,50 @@ const mapEmiSchedule = (emiDates = []) => {
 			paidAmount,
 			emiDate: formatDisplayDate(schedule?.emiDate),
 			paidDate: formatDisplayDate(schedule?.paidDate),
+			bookNo: schedule?.bookNo || "",
+			pageNo: schedule?.pageNo || "",
 			pendingAmount,
 			peningAmount: pendingAmount,
 		};
 	});
+};
+
+const mapPaymentEntries = (paymentEntries = []) => {
+	if (!Array.isArray(paymentEntries)) return [];
+
+	return paymentEntries.map((entry) => ({
+		paidDate: formatDisplayDate(entry?.paidDate),
+		amount: Number(entry?.amount || 0),
+		bookNo: entry?.bookNo || "",
+		pageNo: entry?.pageNo || "",
+		emiNo: Number(entry?.emiNo || 0),
+	}));
+};
+
+const normalizeText = (value) => String(value || "").trim();
+
+const toStartOfDay = (value) => {
+	const parsed = new Date(value);
+	if (Number.isNaN(parsed.getTime())) return null;
+	parsed.setHours(0, 0, 0, 0);
+	return parsed;
+};
+
+const resolveTargetEmiIndex = (emiDates = [], paymentDate) => {
+	if (!Array.isArray(emiDates) || emiDates.length === 0) return -1;
+	const emiProgress = calculateEmiProgress(emiDates);
+
+	const dayValue = paymentDate ? paymentDate.getTime() : null;
+	if (dayValue !== null) {
+		const exactMatchIndex = emiProgress.findIndex((progressItem) => {
+			const dueDate = toStartOfDay(progressItem?.schedule?.emiDate);
+			return dueDate && dueDate.getTime() === dayValue;
+		});
+
+		if (exactMatchIndex >= 0) return exactMatchIndex;
+	}
+
+	return emiProgress.findIndex((progressItem) => Number(progressItem?.pendingAmount || 0) > 0);
 };
 
 const mapBuyerToFinanceStatement = (buyer) => {
@@ -48,11 +109,12 @@ const mapBuyerToFinanceStatement = (buyer) => {
 	const vehicle = buyer?.vehicle || {};
 	const guarantor = buyer?.guarantor || {};
 	const emiSchedule = mapEmiSchedule(finance?.emiDates || []);
-	const totalPaid = emiSchedule.reduce((sum, item) => sum + Number(item?.paidAmount || 0), 0);
-	const totalPending = emiSchedule.reduce(
-		(sum, item) => sum + Number(item?.pendingAmount || 0),
-		0
-	);
+	const paymentEntries = mapPaymentEntries(finance?.paymentEntries || []);
+	const totalInstalmentAmount = emiSchedule.reduce((sum, item) => sum + Number(item?.emi || 0), 0);
+	const totalPaid = paymentEntries.length > 0
+		? paymentEntries.reduce((sum, entry) => sum + Number(entry?.amount || 0), 0)
+		: emiSchedule.reduce((sum, item) => sum + Number(item?.paidAmount || 0), 0);
+	const totalPending = Math.max(totalInstalmentAmount - totalPaid, 0);
 
 	const financeAmount = Number(finance?.financeAmount || 0);
 	const emiAmount = Number(finance?.emiAmount || 0);
@@ -76,6 +138,7 @@ const mapBuyerToFinanceStatement = (buyer) => {
 		charges,
 		totalAmount,
 		emiSchedule,
+		paymentEntries,
 		totalPaid,
 		totalPending,
 		vehicleName: vehicle?.vehicleName || "",
@@ -202,6 +265,110 @@ export const getFinanceStatement = async (req, res) => {
 		return res.status(500).json({
 			success: false,
 			message: "Failed to fetch finance statement",
+			error: error.message,
+		});
+	}
+};
+
+export const createEmiEntry = async (req, res) => {
+	try {
+		const { agreementNo, date, amount, bookNo = "", pageNo = "" } = req.body || {};
+
+		const trimmedAgreementNo = normalizeText(agreementNo);
+		if (!trimmedAgreementNo) {
+			return res.status(400).json({
+				success: false,
+				message: "agreementNo is required",
+			});
+		}
+
+		const paidAmount = Number(amount);
+		if (Number.isNaN(paidAmount) || paidAmount <= 0) {
+			return res.status(400).json({
+				success: false,
+				message: "amount must be a valid number greater than 0",
+			});
+		}
+
+		const paymentDate = toStartOfDay(date || new Date());
+		if (!paymentDate) {
+			return res.status(400).json({
+				success: false,
+				message: "date is invalid",
+			});
+		}
+
+		const buyer = await Buyer.findOne({ agreementNo: trimmedAgreementNo });
+		if (!buyer) {
+			return res.status(404).json({
+				success: false,
+				message: "Buyer not found for this agreement number",
+			});
+		}
+
+		if (!Array.isArray(buyer?.finance?.emiDates) || buyer.finance.emiDates.length === 0) {
+			return res.status(400).json({
+				success: false,
+				message: "No EMI schedule found for this agreement",
+			});
+		}
+
+		const emiDates = buyer.finance.emiDates;
+		const targetIndex = resolveTargetEmiIndex(emiDates, paymentDate);
+		const hasPendingInstalment = targetIndex >= 0;
+
+		let targetEmi = null;
+		if (hasPendingInstalment) {
+			targetEmi = emiDates[targetIndex];
+			targetEmi.paidDate = paymentDate;
+			targetEmi.paidAmount = Number(targetEmi?.paidAmount || 0) + paidAmount;
+			targetEmi.bookNo = normalizeText(bookNo);
+			targetEmi.pageNo = normalizeText(pageNo);
+
+			const emiDueAmount = Number(targetEmi?.amount || 0);
+			targetEmi.paid = emiDueAmount > 0 ? targetEmi.paidAmount >= emiDueAmount : targetEmi.paidAmount > 0;
+		}
+
+		if (!Array.isArray(buyer.finance.paymentEntries)) {
+			buyer.finance.paymentEntries = [];
+		}
+
+		const nextEntryEmiNo = hasPendingInstalment
+			? Number(targetEmi?.emiNo || targetIndex + 1)
+			: buyer.finance.paymentEntries.length + 1;
+
+		buyer.finance.paymentEntries.push({
+			paidDate: paymentDate,
+			amount: paidAmount,
+			bookNo: normalizeText(bookNo),
+			pageNo: normalizeText(pageNo),
+			emiNo: nextEntryEmiNo,
+		});
+
+		const emiProgress = calculateEmiProgress(buyer.finance.emiDates || []);
+		const allPaid = emiProgress.every((item) => Number(item?.pendingAmount || 0) <= 0);
+
+		buyer.finance.status = allPaid ? "paid" : "pending";
+		await buyer.save();
+
+		return res.status(200).json({
+			success: true,
+			message: "EMI entry saved successfully",
+			data: {
+				buyerId: String(buyer._id),
+				agreementNo: buyer.agreementNo,
+				emiNo: nextEntryEmiNo,
+				paidDate: formatDisplayDate(hasPendingInstalment ? targetEmi?.paidDate : paymentDate),
+				paidAmount: hasPendingInstalment ? Number(targetEmi.paidAmount || 0) : paidAmount,
+				bookNo: normalizeText(bookNo),
+				pageNo: normalizeText(pageNo),
+				entryType: hasPendingInstalment ? "instalment" : "extra-payment",
+			},
+		});
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			message: "Failed to save EMI entry",
 			error: error.message,
 		});
 	}

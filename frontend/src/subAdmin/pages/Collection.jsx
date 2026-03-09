@@ -3,6 +3,8 @@ import { useEffect } from 'react'
 import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import WhatsAppConfirmModal from '../components/WhatsAppConfirmModal'
+import apiClient from '../../api/axios'
+import { useToast } from '../../components/ToastProvider'
 
 // Finance data for EMI entry autocomplete
 const unifiedData = [
@@ -15,8 +17,57 @@ const unifiedData = [
   { sno: 7, ha: 'HA460', name: 'DEEPAK VERMA', vehicle: 'AP25KK4532', phone: '9144444444', emi: '1800', emiDate: '10-01-2026', commAmount: '05-01-2026', commDate: '1630', paidAmount: '1630', status: 'paid', vehiclePrice: '35000', charges: '8000', totalAmount: '43000', buyerName: '', financeAmount: '', age: '', address: '', vehicleName: '', chassisNo: '', vehicleModel: '', phoneNo: '9144444444', seller: 'DEEPAK VERMA', agreementNo: 'HA460', bookNo: '7', pageNo: '20', emiSchedule: [{ sno: 1, emi: 1800, paidAmount: 0, emiDate: '10-01-2026', paidDate: '-', peningAmount: 1800 }, { sno: 2, emi: 1800, paidAmount: 0, emiDate: '10-02-2026', paidDate: '-', peningAmount: 1800 }] },
 ]
 
+const toInputDate = (displayDate) => {
+  if (!displayDate) return ''
+  const parts = String(displayDate).split('-')
+  if (parts.length !== 3) return ''
+  const [dd, mm, yyyy] = parts
+  if (!dd || !mm || !yyyy) return ''
+  return `${yyyy}-${mm}-${dd}`
+}
+
+const mapFinanceRowToCollectionRow = (row, index) => {
+  const firstPendingSchedule = (row?.emiSchedule || []).find(
+    s => Number(s?.pendingAmount ?? s?.peningAmount ?? 0) > 0
+  )
+
+  return {
+    id: row?.id,
+    sno: index + 1,
+    ha: row?.agreementNo || '',
+    agreementNo: row?.agreementNo || '',
+    name: row?.seller || '',
+    seller: row?.seller || '',
+    vehicle: row?.vehicle || '',
+    phone: row?.phoneNo || '',
+    phoneNo: row?.phoneNo || '',
+    emi: String(row?.emi ?? ''),
+    emiDate: row?.emiDate || '',
+    commAmount: toInputDate(firstPendingSchedule?.emiDate || row?.emiDate),
+    commDate: String(firstPendingSchedule?.emi ?? row?.emi ?? ''),
+    paidAmount: String(firstPendingSchedule?.paidAmount ?? 0),
+    status: row?.status === 'paid' ? 'paid' : 'pending',
+    vehiclePrice: row?.vehiclePrice,
+    charges: row?.charges,
+    totalAmount: row?.totalAmount,
+    buyerName: row?.buyerName,
+    financeAmount: row?.financeAmount,
+    age: row?.age,
+    address: row?.address,
+    vehicleName: row?.vehicleName,
+    chassisNo: row?.chassisNo,
+    vehicleModel: row?.vehicleModel,
+    emiSchedule: row?.emiSchedule || [],
+    totalPaid: row?.totalPaid,
+    totalPending: row?.totalPending,
+    bookNo: firstPendingSchedule?.bookNo || '',
+    pageNo: firstPendingSchedule?.pageNo || '',
+  }
+}
+
 function Collection() {
   const navigate = useNavigate()
+  const { showToast } = useToast()
 
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({ agent: '', status: 'all', date: '' })
@@ -26,12 +77,37 @@ function Collection() {
   const [whatsAppModal, setWhatsAppModal] = useState({ isOpen: false, userName: '' })
   const [financeModal, setFinanceModal] = useState(null)
   const [editableData, setEditableData] = useState(unifiedData)
+  const [loading, setLoading] = useState(false)
   const [selectedRowIndex, setSelectedRowIndex] = useState(0)
   const tableContainerRef = useRef(null)
   const [emiEntryOpen, setEmiEntryOpen] = useState(false)
   const [emiEntryForm, setEmiEntryForm] = useState({ agreementNo: '', bookNo: '', pageNo: '', amount: '', date: '' })
+  const [savingEntry, setSavingEntry] = useState(false)
   const bookInputRef = useRef(null)
   const [editFieldsPrompt, setEditFieldsPrompt] = useState({ open: false, bookNo: '', pageNo: '', amount: '', date: '' })
+
+  const fetchCollectionData = async () => {
+    try {
+      setLoading(true)
+      const response = await apiClient.get('/api/subadmin/management/finance', {
+        params: { page: 1, limit: 100 },
+      })
+      const data = response?.data?.data || []
+      if (Array.isArray(data) && data.length > 0) {
+        setEditableData(data.map(mapFinanceRowToCollectionRow))
+      } else {
+        setEditableData([])
+      }
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error?.response?.data?.message || 'Failed to load collection data',
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleCellChange = (index, field, value) => {
     setEditableData(prev => prev.map((row, idx) => 
@@ -46,14 +122,14 @@ function Collection() {
   const filteredAgreements = useMemo(() => {
     const query = emiEntryForm.agreementNo.trim().toLowerCase()
     if (!query) return []
-    return unifiedData
+    return editableData
       .filter(f => f.agreementNo && f.agreementNo.toLowerCase().includes(query))
       .slice(0, 6)
-  }, [emiEntryForm.agreementNo])
+  }, [emiEntryForm.agreementNo, editableData])
 
   const selectedAgreement = useMemo(
-    () => unifiedData.find(f => f.agreementNo === emiEntryForm.agreementNo),
-    [emiEntryForm.agreementNo]
+    () => editableData.find(f => f.agreementNo === emiEntryForm.agreementNo),
+    [emiEntryForm.agreementNo, editableData]
   )
 
   const handleEmiEntryChange = (field, value) => {
@@ -66,9 +142,51 @@ function Collection() {
     }
   }
 
-  const handleEmiEntrySave = () => {
-    console.log('EMI Entry saved', emiEntryForm)
-    setEmiEntryOpen(false)
+  const handleEmiEntrySave = async () => {
+    if (!emiEntryForm.agreementNo || !emiEntryForm.date || !emiEntryForm.amount) {
+      showToast({
+        type: 'error',
+        title: 'Validation',
+        message: 'Agreement No, date and amount are required',
+      })
+      return
+    }
+
+    try {
+      setSavingEntry(true)
+      await apiClient.post('/api/subadmin/management/finance/emi-entry', {
+        agreementNo: emiEntryForm.agreementNo,
+        date: emiEntryForm.date,
+        amount: emiEntryForm.amount,
+        bookNo: emiEntryForm.bookNo,
+        pageNo: emiEntryForm.pageNo,
+      })
+
+      await fetchCollectionData()
+
+      if (financeModal?.id) {
+        const statementResponse = await apiClient.get(`/api/subadmin/management/finance/${financeModal.id}`)
+        const statement = statementResponse?.data?.data
+        if (statement) {
+          setFinanceModal(mapFinanceRowToCollectionRow(statement, 0))
+        }
+      }
+
+      showToast({
+        type: 'success',
+        title: 'Saved',
+        message: 'EMI entry saved successfully',
+      })
+      setEmiEntryOpen(false)
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error?.response?.data?.message || 'Failed to save EMI entry',
+      })
+    } finally {
+      setSavingEntry(false)
+    }
   }
 
   const getDerivedEmiDefaults = () => {
@@ -84,7 +202,7 @@ function Collection() {
     const b = (bookNo || '').trim()
     const p = (pageNo || '').trim()
     if (!b || !p) return null
-    const found = unifiedData.find(item => item.bookNo === b && item.pageNo === p)
+    const found = editableData.find(item => item.bookNo === b && item.pageNo === p)
     return found ? { name: found.name, vehicle: found.vehicle } : null
   }
 
@@ -95,6 +213,11 @@ function Collection() {
   }
 
   // Handle keyboard navigation
+  useEffect(() => {
+    fetchCollectionData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'ArrowDown') {
@@ -392,9 +515,10 @@ function Collection() {
                   <td className="py-1.5 px-1">
                     <div className="flex items-center gap-0.5">
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation()
                           setEmiEntryForm({
-                            agreementNo: row.ha,
+                            agreementNo: row.agreementNo,
                             bookNo: '',
                             pageNo: '',
                             amount: row.paidAmount,
@@ -410,7 +534,22 @@ function Collection() {
                         </svg>
                       </button>
                       <button
-                        onClick={() => setFinanceModal(row)}
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          try {
+                            const response = await apiClient.get(`/api/subadmin/management/finance/${row.id}`)
+                            const statement = response?.data?.data
+                            if (statement) {
+                              setFinanceModal(mapFinanceRowToCollectionRow(statement, idx))
+                            }
+                          } catch (error) {
+                            showToast({
+                              type: 'error',
+                              title: 'Error',
+                              message: error?.response?.data?.message || 'Failed to fetch finance statement',
+                            })
+                          }
+                        }}
                         className="p-1 text-blue-600 hover:bg-blue-50 rounded"
                         title="View Finance Details"
                       >
@@ -500,9 +639,10 @@ function Collection() {
 
               <div className="mt-3 flex items-center justify-end gap-2">
                 <button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation()
                     setEmiEntryForm({
-                      agreementNo: row.ha,
+                      agreementNo: row.agreementNo,
                       bookNo: '',
                       pageNo: '',
                       amount: row.paidAmount,
@@ -518,7 +658,22 @@ function Collection() {
                   </svg>
                 </button>
                 <button
-                  onClick={() => setFinanceModal(row)}
+                  onClick={async (e) => {
+                    e.stopPropagation()
+                    try {
+                      const response = await apiClient.get(`/api/subadmin/management/finance/${row.id}`)
+                      const statement = response?.data?.data
+                      if (statement) {
+                        setFinanceModal(mapFinanceRowToCollectionRow(statement, idx))
+                      }
+                    } catch (error) {
+                      showToast({
+                        type: 'error',
+                        title: 'Error',
+                        message: error?.response?.data?.message || 'Failed to fetch finance statement',
+                      })
+                    }
+                  }}
                   className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                   title="View Finance Details"
                 >
@@ -577,7 +732,7 @@ function Collection() {
             </button>
 
             <h2 className="text-2xl sm:text-3xl font-bold text-center mb-2 text-gray-800">Finance Statement</h2>
-            <div className="text-center text-xs sm:text-sm text-gray-500 mb-4 sm:mb-8">Agreement No : {financeModal.ha}</div>
+            <div className="text-center text-xs sm:text-sm text-gray-500 mb-4 sm:mb-8">Agreement No : {financeModal.agreementNo}</div>
 
             {/* Header with Images on Right */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6 mb-4 sm:mb-8">
@@ -636,7 +791,7 @@ function Collection() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-6">
                 <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm">
                   <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">AGREEMENT NO</div>
-                  <div className="text-base sm:text-lg font-bold text-gray-900 truncate">{financeModal.ha}</div>
+                  <div className="text-base sm:text-lg font-bold text-gray-900 truncate">{financeModal.agreementNo}</div>
                 </div>
                 <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm">
                   <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">VEHICLE NUMBER</div>
@@ -945,9 +1100,10 @@ function Collection() {
               </button>
               <button
                 onClick={handleEmiEntrySave}
+                disabled={savingEntry}
                 className="px-5 py-2 rounded-lg bg-gradient-to-r from-[#B0FF1C] to-[#40FF00] text-sm font-semibold text-gray-900 shadow hover:shadow-md"
               >
-                Save
+                {savingEntry ? 'Saving...' : 'Save'}
               </button>
             </div>
           </div>

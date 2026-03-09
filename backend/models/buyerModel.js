@@ -89,6 +89,14 @@ const buyerSchema = new mongoose.Schema({
         pageNo: String,
         }],
 
+        paymentEntries: [{
+        paidDate: { type: Date, default: null },
+        amount: { type: Number, default: 0 },
+        bookNo: { type: String, default: "" },
+        pageNo: { type: String, default: "" },
+        emiNo: Number,
+        }],
+
         agentName: String,
         emiNo: Number,
         commitmentDate: Date,

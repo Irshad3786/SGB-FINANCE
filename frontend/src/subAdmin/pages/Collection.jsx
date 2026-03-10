@@ -132,6 +132,22 @@ function Collection() {
     [emiEntryForm.agreementNo, editableData]
   )
 
+  const duplicateBookPageEntry = useMemo(() => {
+    const bookNo = (emiEntryForm.bookNo || '').trim()
+    const pageNo = (emiEntryForm.pageNo || '').trim()
+    if (!bookNo || !pageNo) return null
+
+    return editableData.find(item => {
+      const itemBookNo = String(item.bookNo || '').trim()
+      const itemPageNo = String(item.pageNo || '').trim()
+      return itemBookNo === bookNo && itemPageNo === pageNo
+    }) || null
+  }, [emiEntryForm.bookNo, emiEntryForm.pageNo, editableData])
+
+  const hasDuplicateBookPageConflict = Boolean(
+    duplicateBookPageEntry && duplicateBookPageEntry.agreementNo !== emiEntryForm.agreementNo
+  )
+
   const handleEmiEntryChange = (field, value) => {
     setEmiEntryForm(prev => ({ ...prev, [field]: value }))
   }
@@ -148,6 +164,15 @@ function Collection() {
         type: 'error',
         title: 'Validation',
         message: 'Agreement No, date and amount are required',
+      })
+      return
+    }
+
+    if (hasDuplicateBookPageConflict) {
+      showToast({
+        type: 'error',
+        title: 'Duplicate Book/Page',
+        message: `Book No ${emiEntryForm.bookNo} and Page No ${emiEntryForm.pageNo} already exist with Agreement No ${duplicateBookPageEntry.agreementNo} (${duplicateBookPageEntry.name || duplicateBookPageEntry.seller || 'Unknown'})`,
       })
       return
     }
@@ -177,7 +202,7 @@ function Collection() {
         title: 'Saved',
         message: 'EMI entry saved successfully',
       })
-      setEmiEntryOpen(false)
+      focusEmiEditFields()
     } catch (error) {
       showToast({
         type: 'error',
@@ -1078,6 +1103,12 @@ function Collection() {
                   />
                 </label>
               </div>
+
+              {hasDuplicateBookPageConflict && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                  Book No {emiEntryForm.bookNo} and Page No {emiEntryForm.pageNo} already exist with Agreement No {duplicateBookPageEntry.agreementNo} ({duplicateBookPageEntry.name || duplicateBookPageEntry.seller || 'Unknown'}).
+                </div>
+              )}
 
               <label className="block text-xs font-semibold text-gray-700">
                 Amount

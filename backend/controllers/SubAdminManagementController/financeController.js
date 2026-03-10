@@ -298,6 +298,33 @@ export const createEmiEntry = async (req, res) => {
 			});
 		}
 
+		const trimmedBookNo = normalizeText(bookNo);
+		const trimmedPageNo = normalizeText(pageNo);
+
+		if (trimmedBookNo && trimmedPageNo) {
+			const duplicateEntryBuyer = await Buyer.findOne({
+				$or: [
+					{ "finance.emiDates": { $elemMatch: { bookNo: trimmedBookNo, pageNo: trimmedPageNo } } },
+					{ "finance.paymentEntries": { $elemMatch: { bookNo: trimmedBookNo, pageNo: trimmedPageNo } } },
+				],
+			})
+				.select("name agreementNo")
+				.lean();
+
+			if (duplicateEntryBuyer) {
+				return res.status(409).json({
+					success: false,
+					message: `Book No ${trimmedBookNo} and Page No ${trimmedPageNo} already exist with Agreement No ${duplicateEntryBuyer.agreementNo} (${duplicateEntryBuyer.name || "Unknown"})`,
+					data: {
+						bookNo: trimmedBookNo,
+						pageNo: trimmedPageNo,
+						agreementNo: duplicateEntryBuyer.agreementNo || "",
+						name: duplicateEntryBuyer.name || "",
+					},
+				});
+			}
+		}
+
 		const buyer = await Buyer.findOne({ agreementNo: trimmedAgreementNo });
 		if (!buyer) {
 			return res.status(404).json({
@@ -322,8 +349,8 @@ export const createEmiEntry = async (req, res) => {
 			targetEmi = emiDates[targetIndex];
 			targetEmi.paidDate = paymentDate;
 			targetEmi.paidAmount = Number(targetEmi?.paidAmount || 0) + paidAmount;
-			targetEmi.bookNo = normalizeText(bookNo);
-			targetEmi.pageNo = normalizeText(pageNo);
+			targetEmi.bookNo = trimmedBookNo;
+			targetEmi.pageNo = trimmedPageNo;
 
 			const emiDueAmount = Number(targetEmi?.amount || 0);
 			targetEmi.paid = emiDueAmount > 0 ? targetEmi.paidAmount >= emiDueAmount : targetEmi.paidAmount > 0;
@@ -340,8 +367,8 @@ export const createEmiEntry = async (req, res) => {
 		buyer.finance.paymentEntries.push({
 			paidDate: paymentDate,
 			amount: paidAmount,
-			bookNo: normalizeText(bookNo),
-			pageNo: normalizeText(pageNo),
+			bookNo: trimmedBookNo,
+			pageNo: trimmedPageNo,
 			emiNo: nextEntryEmiNo,
 		});
 
@@ -360,8 +387,8 @@ export const createEmiEntry = async (req, res) => {
 				emiNo: nextEntryEmiNo,
 				paidDate: formatDisplayDate(hasPendingInstalment ? targetEmi?.paidDate : paymentDate),
 				paidAmount: hasPendingInstalment ? Number(targetEmi.paidAmount || 0) : paidAmount,
-				bookNo: normalizeText(bookNo),
-				pageNo: normalizeText(pageNo),
+				bookNo: trimmedBookNo,
+				pageNo: trimmedPageNo,
 				entryType: hasPendingInstalment ? "instalment" : "extra-payment",
 			},
 		});

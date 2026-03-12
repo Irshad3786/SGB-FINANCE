@@ -1,4 +1,6 @@
 import Buyer from "../../models/buyerModel.js";
+import SubAdmin from "../../models/subAdminModel.js";
+import CollectionEntry from "../../models/collectionEntryModel.js";
 
 const formatDisplayDate = (value) => {
 	if (!value) return "";
@@ -396,6 +398,187 @@ export const createEmiEntry = async (req, res) => {
 		return res.status(500).json({
 			success: false,
 			message: "Failed to save EMI entry",
+			error: error.message,
+		});
+	}
+};
+
+export const getCollectionAgents = async (req, res) => {
+	try {
+		const collectionAgents = await SubAdmin.find({
+			roleName: "Collection Agent",
+			status: "active",
+		})
+			.select("name")
+			.sort({ name: 1 })
+			.lean();
+
+		const data = collectionAgents
+			.map((agent) => String(agent?.name || "").trim())
+			.filter(Boolean);
+
+		return res.status(200).json({
+			success: true,
+			message: "Collection agents fetched successfully",
+			data,
+		});
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			message: "Failed to fetch collection agents",
+			error: error.message,
+		});
+	}
+};
+
+// Save a quick collection entry (aggNo + amount + agent)
+export const saveCollectionEntry = async (req, res) => {
+	try {
+		const { agreementNo, amount, agentName } = req.body || {};
+
+		const trimmedAgreementNo = normalizeText(agreementNo);
+		if (!trimmedAgreementNo) {
+			return res.status(400).json({ success: false, message: "agreementNo is required" });
+		}
+
+		const parsedAmount = Number(amount);
+		if (Number.isNaN(parsedAmount) || parsedAmount <= 0) {
+			return res.status(400).json({ success: false, message: "amount must be a valid number greater than 0" });
+		}
+
+		const trimmedAgent = normalizeText(agentName);
+		if (!trimmedAgent) {
+			return res.status(400).json({ success: false, message: "agentName is required" });
+		}
+
+		const entry = await CollectionEntry.create({
+			agreementNo: trimmedAgreementNo,
+			amount: parsedAmount,
+			agentName: trimmedAgent,
+			createdBy: req.subAdminId || null,
+		});
+
+		const buyer = await Buyer.findOne({ agreementNo: trimmedAgreementNo })
+			.select("name phoneNo vehicle finance")
+			.lean();
+
+		return res.status(201).json({
+			success: true,
+			message: "Collection entry saved successfully",
+			data: {
+				id: String(entry._id),
+				agreementNo: entry.agreementNo,
+				amount: entry.amount,
+				agentName: entry.agentName,
+				date: entry.date,
+				createdAt: entry.createdAt,
+				name: buyer?.name || "",
+				vehicle: buyer?.vehicle?.vehicleNumber || "",
+				phoneNo: buyer?.phoneNo || "",
+				emi: Number(buyer?.finance?.emiAmount || 0),
+				emiDate: formatDisplayDate(buyer?.finance?.emiStartDate || buyer?.finance?.emiDate),
+				buyerId: buyer ? String(buyer._id) : "",
+			},
+		});
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			message: "Failed to save collection entry",
+			error: error.message,
+		});
+	}
+};
+
+// Get all collection entries, optionally filtered by agentName
+export const getCollectionEntries = async (req, res) => {
+	try {
+		const { agentName = "" } = req.query;
+
+		const query = {};
+		if (agentName && agentName.trim()) {
+			query.agentName = { $regex: `^${agentName.trim()}$`, $options: "i" };
+		}
+
+		const entries = await CollectionEntry.find(query)
+			.sort({ createdAt: -1 })
+			.lean();
+
+		const agreementNos = [...new Set(entries.map((e) => e.agreementNo).filter(Boolean))];
+		let buyerMap = {};
+		if (agreementNos.length > 0) {
+			const buyers = await Buyer.find({ agreementNo: { $in: agreementNos } })
+				.select("name agreementNo phoneNo vehicle finance")
+				.lean();
+			for (const buyer of buyers) {
+				buyerMap[buyer.agreementNo] = buyer;
+			}
+		}
+
+		const data = entries.map((entry) => {
+			const buyer = buyerMap[entry.agreementNo] || null;
+			return {
+				id: String(entry._id),
+				agreementNo: entry.agreementNo,
+				amount: entry.amount,
+				agentName: entry.agentName,
+				date: entry.date,
+				createdAt: entry.createdAt,
+				name: buyer?.name || "",
+				vehicle: buyer?.vehicle?.vehicleNumber || "",
+				phoneNo: buyer?.phoneNo || "",
+				emi: Number(buyer?.finance?.emiAmount || 0),
+				emiDate: formatDisplayDate(buyer?.finance?.emiStartDate || buyer?.finance?.emiDate),
+				buyerId: buyer ? String(buyer._id) : "",
+			};
+		});
+
+		return res.status(200).json({
+			success: true,
+			message: "Collection entries fetched successfully",
+			data,
+		});
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			message: "Failed to fetch collection entries",
+			error: error.message,
+		});
+	}
+};
+
+// Update a collection entry's date
+export const updateCollectionEntry = async (req, res) => {
+	try {
+		const { id } = req.params;
+		const { date } = req.body;
+
+		if (!date) {
+			return res.status(400).json({ success: false, message: "date is required" });
+		}
+		const parsedDate = new Date(date);
+		if (isNaN(parsedDate.getTime())) {
+			return res.status(400).json({ success: false, message: "Invalid date" });
+		}
+
+		const entry = await CollectionEntry.findByIdAndUpdate(
+			id,
+			{ date: parsedDate },
+			{ new: true }
+		);
+
+		if (!entry) {
+			return res.status(404).json({ success: false, message: "Collection entry not found" });
+		}
+
+		return res.status(200).json({
+			success: true,
+			message: "Collection entry updated successfully",
+			data: { id: String(entry._id), date: entry.date },
+		});
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			message: "Failed to update collection entry",
 			error: error.message,
 		});
 	}

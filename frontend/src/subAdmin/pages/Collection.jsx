@@ -65,6 +65,36 @@ const mapFinanceRowToCollectionRow = (row, index) => {
   }
 }
 
+const todayInputDate = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+const mapCollectionEntryToTableRow = (entry, index) => ({
+  id: entry.buyerId || '',
+  collectionEntryId: entry.id,
+  sno: index + 1,
+  ha: entry.agreementNo,
+  agreementNo: entry.agreementNo,
+  name: entry.name || '',
+  seller: entry.name || '',
+  vehicle: entry.vehicle || '',
+  phone: entry.phoneNo || '',
+  phoneNo: entry.phoneNo || '',
+  emi: String(entry.emi || ''),
+  emiDate: entry.emiDate || '',
+  commAmount: todayInputDate(),
+  commDate: String(entry.amount || ''),
+  paidAmount: '0',
+  status: 'pending',
+  agentName: entry.agentName || '',
+  vehiclePrice: '', charges: '', totalAmount: '',
+  buyerName: entry.name || '', financeAmount: '', age: '',
+  address: '', vehicleName: '', chassisNo: '', vehicleModel: '',
+  emiSchedule: [], totalPaid: '', totalPending: '',
+  bookNo: '', pageNo: '',
+})
+
 function Collection() {
   const navigate = useNavigate()
   const { showToast } = useToast()
@@ -72,11 +102,13 @@ function Collection() {
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({ agent: '', status: 'all', date: '' })
   // Quick entry defaults so inputs are ready to edit
-  const [quickEntry, setQuickEntry] = useState({ aggNo: '586', amount: '3500', agent: 'prasad' })
-  const agentOptions = ['prasad', 'ajay', 'rajesh', 'suresh']
+  const [quickEntry, setQuickEntry] = useState({ aggNo: '', amount: '', agent: '' })
+  const [agentOptions, setAgentOptions] = useState([])
+  const [financeData, setFinanceData] = useState([])
+  const [savingQuickEntry, setSavingQuickEntry] = useState(false)
   const [whatsAppModal, setWhatsAppModal] = useState({ isOpen: false, userName: '' })
   const [financeModal, setFinanceModal] = useState(null)
-  const [editableData, setEditableData] = useState(unifiedData)
+  const [editableData, setEditableData] = useState([])
   const [loading, setLoading] = useState(false)
   const [selectedRowIndex, setSelectedRowIndex] = useState(0)
   const tableContainerRef = useRef(null)
@@ -94,9 +126,9 @@ function Collection() {
       })
       const data = response?.data?.data || []
       if (Array.isArray(data) && data.length > 0) {
-        setEditableData(data.map(mapFinanceRowToCollectionRow))
+        setFinanceData(data.map(mapFinanceRowToCollectionRow))
       } else {
-        setEditableData([])
+        setFinanceData([])
       }
     } catch (error) {
       showToast({
@@ -109,10 +141,84 @@ function Collection() {
     }
   }
 
+  const fetchCollectionAgents = async () => {
+    try {
+      const response = await apiClient.get('/api/subadmin/management/finance/collection-agents')
+      const names = Array.isArray(response?.data?.data) ? response.data.data : []
+      setAgentOptions(names)
+    } catch (error) {
+      setAgentOptions([])
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error?.response?.data?.message || 'Failed to load collection agents',
+      })
+    }
+  }
+
+  const fetchCollectionEntries = async (agentFilter = '') => {
+    try {
+      const params = {}
+      if (agentFilter && agentFilter.trim()) params.agentName = agentFilter.trim()
+      const response = await apiClient.get('/api/subadmin/management/finance/collection-entries', { params })
+      const entries = Array.isArray(response?.data?.data) ? response.data.data : []
+      setEditableData(entries.map(mapCollectionEntryToTableRow))
+    } catch (error) {
+      setEditableData([])
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error?.response?.data?.message || 'Failed to load collection entries',
+      })
+    }
+  }
+
+  const handleQuickEntrySubmit = async (e) => {
+    e.preventDefault()
+    if (!quickEntry.aggNo.trim() || !quickEntry.amount || !quickEntry.agent) {
+      showToast({ type: 'error', title: 'Validation', message: 'Agg No, Amount and Agent are required' })
+      return
+    }
+    try {
+      setSavingQuickEntry(true)
+      const resp = await apiClient.post('/api/subadmin/management/finance/collection-entry', {
+        agreementNo: quickEntry.aggNo.trim(),
+        amount: quickEntry.amount,
+        agentName: quickEntry.agent,
+      })
+      const savedEntry = resp?.data?.data
+      if (savedEntry) {
+        const newRow = mapCollectionEntryToTableRow(savedEntry, editableData.length)
+        setEditableData(prev => [...prev, newRow])
+      }
+      showToast({ type: 'success', title: 'Saved', message: 'Collection entry added' })
+      setQuickEntry(prev => ({ aggNo: '', amount: '', agent: prev.agent }))
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error?.response?.data?.message || 'Failed to save collection entry',
+      })
+    } finally {
+      setSavingQuickEntry(false)
+    }
+  }
+
   const handleCellChange = (index, field, value) => {
     setEditableData(prev => prev.map((row, idx) => 
       idx === index ? { ...row, [field]: value } : row
     ))
+    if (field === 'commAmount') {
+      const row = editableData[index]
+      if (row?.collectionEntryId) {
+        apiClient.patch(
+          `/api/subadmin/management/finance/collection-entry/${row.collectionEntryId}`,
+          { date: value }
+        ).catch(() => {
+          showToast({ type: 'error', title: 'Error', message: 'Failed to save date' })
+        })
+      }
+    }
   }
 
   const handleWhatsAppClick = (userName) => {
@@ -122,14 +228,14 @@ function Collection() {
   const filteredAgreements = useMemo(() => {
     const query = emiEntryForm.agreementNo.trim().toLowerCase()
     if (!query) return []
-    return editableData
+    return financeData
       .filter(f => f.agreementNo && f.agreementNo.toLowerCase().includes(query))
       .slice(0, 6)
-  }, [emiEntryForm.agreementNo, editableData])
+  }, [emiEntryForm.agreementNo, financeData])
 
   const selectedAgreement = useMemo(
-    () => editableData.find(f => f.agreementNo === emiEntryForm.agreementNo),
-    [emiEntryForm.agreementNo, editableData]
+    () => financeData.find(f => f.agreementNo === emiEntryForm.agreementNo),
+    [emiEntryForm.agreementNo, financeData]
   )
 
   const duplicateBookPageEntry = useMemo(() => {
@@ -137,12 +243,12 @@ function Collection() {
     const pageNo = (emiEntryForm.pageNo || '').trim()
     if (!bookNo || !pageNo) return null
 
-    return editableData.find(item => {
+    return financeData.find(item => {
       const itemBookNo = String(item.bookNo || '').trim()
       const itemPageNo = String(item.pageNo || '').trim()
       return itemBookNo === bookNo && itemPageNo === pageNo
     }) || null
-  }, [emiEntryForm.bookNo, emiEntryForm.pageNo, editableData])
+  }, [emiEntryForm.bookNo, emiEntryForm.pageNo, financeData])
 
   const hasDuplicateBookPageConflict = Boolean(
     duplicateBookPageEntry && duplicateBookPageEntry.agreementNo !== emiEntryForm.agreementNo
@@ -222,12 +328,12 @@ function Collection() {
     }
   }
 
-  // Lookup Book/Page -> Name & Vehicle from unifiedData
+  // Lookup Book/Page -> Name & Vehicle from financeData
   const lookupByBookPage = (bookNo, pageNo) => {
     const b = (bookNo || '').trim()
     const p = (pageNo || '').trim()
     if (!b || !p) return null
-    const found = editableData.find(item => item.bookNo === b && item.pageNo === p)
+    const found = financeData.find(item => item.bookNo === b && item.pageNo === p)
     return found ? { name: found.name, vehicle: found.vehicle } : null
   }
 
@@ -240,8 +346,21 @@ function Collection() {
   // Handle keyboard navigation
   useEffect(() => {
     fetchCollectionData()
+    fetchCollectionAgents()
+    fetchCollectionEntries()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Re-fetch entries whenever agent filter changes
+  useEffect(() => {
+    fetchCollectionEntries(filters.agent)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.agent])
+
+  useEffect(() => {
+    if (agentOptions.length === 0) return
+    setQuickEntry(prev => (prev.agent ? prev : { ...prev, agent: agentOptions[0] }))
+  }, [agentOptions])
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -363,10 +482,9 @@ function Collection() {
               <label className="text-[12px] text-gray-500">Select Agent</label>
               <select value={filters.agent} onChange={(e)=> setFilters(f=>({...f, agent: e.target.value}))} className="text-xs border rounded px-2 py-1">
                 <option value="">All Agents</option>
-                <option value="prasad">Prasad</option>
-                <option value="ajay">Ajay</option>
-                <option value="rajesh">Rajesh</option>
-                <option value="suresh">Suresh</option>
+                {agentOptions.map(agent => (
+                  <option key={agent} value={agent}>{agent}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -389,7 +507,7 @@ function Collection() {
 
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
-        <form className="flex flex-wrap items-center gap-3 bg-[#f3f1ff] rounded-xl px-4 py-3 shadow-sm" onSubmit={(e) => e.preventDefault()}>
+        <form className="flex flex-wrap items-center gap-3 bg-[#f3f1ff] rounded-xl px-4 py-3 shadow-sm" onSubmit={handleQuickEntrySubmit}>
           <div className="flex items-center gap-3">
             <label className="flex flex-col leading-tight text-gray-700 text-sm">
               <span className="text-[11px] text-gray-500">Agg No</span>
@@ -399,7 +517,7 @@ function Collection() {
                 value={quickEntry.aggNo}
                 onChange={(e) => setQuickEntry(q => ({ ...q, aggNo: e.target.value }))}
                 className="mt-1 w-24 rounded-md border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
-                placeholder="586"
+                placeholder="Agg No"
                 autoComplete="off"
               />
             </label>
@@ -411,7 +529,7 @@ function Collection() {
                 value={quickEntry.amount}
                 onChange={(e) => setQuickEntry(q => ({ ...q, amount: e.target.value }))}
                 className="mt-1 w-24 rounded-md border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
-                placeholder="3500"
+                placeholder="Amount"
                 inputMode="numeric"
               />
             </label>
@@ -425,25 +543,35 @@ function Collection() {
               >
                 <option value="" disabled>Select agent</option>
                 {agentOptions.map(agent => (
-                  <option key={agent} value={agent} className="capitalize">{agent}</option>
+                  <option key={agent} value={agent}>{agent}</option>
                 ))}
               </select>
             </label>
           </div>
           <button
             type="submit"
-            className="w-9 h-9 flex items-center justify-center rounded-full border border-[#5751f5] text-[#5751f5] bg-white hover:bg-[#5751f5] hover:text-white transition-colors"
+            disabled={savingQuickEntry}
+            className="w-9 h-9 flex items-center justify-center rounded-full border border-[#5751f5] text-[#5751f5] bg-white hover:bg-[#5751f5] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Add quick entry"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 5c.552 0 1 .448 1 1v5h5c.552 0 1 .448 1 1s-.448 1-1 1h-5v5c0 .552-.448 1-1 1s-1-.448-1-1v-5H6c-.552 0-1-.448-1-1s.448-1 1-1h5V6c0-.552.448-1 1-1" />
-            </svg>
+            {savingQuickEntry ? (
+              <svg className="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 5c.552 0 1 .448 1 1v5h5c.552 0 1 .448 1 1s-.448 1-1 1h-5v5c0 .552-.448 1-1 1s-1-.448-1-1v-5H6c-.552 0-1-.448-1-1s.448-1 1-1h5V6c0-.552.448-1 1-1" />
+              </svg>
+            )}
           </button>
         </form>
 
         <div className="flex justify-start md:justify-end">
           <button
-            onClick={() => setFilters({ agent: '', status: 'all', date: '' })}
+            onClick={() => {
+              setFilters({ agent: '', status: 'all', date: '' })
+            }}
             className="flex items-center gap-2 bg-[#ff7a19] text-white font-semibold px-5 py-3 rounded-full shadow hover:shadow-md"
           >
             <span>reset collection</span>

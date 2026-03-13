@@ -451,9 +451,34 @@ export const saveCollectionEntry = async (req, res) => {
 			return res.status(400).json({ success: false, message: "agentName is required" });
 		}
 
+		const existingEntry = await CollectionEntry.findOne({
+			agreementNo: { $regex: `^${trimmedAgreementNo}$`, $options: "i" },
+		})
+			.select("agreementNo agentName")
+			.lean();
+
+		if (existingEntry) {
+			const existingAgent = normalizeText(existingEntry.agentName);
+			const isSameAgent = existingAgent.toLowerCase() === trimmedAgent.toLowerCase();
+
+			return res.status(409).json({
+				success: false,
+				message: isSameAgent
+					? `Agreement No ${trimmedAgreementNo} is already added under Agent ${existingAgent}`
+					: `Agreement No ${trimmedAgreementNo} is already added under Agent ${existingAgent}. You cannot add it under Agent ${trimmedAgent}`,
+				data: {
+					agreementNo: trimmedAgreementNo,
+					existingAgentName: existingAgent,
+					requestedAgentName: trimmedAgent,
+				},
+			});
+		}
+
 		const entry = await CollectionEntry.create({
 			agreementNo: trimmedAgreementNo,
 			amount: parsedAmount,
+			paidAmount: 0,
+			status: "pending",
 			agentName: trimmedAgent,
 			createdBy: req.subAdminId || null,
 		});
@@ -469,6 +494,8 @@ export const saveCollectionEntry = async (req, res) => {
 				id: String(entry._id),
 				agreementNo: entry.agreementNo,
 				amount: entry.amount,
+				paidAmount: Number(entry.paidAmount || 0),
+				status: entry.status || "pending",
 				agentName: entry.agentName,
 				date: entry.date,
 				createdAt: entry.createdAt,
@@ -484,6 +511,51 @@ export const saveCollectionEntry = async (req, res) => {
 		return res.status(500).json({
 			success: false,
 			message: "Failed to save collection entry",
+			error: error.message,
+		});
+	}
+};
+
+// Delete a collection entry
+export const deleteCollectionEntry = async (req, res) => {
+	try {
+		const { id } = req.params;
+
+		const deletedEntry = await CollectionEntry.findByIdAndDelete(id);
+		if (!deletedEntry) {
+			return res.status(404).json({ success: false, message: "Collection entry not found" });
+		}
+
+		return res.status(200).json({
+			success: true,
+			message: "Collection entry deleted successfully",
+			data: { id: String(deletedEntry._id) },
+		});
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			message: "Failed to delete collection entry",
+			error: error.message,
+		});
+	}
+};
+
+// Delete all collection entries for all agents
+export const clearCollectionEntries = async (req, res) => {
+	try {
+		const result = await CollectionEntry.deleteMany({});
+
+		return res.status(200).json({
+			success: true,
+			message: "All collection entries deleted successfully",
+			data: {
+				deletedCount: Number(result?.deletedCount || 0),
+			},
+		});
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			message: "Failed to clear collection entries",
 			error: error.message,
 		});
 	}
@@ -520,6 +592,8 @@ export const getCollectionEntries = async (req, res) => {
 				id: String(entry._id),
 				agreementNo: entry.agreementNo,
 				amount: entry.amount,
+				paidAmount: Number(entry.paidAmount || 0),
+				status: entry.status || "pending",
 				agentName: entry.agentName,
 				date: entry.date,
 				createdAt: entry.createdAt,
@@ -546,23 +620,54 @@ export const getCollectionEntries = async (req, res) => {
 	}
 };
 
-// Update a collection entry's date
+// Update collection entry editable fields
 export const updateCollectionEntry = async (req, res) => {
 	try {
 		const { id } = req.params;
-		const { date } = req.body;
+		const { date, amount, paidAmount, status } = req.body || {};
 
-		if (!date) {
-			return res.status(400).json({ success: false, message: "date is required" });
+		const updateDoc = {};
+
+		if (date !== undefined) {
+			const parsedDate = new Date(date);
+			if (isNaN(parsedDate.getTime())) {
+				return res.status(400).json({ success: false, message: "Invalid date" });
+			}
+			updateDoc.date = parsedDate;
 		}
-		const parsedDate = new Date(date);
-		if (isNaN(parsedDate.getTime())) {
-			return res.status(400).json({ success: false, message: "Invalid date" });
+
+		if (amount !== undefined) {
+			const parsedAmount = Number(amount);
+			if (Number.isNaN(parsedAmount) || parsedAmount < 0) {
+				return res.status(400).json({ success: false, message: "amount must be a valid number" });
+			}
+			updateDoc.amount = parsedAmount;
+		}
+
+		if (paidAmount !== undefined) {
+			const parsedPaidAmount = Number(paidAmount);
+			if (Number.isNaN(parsedPaidAmount) || parsedPaidAmount < 0) {
+				return res.status(400).json({ success: false, message: "paidAmount must be a valid number" });
+			}
+			updateDoc.paidAmount = parsedPaidAmount;
+		}
+
+		if (status !== undefined) {
+			const normalizedStatus = normalizeText(status).toLowerCase();
+			const allowedStatuses = ["none", "paid", "pending", "mark"];
+			if (!allowedStatuses.includes(normalizedStatus)) {
+				return res.status(400).json({ success: false, message: "Invalid status" });
+			}
+			updateDoc.status = normalizedStatus;
+		}
+
+		if (Object.keys(updateDoc).length === 0) {
+			return res.status(400).json({ success: false, message: "No fields provided to update" });
 		}
 
 		const entry = await CollectionEntry.findByIdAndUpdate(
 			id,
-			{ date: parsedDate },
+			updateDoc,
 			{ new: true }
 		);
 
@@ -573,7 +678,13 @@ export const updateCollectionEntry = async (req, res) => {
 		return res.status(200).json({
 			success: true,
 			message: "Collection entry updated successfully",
-			data: { id: String(entry._id), date: entry.date },
+			data: {
+				id: String(entry._id),
+				date: entry.date,
+				amount: entry.amount,
+				paidAmount: Number(entry.paidAmount || 0),
+				status: entry.status || "pending",
+			},
 		});
 	} catch (error) {
 		return res.status(500).json({

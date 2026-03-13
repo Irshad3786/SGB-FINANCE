@@ -7,6 +7,8 @@ import {
 	saveCollectionEntry,
 	getCollectionEntries,
 	updateCollectionEntry,
+	deleteCollectionEntry,
+	clearCollectionEntries,
 } from "../../controllers/SubAdminManagementController/financeController.js";
 import { verifySubAdminToken } from "../../middlewares/subAdminMiddleware.js";
 
@@ -16,8 +18,10 @@ router.get("/finance", verifySubAdminToken, getFinanceList);
 // Static routes MUST come before /:buyerId to avoid param conflicts
 router.get("/finance/collection-agents", verifySubAdminToken, getCollectionAgents);
 router.get("/finance/collection-entries", verifySubAdminToken, getCollectionEntries);
+router.delete("/finance/collection-entries", verifySubAdminToken, clearCollectionEntries);
 router.post("/finance/collection-entry", verifySubAdminToken, saveCollectionEntry);
 router.patch("/finance/collection-entry/:id", verifySubAdminToken, updateCollectionEntry);
+router.delete("/finance/collection-entry/:id", verifySubAdminToken, deleteCollectionEntry);
 router.get("/finance/:buyerId", verifySubAdminToken, getFinanceStatement);
 router.post("/finance/emi-entry", verifySubAdminToken, createEmiEntry);
 

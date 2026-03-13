@@ -70,6 +70,13 @@ const todayInputDate = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+const toDateInputValue = (value) => {
+  if (!value) return todayInputDate()
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return todayInputDate()
+  return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`
+}
+
 const mapCollectionEntryToTableRow = (entry, index) => ({
   id: entry.buyerId || '',
   collectionEntryId: entry.id,
@@ -83,10 +90,10 @@ const mapCollectionEntryToTableRow = (entry, index) => ({
   phoneNo: entry.phoneNo || '',
   emi: String(entry.emi || ''),
   emiDate: entry.emiDate || '',
-  commAmount: todayInputDate(),
+  commAmount: toDateInputValue(entry.date),
   commDate: String(entry.amount || ''),
-  paidAmount: '0',
-  status: 'pending',
+  paidAmount: String(entry.paidAmount ?? 0),
+  status: entry.status || 'pending',
   agentName: entry.agentName || '',
   vehiclePrice: '', charges: '', totalAmount: '',
   buyerName: entry.name || '', financeAmount: '', age: '',
@@ -95,17 +102,22 @@ const mapCollectionEntryToTableRow = (entry, index) => ({
   bookNo: '', pageNo: '',
 })
 
+const withSno = (rows = []) => rows.map((row, index) => ({ ...row, sno: index + 1 }))
+
 function Collection() {
   const navigate = useNavigate()
   const { showToast } = useToast()
 
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({ agent: '', status: 'all', date: '' })
+  const [searchQuery, setSearchQuery] = useState('')
   // Quick entry defaults so inputs are ready to edit
   const [quickEntry, setQuickEntry] = useState({ aggNo: '', amount: '', agent: '' })
   const [agentOptions, setAgentOptions] = useState([])
   const [financeData, setFinanceData] = useState([])
   const [savingQuickEntry, setSavingQuickEntry] = useState(false)
+  const [resettingCollection, setResettingCollection] = useState(false)
+  const [confirmDeleteModal, setConfirmDeleteModal] = useState({ open: false, type: '', row: null })
   const [whatsAppModal, setWhatsAppModal] = useState({ isOpen: false, userName: '' })
   const [financeModal, setFinanceModal] = useState(null)
   const [editableData, setEditableData] = useState([])
@@ -157,12 +169,19 @@ function Collection() {
   }
 
   const fetchCollectionEntries = async (agentFilter = '') => {
+    const selectedAgent = String(agentFilter || '').trim()
+    if (!selectedAgent) {
+      setEditableData([])
+      return
+    }
+
     try {
       const params = {}
-      if (agentFilter && agentFilter.trim()) params.agentName = agentFilter.trim()
+      params.agentName = selectedAgent
       const response = await apiClient.get('/api/subadmin/management/finance/collection-entries', { params })
       const entries = Array.isArray(response?.data?.data) ? response.data.data : []
-      setEditableData(entries.map(mapCollectionEntryToTableRow))
+      setEditableData(withSno(entries.map(mapCollectionEntryToTableRow)))
+      setSelectedRowIndex(0)
     } catch (error) {
       setEditableData([])
       showToast({
@@ -175,24 +194,41 @@ function Collection() {
 
   const handleQuickEntrySubmit = async (e) => {
     e.preventDefault()
-    if (!quickEntry.aggNo.trim() || !quickEntry.amount || !quickEntry.agent) {
+    const selectedAgent = filters.agent || quickEntry.agent
+    const normalizedAggNo = quickEntry.aggNo.trim()
+
+    if (!normalizedAggNo || !quickEntry.amount || !selectedAgent) {
       showToast({ type: 'error', title: 'Validation', message: 'Agg No, Amount and Agent are required' })
       return
     }
+
+    const duplicateExists = editableData.some(row =>
+      String(row.agreementNo || '').trim().toLowerCase() === normalizedAggNo.toLowerCase()
+    )
+
+    if (duplicateExists) {
+      showToast({
+        type: 'error',
+        title: 'Duplicate',
+        message: `Agreement No ${normalizedAggNo} is already added for ${selectedAgent}`,
+      })
+      return
+    }
+
     try {
       setSavingQuickEntry(true)
       const resp = await apiClient.post('/api/subadmin/management/finance/collection-entry', {
-        agreementNo: quickEntry.aggNo.trim(),
+        agreementNo: normalizedAggNo,
         amount: quickEntry.amount,
-        agentName: quickEntry.agent,
+        agentName: selectedAgent,
       })
       const savedEntry = resp?.data?.data
       if (savedEntry) {
         const newRow = mapCollectionEntryToTableRow(savedEntry, editableData.length)
-        setEditableData(prev => [...prev, newRow])
+        setEditableData(prev => withSno([...prev, newRow]))
       }
       showToast({ type: 'success', title: 'Saved', message: 'Collection entry added' })
-      setQuickEntry(prev => ({ aggNo: '', amount: '', agent: prev.agent }))
+      setQuickEntry(prev => ({ aggNo: '', amount: '', agent: selectedAgent }))
     } catch (error) {
       showToast({
         type: 'error',
@@ -204,21 +240,94 @@ function Collection() {
     }
   }
 
-  const handleCellChange = (index, field, value) => {
-    setEditableData(prev => prev.map((row, idx) => 
-      idx === index ? { ...row, [field]: value } : row
+  const handleCellChange = (collectionEntryId, field, value) => {
+    const currentRow = editableData.find(row => row.collectionEntryId === collectionEntryId)
+    if (!currentRow) return
+
+    setEditableData(prev => prev.map((row, idx) =>
+      row.collectionEntryId === collectionEntryId ? { ...row, [field]: value } : row
     ))
-    if (field === 'commAmount') {
-      const row = editableData[index]
-      if (row?.collectionEntryId) {
-        apiClient.patch(
-          `/api/subadmin/management/finance/collection-entry/${row.collectionEntryId}`,
-          { date: value }
-        ).catch(() => {
-          showToast({ type: 'error', title: 'Error', message: 'Failed to save date' })
-        })
-      }
+
+    if (!currentRow?.collectionEntryId) return
+
+    const payload = {}
+    if (field === 'commAmount') payload.date = value
+    if (field === 'commDate') payload.amount = value
+    if (field === 'paidAmount') payload.paidAmount = value
+    if (field === 'status') payload.status = value
+    if (Object.keys(payload).length === 0) return
+
+    apiClient.patch(
+      `/api/subadmin/management/finance/collection-entry/${currentRow.collectionEntryId}`,
+      payload
+    ).catch(() => {
+      showToast({ type: 'error', title: 'Error', message: 'Failed to save changes' })
+    })
+  }
+
+  const handleDeleteCollectionEntry = async (row) => {
+    if (!row?.collectionEntryId) {
+      showToast({ type: 'error', title: 'Error', message: 'Entry id missing' })
+      return
     }
+
+    try {
+      await apiClient.delete(`/api/subadmin/management/finance/collection-entry/${row.collectionEntryId}`)
+      setEditableData(prev => withSno(prev.filter(item => item.collectionEntryId !== row.collectionEntryId)))
+      setSelectedRowIndex(0)
+      showToast({ type: 'success', title: 'Deleted', message: 'Collection entry removed' })
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error?.response?.data?.message || 'Failed to delete collection entry',
+      })
+    }
+  }
+
+  const handleResetCollection = async () => {
+    try {
+      setResettingCollection(true)
+      const response = await apiClient.delete('/api/subadmin/management/finance/collection-entries')
+      const deletedCount = Number(response?.data?.data?.deletedCount || 0)
+
+      setEditableData([])
+      setSelectedRowIndex(0)
+
+      showToast({
+        type: 'success',
+        title: 'Reset Complete',
+        message: `Deleted ${deletedCount} collection entries from database`,
+      })
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error?.response?.data?.message || 'Failed to reset collection data',
+      })
+    } finally {
+      setResettingCollection(false)
+    }
+  }
+
+  const openDeleteConfirmModal = (type, row = null) => {
+    setConfirmDeleteModal({ open: true, type, row })
+  }
+
+  const closeDeleteConfirmModal = () => {
+    setConfirmDeleteModal({ open: false, type: '', row: null })
+  }
+
+  const handleConfirmDeleteModal = async () => {
+    if (confirmDeleteModal.type === 'row' && confirmDeleteModal.row) {
+      await handleDeleteCollectionEntry(confirmDeleteModal.row)
+    }
+
+    if (confirmDeleteModal.type === 'reset') {
+      await handleResetCollection()
+    }
+
+    closeDeleteConfirmModal()
   }
 
   const handleWhatsAppClick = (userName) => {
@@ -343,11 +452,30 @@ function Collection() {
     // You can integrate WhatsApp API or deep linking here
   }
 
+  const filteredData = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) return editableData
+
+    return editableData.filter(row => {
+      const searchable = [
+        row.ha,
+        row.agreementNo,
+        row.name,
+        row.vehicle,
+        row.phone,
+        row.emi,
+        row.emiDate,
+        row.commDate,
+      ]
+
+      return searchable.some(value => String(value || '').toLowerCase().includes(query))
+    })
+  }, [editableData, searchQuery])
+
   // Handle keyboard navigation
   useEffect(() => {
     fetchCollectionData()
     fetchCollectionAgents()
-    fetchCollectionEntries()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -360,13 +488,14 @@ function Collection() {
   useEffect(() => {
     if (agentOptions.length === 0) return
     setQuickEntry(prev => (prev.agent ? prev : { ...prev, agent: agentOptions[0] }))
+    setFilters(prev => (prev.agent ? prev : { ...prev, agent: agentOptions[0] }))
   }, [agentOptions])
 
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'ArrowDown') {
         e.preventDefault()
-        setSelectedRowIndex(prev => (prev < editableData.length - 1 ? prev + 1 : prev))
+        setSelectedRowIndex(prev => (prev < filteredData.length - 1 ? prev + 1 : prev))
       } else if (e.key === 'ArrowUp') {
         e.preventDefault()
         setSelectedRowIndex(prev => (prev > 0 ? prev - 1 : prev))
@@ -382,24 +511,24 @@ function Collection() {
         tableContainerRef.current.removeEventListener('keydown', handleKeyDown)
       }
     }
-  }, [editableData.length])
+  }, [filteredData.length])
 
   // Calculate totals
   const totals = useMemo(() => {
-    const totalCommAmount = editableData.reduce((sum, row) => {
+    const totalCommAmount = filteredData.reduce((sum, row) => {
       const amount = parseFloat(row.commDate) || 0
       return sum + amount
     }, 0)
-    
-    const totalPaidAmount = editableData.reduce((sum, row) => {
+
+    const totalPaidAmount = filteredData.reduce((sum, row) => {
       const amount = parseFloat(row.paidAmount) || 0
       return sum + amount
     }, 0)
-    
+
     const pendingAmount = totalCommAmount - totalPaidAmount
-    
+
     return { totalCommAmount, totalPaidAmount, pendingAmount }
-  }, [editableData])
+  }, [filteredData])
 
   return (
     <div className="p-3 sm:p-6 overflow-x-hidden max-w-full break-words w-full">
@@ -465,6 +594,8 @@ function Collection() {
               type="search"
               name="search"
               placeholder="search user"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-3 py-3 rounded-3xl border border-transparent bg-white/90 text-xs focus:outline-none focus:ring-2 focus:ring-[#bff86a] shadow-[1px_2px_9px_-4px_rgba(0,_0,_0,_0.7)]"
             />
           </div>
@@ -481,7 +612,6 @@ function Collection() {
             <div className="flex items-center gap-2">
               <label className="text-[12px] text-gray-500">Select Agent</label>
               <select value={filters.agent} onChange={(e)=> setFilters(f=>({...f, agent: e.target.value}))} className="text-xs border rounded px-2 py-1">
-                <option value="">All Agents</option>
                 {agentOptions.map(agent => (
                   <option key={agent} value={agent}>{agent}</option>
                 ))}
@@ -538,7 +668,11 @@ function Collection() {
               <select
                 name="agent"
                 value={quickEntry.agent}
-                onChange={(e) => setQuickEntry(q => ({ ...q, agent: e.target.value }))}
+                onChange={(e) => {
+                  const selectedAgent = e.target.value
+                  setQuickEntry(q => ({ ...q, agent: selectedAgent }))
+                  setFilters(f => ({ ...f, agent: selectedAgent }))
+                }}
                 className="mt-1 w-28 rounded-md border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a] capitalize bg-white"
               >
                 <option value="" disabled>Select agent</option>
@@ -569,12 +703,11 @@ function Collection() {
 
         <div className="flex justify-start md:justify-end">
           <button
-            onClick={() => {
-              setFilters({ agent: '', status: 'all', date: '' })
-            }}
+            onClick={() => openDeleteConfirmModal('reset')}
+            disabled={resettingCollection}
             className="flex items-center gap-2 bg-[#ff7a19] text-white font-semibold px-5 py-3 rounded-full shadow hover:shadow-md"
           >
-            <span>reset collection</span>
+            <span>{resettingCollection ? 'resetting...' : 'reset collection'}</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21"><g fill="none" fill-rule="evenodd" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"><path d="M3.578 6.487A8 8 0 1 1 2.5 10.5"/><path d="M7.5 6.5h-4v-4"/></g></svg>
           </button>
         </div>
@@ -585,7 +718,7 @@ function Collection() {
         {/* Agent Filter Display */}
         <div className="mb-4 pb-3 border-b border-gray-200">
           <span className="text-sm text-gray-600">Agent: </span>
-          <span className="text-base font-bold text-black capitalize">{filters.agent ? filters.agent : 'All agents'}</span>
+          <span className="text-base font-bold text-black capitalize">{filters.agent || '-'}</span>
         </div>
 
         {/* Desktop table */}
@@ -607,7 +740,7 @@ function Collection() {
               </tr>
             </thead>
             <tbody>
-              {editableData.map((row, idx) => (
+              {filteredData.map((row, idx) => (
                 <tr key={idx} onClick={() => setSelectedRowIndex(idx)} className={`border transition-all cursor-pointer ${
                   selectedRowIndex === idx ? 'border-2 border-orange-600' : 'border border-gray-200'
                 } ${
@@ -626,7 +759,7 @@ function Collection() {
                     <input
                       type="date"
                       value={row.commAmount}
-                      onChange={(e) => handleCellChange(idx, 'commAmount', e.target.value)}
+                      onChange={(e) => handleCellChange(row.collectionEntryId, 'commAmount', e.target.value)}
                       className="w-24 px-2 py-1 text-[10px] border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#bff86a] bg-white"
                     />
                   </td>
@@ -634,7 +767,7 @@ function Collection() {
                     <input
                       type="text"
                       value={row.commDate}
-                      onChange={(e) => handleCellChange(idx, 'commDate', e.target.value)}
+                      onChange={(e) => handleCellChange(row.collectionEntryId, 'commDate', e.target.value)}
                       className="w-16 px-2 py-1 text-[10px] border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#bff86a]"
                       placeholder="Amt"
                     />
@@ -643,7 +776,7 @@ function Collection() {
                     <input
                       type="text"
                       value={row.paidAmount}
-                      onChange={(e) => handleCellChange(idx, 'paidAmount', e.target.value)}
+                      onChange={(e) => handleCellChange(row.collectionEntryId, 'paidAmount', e.target.value)}
                       className="w-16 px-2 py-1 text-[10px] border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#bff86a]"
                       placeholder="Amt"
                     />
@@ -651,7 +784,7 @@ function Collection() {
                   <td className="py-1.5 px-1">
                     <select
                       value={row.status}
-                      onChange={(e) => handleCellChange(idx, 'status', e.target.value)}
+                      onChange={(e) => handleCellChange(row.collectionEntryId, 'status', e.target.value)}
                       className={`w-20 px-2 py-1 text-[10px] border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#bff86a] font-medium ${
                         row.status === 'paid' ? 'bg-green-50 text-green-700' : 
                         row.status === 'pending' ? 'bg-red-50 text-red-700' :
@@ -717,6 +850,18 @@ function Collection() {
                           <path fill="currentColor" d="M8 0a8 8 0 1 1-4.075 14.886L.658 15.974a.5.5 0 0 1-.632-.632l1.089-3.266A8 8 0 0 1 8 0M5.214 4.004a.7.7 0 0 0-.526.266C4.508 4.481 4 4.995 4 6.037c0 1.044.705 2.054.804 2.196c.098.138 1.388 2.28 3.363 3.2q.55.255 1.12.446c.472.16.902.139 1.242.085c.379-.06 1.164-.513 1.329-1.01c.163-.493.163-.918.113-1.007c-.049-.088-.18-.142-.378-.25c-.196-.105-1.165-.618-1.345-.687c-.18-.073-.312-.106-.443.105c-.132.213-.507.691-.623.832c-.113.139-.23.159-.425.053c-.198-.105-.831-.33-1.584-1.054c-.585-.561-.98-1.258-1.094-1.469c-.116-.213-.013-.326.085-.433c.09-.094.198-.246.296-.371c.097-.122.132-.21.198-.353c.064-.141.031-.266-.018-.371s-.443-1.152-.607-1.577c-.16-.413-.323-.355-.443-.363c-.114-.005-.245-.005-.376-.005"/>
                         </svg>
                       </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          openDeleteConfirmModal('row', row)
+                        }}
+                        className="p-1 text-red-600 hover:bg-red-50 rounded"
+                        title="Delete row"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
+                          <path fill="currentColor" d="M9 3h6l1 2h4v2h-1v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7H4V5h4zm0 6v9h2V9zm4 0v9h2V9zM9.618 5h4.764l-.5-1h-3.764z"/>
+                        </svg>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -727,7 +872,7 @@ function Collection() {
 
         {/* Mobile cards */}
         <div className="block md:hidden space-y-2 w-full">
-          {editableData.map((row, idx) => (
+          {filteredData.map((row, idx) => (
             <div key={idx} onClick={() => setSelectedRowIndex(idx)} className={`rounded-lg p-2 sm:p-3 transition-all cursor-pointer overflow-hidden ${
               selectedRowIndex === idx ? 'border-2 border-orange-600' : 'border border-gray-300'
             } ${
@@ -740,7 +885,7 @@ function Collection() {
                 <div className="text-xs font-semibold">{row.ha}</div>
                 <select
                   value={row.status}
-                  onChange={(e) => handleCellChange(idx, 'status', e.target.value)}
+                  onChange={(e) => handleCellChange(row.collectionEntryId, 'status', e.target.value)}
                   className={`px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#bff86a] font-medium ${
                     row.status === 'paid' ? 'bg-green-50 text-green-700' :
                     row.status === 'pending' ? 'bg-red-50 text-red-700' :
@@ -765,7 +910,7 @@ function Collection() {
                   <input
                     type="date"
                     value={row.commAmount}
-                    onChange={(e) => handleCellChange(idx, 'commAmount', e.target.value)}
+                    onChange={(e) => handleCellChange(row.collectionEntryId, 'commAmount', e.target.value)}
                     className="w-full mt-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#bff86a] bg-white"
                   />
                 </div>
@@ -774,7 +919,7 @@ function Collection() {
                   <input
                     type="text"
                     value={row.commDate}
-                    onChange={(e) => handleCellChange(idx, 'commDate', e.target.value)}
+                    onChange={(e) => handleCellChange(row.collectionEntryId, 'commDate', e.target.value)}
                     className="w-full mt-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
                   />
                 </div>
@@ -783,7 +928,7 @@ function Collection() {
                   <input
                     type="text"
                     value={row.paidAmount}
-                    onChange={(e) => handleCellChange(idx, 'paidAmount', e.target.value)}
+                    onChange={(e) => handleCellChange(row.collectionEntryId, 'paidAmount', e.target.value)}
                     className="w-full mt-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
                   />
                 </div>
@@ -839,6 +984,18 @@ function Collection() {
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16">
                     <path fill="currentColor" d="M8 0a8 8 0 1 1-4.075 14.886L.658 15.974a.5.5 0 0 1-.632-.632l1.089-3.266A8 8 0 0 1 8 0M5.214 4.004a.7.7 0 0 0-.526.266C4.508 4.481 4 4.995 4 6.037c0 1.044.705 2.054.804 2.196c.098.138 1.388 2.28 3.363 3.2q.55.255 1.12.446c.472.16.902.139 1.242.085c.379-.06 1.164-.513 1.329-1.01c.163-.493.163-.918.113-1.007c-.049-.088-.18-.142-.378-.25c-.196-.105-1.165-.618-1.345-.687c-.18-.073-.312-.106-.443.105c-.132.213-.507.691-.623.832c-.113.139-.23.159-.425.053c-.198-.105-.831-.33-1.584-1.054c-.585-.561-.98-1.258-1.094-1.469c-.116-.213-.013-.326.085-.433c.09-.094.198-.246.296-.371c.097-.122.132-.21.198-.353c.064-.141.031-.266-.018-.371s-.443-1.152-.607-1.577c-.16-.413-.323-.355-.443-.363c-.114-.005-.245-.005-.376-.005"/>
+                  </svg>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    openDeleteConfirmModal('row', row)
+                  }}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Delete row"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M9 3h6l1 2h4v2h-1v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7H4V5h4zm0 6v9h2V9zm4 0v9h2V9zM9.618 5h4.764l-.5-1h-3.764z"/>
                   </svg>
                 </button>
               </div>
@@ -1270,6 +1427,34 @@ function Collection() {
       )}
 
       {/* WhatsApp Confirmation Modal */}
+      {confirmDeleteModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl p-5 shadow-2xl">
+            <div className="text-lg font-bold text-gray-900 mb-2">Confirm Delete</div>
+            <p className="text-sm text-gray-600 mb-5">
+              {confirmDeleteModal.type === 'reset'
+                ? 'This will delete all collection data for every agent from database. Do you want to continue?'
+                : `Delete Agreement No ${confirmDeleteModal.row?.agreementNo || ''}?`}
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={closeDeleteConfirmModal}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDeleteModal}
+                disabled={resettingCollection}
+                className="px-4 py-2 rounded-lg bg-red-600 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {resettingCollection && confirmDeleteModal.type === 'reset' ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <WhatsAppConfirmModal
         isOpen={whatsAppModal.isOpen}
         onClose={() => setWhatsAppModal({ isOpen: false, userName: '' })}

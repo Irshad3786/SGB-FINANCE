@@ -77,6 +77,71 @@ const toDateInputValue = (value) => {
   return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`
 }
 
+const toInr = (value) => Number(value || 0).toLocaleString('en-IN')
+
+const formatBalance = (value) => {
+  const amount = Number(value || 0)
+  if (amount < 0) {
+    return `(${toInr(Math.abs(amount))})`
+  }
+  return toInr(amount)
+}
+
+const getBalanceClass = (balance) => {
+  const amount = Number(balance || 0)
+  if (amount < 0) return 'text-green-600'
+  if (amount > 0) return 'text-red-600'
+  return 'text-black'
+}
+
+const getStatementRows = (emiSchedule = [], paymentEntries = []) => {
+  let runningBalance = 0
+  const entries = Array.isArray(paymentEntries) ? paymentEntries : []
+
+  const rows = emiSchedule.map((schedule, idx) => {
+    const paymentEntry = entries[idx] || null
+    const paidAmt = Number(paymentEntry?.amount ?? 0)
+    const paidDate = paymentEntry?.paidDate || '-'
+    const receiptNo = paymentEntry?.bookNo && paymentEntry?.pageNo
+      ? `${paymentEntry.bookNo}/${paymentEntry.pageNo}`
+      : '-'
+
+    const instAmount = Number(schedule?.emi || 0)
+    runningBalance += instAmount - paidAmt
+
+    return {
+      instNo: Number(schedule?.sno || idx + 1),
+      instDate: schedule?.emiDate || '-',
+      instAmount,
+      paidDate,
+      paidAmt,
+      balance: runningBalance,
+      receiptNo,
+    }
+  })
+
+  const extraEntries = entries.slice(emiSchedule.length)
+  extraEntries.forEach((entry, index) => {
+    const paidAmt = Number(entry?.amount || 0)
+    const receiptNo = entry?.bookNo && entry?.pageNo
+      ? `${entry.bookNo}/${entry.pageNo}`
+      : '-'
+    runningBalance -= paidAmt
+
+    rows.push({
+      instNo: emiSchedule.length + index + 1,
+      instDate: '',
+      instAmount: '',
+      paidDate: entry?.paidDate || '-',
+      paidAmt,
+      balance: runningBalance,
+      receiptNo,
+    })
+  })
+
+  return rows
+}
+
 const mapCollectionEntryToTableRow = (entry, index) => ({
   id: entry.buyerId || '',
   collectionEntryId: entry.id,
@@ -408,7 +473,7 @@ function Collection() {
         const statementResponse = await apiClient.get(`/api/subadmin/management/finance/${financeModal.id}`)
         const statement = statementResponse?.data?.data
         if (statement) {
-          setFinanceModal(mapFinanceRowToCollectionRow(statement, 0))
+          setFinanceModal(statement)
         }
       }
 
@@ -529,6 +594,15 @@ function Collection() {
 
     return { totalCommAmount, totalPaidAmount, pendingAmount }
   }, [filteredData])
+
+  const statementRows = financeModal
+    ? getStatementRows(financeModal.emiSchedule, financeModal.paymentEntries)
+    : []
+  const statementTotalPaid = statementRows.reduce((sum, row) => sum + Number(row?.paidAmt || 0), 0)
+  const statementBalance = statementRows.length > 0
+    ? Number(statementRows[statementRows.length - 1]?.balance || 0)
+    : 0
+  const statementPending = Math.max(statementBalance, 0)
 
   return (
     <div className="p-3 sm:p-6 overflow-x-hidden max-w-full break-words w-full">
@@ -826,7 +900,7 @@ function Collection() {
                             const response = await apiClient.get(`/api/subadmin/management/finance/${row.id}`)
                             const statement = response?.data?.data
                             if (statement) {
-                              setFinanceModal(mapFinanceRowToCollectionRow(statement, idx))
+                              setFinanceModal(statement)
                             }
                           } catch (error) {
                             showToast({
@@ -962,7 +1036,7 @@ function Collection() {
                       const response = await apiClient.get(`/api/subadmin/management/finance/${row.id}`)
                       const statement = response?.data?.data
                       if (statement) {
-                        setFinanceModal(mapFinanceRowToCollectionRow(statement, idx))
+                        setFinanceModal(statement)
                       }
                     } catch (error) {
                       showToast({
@@ -1029,154 +1103,164 @@ function Collection() {
         </div>
       </div>
 
-      {/* Finance Statement Modal */}
       {financeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-3 sm:p-0">
-          <div className="relative w-[95%] sm:w-4/5 lg:w-3/4 bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl no-scrollbar max-h-[90vh] overflow-auto">
-            {/* Close button */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="relative w-[95%] md:w-4/5 lg:w-3/4 bg-white rounded-3xl p-8 shadow-2xl no-scrollbar max-h-[90vh] overflow-auto">
             <button
               onClick={() => setFinanceModal(null)}
-              className="absolute top-4 sm:top-6 right-4 sm:right-6 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center font-bold"
+              className="absolute top-6 right-6 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center font-bold"
             >
               ✕
             </button>
 
-            <h2 className="text-2xl sm:text-3xl font-bold text-center mb-2 text-gray-800">Finance Statement</h2>
-            <div className="text-center text-xs sm:text-sm text-gray-500 mb-4 sm:mb-8">Agreement No : {financeModal.agreementNo}</div>
+            <h2 className="text-3xl font-bold text-center mb-2 text-gray-800">Finance Statement</h2>
+            <div className="text-center text-sm text-gray-500 mb-8">Agreement No : {financeModal.agreementNo}</div>
 
-            {/* Header with Images on Right */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6 mb-4 sm:mb-8">
-              {/* Left: Party Details with Image - Bordered Box */}
-              <div className="border-2 border-gray-300 rounded-lg sm:rounded-2xl p-3 sm:p-6">
-                <div className="flex gap-2 sm:gap-4">
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="border-2 border-gray-300 rounded-2xl p-6">
+                <div className="flex gap-4">
                   <div className="flex-1">
-                    <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-2 sm:mb-4 pb-2 border-b border-gray-300">Party Details</h3>
-                    <div className="text-xs sm:text-sm text-gray-700 space-y-1 sm:space-y-2">
-                      <div className="font-semibold text-gray-900">{financeModal.name}</div>
-                      <div className="text-gray-600">s/o ramakrishna</div>
-                      <div className="text-gray-600">Phone No: {financeModal.phone}</div>
-                      <div className="text-gray-600">EMI Amount: ₹{financeModal.emi}</div>
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-300">Party Details</h3>
+                    <div className="text-sm text-gray-700 space-y-2">
+                      <div className="font-semibold text-gray-900">{financeModal.seller}</div>
+                      <div className="text-gray-600">Age : {financeModal.age}</div>
+                      <div className="text-gray-600">Phone No: {financeModal.phoneNo}</div>
+                      <div className="text-gray-600">Address: {financeModal.address}</div>
                     </div>
                   </div>
-                  {/* Party Image - Right side */}
                   <div className="shrink-0">
-                    <div className="bg-white border-2 border-gray-300 rounded-lg p-2 sm:p-3 flex flex-col items-center">
-                      <div className="w-16 sm:w-28 h-16 sm:h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-1 sm:mb-2">
-                        <span className="text-[10px] sm:text-xs text-gray-500 text-center">Party<br/>Img</span>
-                      </div>
-                      <span className="text-[10px] sm:text-xs text-gray-600 font-semibold">Party</span>
+                    <div className="bg-white border-2 border-gray-300 rounded-lg p-3 flex flex-col items-center">
+                      {financeModal.partyPhoto ? (
+                        <img src={financeModal.partyPhoto} alt="Party" className="w-28 h-28 rounded-lg object-cover mb-2" />
+                      ) : (
+                        <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-2">
+                          <span className="text-xs text-gray-500 text-center">Party<br/>Img</span>
+                        </div>
+                      )}
+                      <span className="text-xs text-gray-600 font-semibold">Party</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Right: Guarantor Details with Image - Bordered Box */}
-              <div className="border-2 border-gray-300 rounded-lg sm:rounded-2xl p-3 sm:p-6">
-                <div className="flex gap-2 sm:gap-4">
+              <div className="border-2 border-gray-300 rounded-2xl p-6">
+                <div className="flex gap-4">
                   <div className="flex-1">
-                    <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-2 sm:mb-4 pb-2 border-b border-gray-300">Guarantor Details</h3>
-                    <div className="text-xs sm:text-sm text-gray-700 space-y-1 sm:space-y-2">
-                      <div className="font-semibold text-gray-900">{financeModal.name}</div>
-                      <div className="text-gray-600">s/o ramakrishna</div>
-                      <div className="text-gray-600">Phone No: {financeModal.phone}</div>
-                      <div className="text-gray-600">Status: {financeModal.status}</div>
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-300">Guarantor Details</h3>
+                    <div className="text-sm text-gray-700 space-y-2">
+                      <div className="font-semibold text-gray-900">{financeModal.guarantorName || '-'}</div>
+                      <div className="text-gray-600">Age : {financeModal.guarantorAge || '-'}</div>
+                      <div className="text-gray-600">Phone No: {financeModal.guarantorPhoneNo || '-'}</div>
+                      <div className="text-gray-600">Address: {financeModal.guarantorAddress || '-'}</div>
                     </div>
                   </div>
-                  {/* Guarantor Image - Right side */}
                   <div className="shrink-0">
-                    <div className="bg-white border-2 border-gray-300 rounded-lg p-2 sm:p-3 flex flex-col items-center">
-                      <div className="w-16 sm:w-28 h-16 sm:h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-1 sm:mb-2">
-                        <span className="text-[10px] sm:text-xs text-gray-500 text-center">Guarantor<br/>Img</span>
-                      </div>
-                      <span className="text-[10px] sm:text-xs text-gray-600 font-semibold">Guarantor</span>
+                    <div className="bg-white border-2 border-gray-300 rounded-lg p-3 flex flex-col items-center">
+                      {financeModal.guarantorPhoto ? (
+                        <img src={financeModal.guarantorPhoto} alt="Guarantor" className="w-28 h-28 rounded-lg object-cover mb-2" />
+                      ) : (
+                        <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-2">
+                          <span className="text-xs text-gray-500 text-center">Guarantor<br/>Img</span>
+                        </div>
+                      )}
+                      <span className="text-xs text-gray-600 font-semibold">Guarantor</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Vehicle Details */}
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg sm:rounded-2xl p-3 sm:p-6 mb-4 sm:mb-8">
-              <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-6 pb-2 sm:pb-3 border-b border-blue-300">Commission Details</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-6">
-                <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm">
-                  <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">AGREEMENT NO</div>
-                  <div className="text-base sm:text-lg font-bold text-gray-900 truncate">{financeModal.agreementNo}</div>
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 mb-8">
+              <h3 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b border-blue-300">Vehicle Details</h3>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="text-xs text-gray-500 font-semibold mb-2">VEHICLE NO</div>
+                  <div className="text-lg font-bold text-gray-900">{financeModal.vehicle}</div>
                 </div>
-                <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm">
-                  <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">VEHICLE NUMBER</div>
-                  <div className="text-base sm:text-lg font-bold text-gray-900 truncate">{financeModal.vehicle}</div>
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="text-xs text-gray-500 font-semibold mb-2">VEHICLE NAME</div>
+                  <div className="text-lg font-bold text-gray-900">{financeModal.vehicleName}</div>
                 </div>
-                <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm">
-                  <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">EMI DATE</div>
-                  <div className="text-xs sm:text-sm font-bold text-gray-900">{financeModal.emiDate}</div>
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="text-xs text-gray-500 font-semibold mb-2">CHASSIS NO</div>
+                  <div className="text-sm font-bold text-gray-900">{financeModal.chassisNo}</div>
                 </div>
-                <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm">
-                  <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">AGENT</div>
-                  <div className="text-base sm:text-lg font-bold text-gray-900 truncate">{financeModal.agent}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Finance Details */}
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg sm:rounded-2xl p-3 sm:p-6 mb-4 sm:mb-8">
-              <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-6 pb-2 sm:pb-3 border-b border-purple-300">Finance Details</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-6">
-                <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm">
-                  <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">VEHICLE PRICE</div>
-                  <div className="text-base sm:text-lg font-bold text-gray-900">₹ {financeModal.vehiclePrice?.toLocaleString()}</div>
-                </div>
-                <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm">
-                  <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">CHARGES</div>
-                  <div className="text-base sm:text-lg font-bold text-gray-900">₹ {financeModal.charges?.toLocaleString()}</div>
-                </div>
-                <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm">
-                  <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">EMI AMOUNT</div>
-                  <div className="text-base sm:text-lg font-bold text-gray-900">₹ {financeModal.emi}</div>
-                </div>
-                <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm border-2 border-purple-300">
-                  <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">TOTAL AMOUNT</div>
-                  <div className="text-base sm:text-lg font-bold text-purple-900">₹ {financeModal.totalAmount?.toLocaleString()}</div>
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="text-xs text-gray-500 font-semibold mb-2">MODEL</div>
+                  <div className="text-lg font-bold text-gray-900">{financeModal.vehicleModel}</div>
                 </div>
               </div>
             </div>
 
-            {/* EMI Schedule */}
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 mb-8">
+              <h3 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b border-purple-300">Finance Details</h3>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="text-xs text-gray-500 font-semibold mb-2">VEHICLE PRICE</div>
+                  <div className="text-lg font-bold text-gray-900">₹ {toInr(financeModal.vehiclePrice)}</div>
+                </div>
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="text-xs text-gray-500 font-semibold mb-2">FINANCE AMOUNT</div>
+                  <div className="text-lg font-bold text-gray-900">₹ {toInr(financeModal.financeAmount)}</div>
+                </div>
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="text-xs text-gray-500 font-semibold mb-2">CHARGES & INTEREST</div>
+                  <div className="text-lg font-bold text-gray-900">₹ {toInr(financeModal.charges)}</div>
+                </div>
+                <div className="bg-white rounded-lg p-4 shadow-sm border-2 border-purple-300">
+                  <div className="text-xs text-gray-500 font-semibold mb-2">TOTAL AMOUNT</div>
+                  <div className="text-lg font-bold text-purple-900">₹ {toInr(financeModal.totalAmount)}</div>
+                </div>
+              </div>
+            </div>
+
             {financeModal.emiSchedule && financeModal.emiSchedule.length > 0 && (
-              <div className="mb-4 sm:mb-8">
-                <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 sm:mb-4 pb-2 sm:pb-3 border-b border-gray-300 truncate">EMI Schedule : ₹ {financeModal.emi} x {financeModal.emiSchedule.length} months</h3>
+              <div className="mb-8">
+                <h3 className="text-xl font-bold text-gray-800 mb-4 pb-3 border-b border-gray-300">EMI Schedule : ₹ {toInr(financeModal.emi)} x {financeModal.months || financeModal.emiSchedule.length} months</h3>
                 <div className="overflow-x-auto rounded-lg border border-gray-200">
-                  <table className="w-full text-xs sm:text-sm">
+                  <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-gray-800 text-white">
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm whitespace-nowrap">SNO</th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm whitespace-nowrap">EMI</th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm whitespace-nowrap">PAID</th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm whitespace-nowrap">EMI DATE</th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm whitespace-nowrap">PAID DATE</th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm whitespace-nowrap">PENDING</th>
+                        <th className="px-4 py-3 text-left font-semibold">INST.NO</th>
+                        <th className="px-4 py-3 text-left font-semibold">INST.DATE</th>
+                        <th className="px-4 py-3 text-left font-semibold">INST.AMOUNT</th>
+                        <th className="px-4 py-3 text-left font-semibold">PAID DATE</th>
+                        <th className="px-4 py-3 text-left font-semibold">PAID AMT.</th>
+                        <th className="px-4 py-3 text-left font-semibold">BALANCE</th>
+                        <th className="px-4 py-3 text-left font-semibold">RECEIPT NO.</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {financeModal.emiSchedule.map((schedule, idx) => (
-                        <tr key={schedule.sno} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                          <td className="px-2 sm:px-4 py-2 sm:py-3 font-semibold text-gray-900 whitespace-nowrap">{schedule.sno}</td>
-                          <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-700 whitespace-nowrap">₹ {schedule.emi}</td>
-                          <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-700 whitespace-nowrap">₹ {schedule.paidAmount}</td>
-                          <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-700 whitespace-nowrap text-xs sm:text-base">{schedule.emiDate}</td>
-                          <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-700 whitespace-nowrap text-xs sm:text-base">{schedule.paidDate}</td>
-                          <td className="px-2 sm:px-4 py-2 sm:py-3 font-semibold text-red-600 whitespace-nowrap">₹ {schedule.peningAmount}</td>
+                      {statementRows.map((schedule, idx) => (
+                        <tr key={`${schedule.instNo}-${idx}`} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                          <td className="px-4 py-3 font-semibold text-gray-900">{schedule.instNo}</td>
+                          <td className="px-4 py-3 text-gray-700">{schedule.instDate}</td>
+                          <td className="px-4 py-3 text-gray-700">{schedule.instAmount === '' ? '' : `₹ ${toInr(schedule.instAmount)}`}</td>
+                          <td className="px-4 py-3 text-gray-700">{schedule.paidDate}</td>
+                          <td className="px-4 py-3 text-gray-700">₹ {toInr(schedule.paidAmt)}</td>
+                          <td className={`px-4 py-3 font-semibold ${getBalanceClass(schedule.balance)}`}>
+                            {formatBalance(schedule.balance)}
+                          </td>
+                          <td className="px-4 py-3 text-gray-700">{schedule.receiptNo}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-
-                {/* EMI Summary removed as requested */}
               </div>
             )}
 
-            {/* Payment Summary removed as requested */}
+            <div className="bg-gray-100 rounded-xl p-6 flex justify-between items-center">
+              <div>
+                <div className="text-xs text-gray-500 font-semibold mb-1">TOTAL PAID</div>
+                <div className="text-2xl font-bold text-green-600">₹ {toInr(statementTotalPaid)}</div>
+              </div>
+              <div className="h-12 w-px bg-gray-300"></div>
+              <div>
+                <div className="text-xs text-gray-500 font-semibold mb-1">PENDING AMOUNT</div>
+                <div className="text-2xl font-bold text-red-600">₹ {toInr(statementPending)}</div>
+              </div>
+            </div>
           </div>
         </div>
       )}

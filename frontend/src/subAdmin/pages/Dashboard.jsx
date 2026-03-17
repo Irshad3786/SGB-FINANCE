@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import Chart from 'chart.js/auto'
+import apiClient from '../../api/axios'
+import { useToast } from '../../components/ToastProvider'
 
 function StatCard({ label, value, className, icon }) {
   return (
@@ -15,7 +17,7 @@ function StatCard({ label, value, className, icon }) {
   )
 }
 
-function BarChart() {
+function BarChart({ labels = [], values = [] }) {
   const chartRef = useRef(null)
   const chartInstance = useRef(null)
 
@@ -31,10 +33,10 @@ function BarChart() {
       chartInstance.current = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: ['Sep', 'Oct', 'Nov', 'Dec'],
+          labels,
           datasets: [{
             label: 'Total Collection',
-            data: [68000, 75000, 72000, 85000],
+            data: values,
             backgroundColor: [
               'rgba(99, 102, 241, 0.8)',   // Indigo
               'rgba(139, 92, 246, 0.8)',   // Violet
@@ -111,12 +113,12 @@ function BarChart() {
         chartInstance.current.destroy()
       }
     }
-  }, [])
+  }, [labels, values])
 
   return <canvas ref={chartRef}></canvas>
 }
 
-function PieChart() {
+function PieChart({ done = 0, pending = 0 }) {
   const chartRef = useRef(null)
   const chartInstance = useRef(null)
 
@@ -134,7 +136,7 @@ function PieChart() {
         data: {
           labels: ['Collection Done', 'Pending Collection'],
           datasets: [{
-            data: [85000, 42000],
+            data: [done, pending],
             backgroundColor: [
               'rgba(34, 197, 94, 0.8)',  // Green
               'rgba(239, 68, 68, 0.8)',  // Red
@@ -192,15 +194,66 @@ function PieChart() {
         chartInstance.current.destroy()
       }
     }
-  }, [])
+  }, [done, pending])
 
   return <canvas ref={chartRef}></canvas>
 }
 
 export default function Dashboard() {
+  const { showToast } = useToast()
+  const [loading, setLoading] = React.useState(true)
+  const [dashboard, setDashboard] = React.useState({
+    stats: {
+      totalUsers: 0,
+      totalSellers: 0,
+      totalBuyers: 0,
+      financed: 0,
+      refinance: 0,
+      totalVehicles: 0,
+      pendingPayments: 0,
+      totalFinancedAmount: 0,
+      totalWithHA: 0,
+      totalWithoutHA: 0,
+    },
+    charts: {
+      monthlyCollection: { labels: ['Jan', 'Feb', 'Mar', 'Apr'], values: [0, 0, 0, 0] },
+      collectionDistribution: { collectionDone: 0, pendingCollection: 0 },
+    },
+  })
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        setLoading(true)
+        const response = await apiClient.get('/api/subadmin/management/dashboard')
+        const data = response?.data?.data
+        if (data) {
+          setDashboard(data)
+        }
+      } catch (error) {
+        showToast({
+          type: 'error',
+          title: 'Error',
+          message: error?.response?.data?.message || 'Failed to fetch dashboard data',
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDashboard()
+  }, [showToast])
+
+  const stats = dashboard?.stats || {}
+  const monthlyCollection = dashboard?.charts?.monthlyCollection || { labels: [], values: [] }
+  const collectionDistribution = dashboard?.charts?.collectionDistribution || { collectionDone: 0, pendingCollection: 0 }
+
   return (
     <div className="w-full px-4 sm:px-6 md:px-8">
       <div className="max-w-6xl mx-auto">
+        {loading && (
+          <div className="mb-4 text-sm font-semibold text-gray-500">Loading dashboard...</div>
+        )}
         <div className="bg-white rounded-2xl p-4 sm:p-6  border shadow-[0px_6px_7px_-4px_rgba(0,_0,_0,_0.25)]">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg sm:text-xl font-extrabold">Users Data</h2>
@@ -210,7 +263,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 ">
             <StatCard
               label="Total Users"
-              value="1000"
+              value={stats.totalUsers || 0}
               className="bg-green-50"
               icon={(
                 <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-green-200 rounded-xl flex items-center justify-center">
@@ -221,7 +274,7 @@ export default function Dashboard() {
 
             <StatCard
               label="Total Sellers"
-              value="999"
+              value={stats.totalSellers || 0}
               className="bg-indigo-50"
               icon={(
                 <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-indigo-200 rounded-xl flex items-center justify-center">
@@ -232,7 +285,7 @@ export default function Dashboard() {
 
             <StatCard
               label="Total Buyers"
-              value="682"
+              value={stats.totalBuyers || 0}
               className="bg-amber-50"
               icon={(
                 <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-amber-200 rounded-xl flex items-center justify-center">
@@ -243,7 +296,7 @@ export default function Dashboard() {
 
             <StatCard
               label="Financed"
-              value="24"
+              value={stats.financed || 0}
               className="bg-violet-50"
               icon={(
                 <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-violet-200 rounded-xl flex items-center justify-center">
@@ -262,7 +315,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <StatCard
               label="Refinance"
-              value="18"
+              value={stats.refinance || 0}
               className="bg-cyan-50"
               icon={(
                 <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-cyan-200 rounded-xl flex items-center justify-center">
@@ -273,7 +326,7 @@ export default function Dashboard() {
 
             <StatCard
               label="Total Vehicles"
-              value="156"
+              value={stats.totalVehicles || 0}
               className="bg-blue-50"
               icon={(
                 <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-blue-200 rounded-xl flex items-center justify-center">
@@ -284,7 +337,7 @@ export default function Dashboard() {
 
             <StatCard
               label="Pending Payments"
-              value="42"
+              value={stats.pendingPayments || 0}
               className="bg-red-50"
               icon={(
                 <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-red-200 rounded-xl flex items-center justify-center">
@@ -303,7 +356,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <StatCard
               label="Total Financed Amount"
-              value="$156,000"
+              value={`₹ ${Number(stats.totalFinancedAmount || 0).toLocaleString('en-IN')}`}
               className="bg-purple-50"
               icon={(
                 <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-purple-200 rounded-xl flex items-center justify-center">
@@ -314,7 +367,7 @@ export default function Dashboard() {
 
             <StatCard
               label="Total With HA"
-              value="89"
+              value={`₹ ${Number(stats.totalWithHA || 0).toLocaleString('en-IN')}`}
               className="bg-orange-50"
               icon={(
                 <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-orange-200 rounded-xl flex items-center justify-center">
@@ -325,7 +378,7 @@ export default function Dashboard() {
 
             <StatCard
               label="Total Without HA"
-              value="67"
+              value={`₹ ${Number(stats.totalWithoutHA || 0).toLocaleString('en-IN')}`}
               className="bg-green-50"
               icon={(
                 <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-green-200 rounded-xl flex items-center justify-center">
@@ -344,7 +397,7 @@ export default function Dashboard() {
               <h2 className="text-lg sm:text-xl font-extrabold">Monthly Collection Overview</h2>
             </div>
             <div className="h-[300px] sm:h-[350px]">
-              <BarChart />
+              <BarChart labels={monthlyCollection.labels || []} values={monthlyCollection.values || []} />
             </div>
           </div>
 
@@ -354,7 +407,7 @@ export default function Dashboard() {
               <h2 className="text-lg sm:text-xl font-extrabold">Collection Distribution</h2>
             </div>
             <div className="h-[300px] sm:h-[350px]">
-              <PieChart />
+              <PieChart done={collectionDistribution.collectionDone || 0} pending={collectionDistribution.pendingCollection || 0} />
             </div>
           </div>
         </div>

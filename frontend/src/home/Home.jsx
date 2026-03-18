@@ -32,11 +32,26 @@ function Home() {
         <div className='flex justify-center items-center gap-2 sm:px-5'>
         <button type="button"
           onClick={() => navigate('/login')}
-          className='px-4 py-1 bg-[#E0FCED] font-bold border-[2px] border-black rounded-xl text-sm shadow-[1px_3px_4px_0px_rgba(0,_0,_0,_0.1)]'
+          aria-label='Login'
+          className='px-3 md:px-4 py-1 bg-[#E0FCED] font-bold border-[2px] border-black rounded-xl text-sm shadow-[1px_3px_4px_0px_rgba(0,_0,_0,_0.1)] text-[#27563C]'
       >
-         Login       </button>
-        <button type="button"  onClick={() => navigate('/signup')} className='px-4 py-1 bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] font-bold border-[2px] border-black rounded-xl text-sm shadow-[1px_3px_4px_0px_rgba(0,_0,_0,_0.1)]'>
-          Sign up
+          <span className='md:hidden flex items-center justify-center' aria-hidden='true'>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M10 3H6C4.89543 3 4 3.89543 4 5V19C4 20.1046 4.89543 21 6 21H10V19H6V5H10V3Z" fill="currentColor"/>
+              <path d="M13.586 7.00005L12.172 8.41405L14.758 11.0001H8V13.0001H14.758L12.172 15.5861L13.586 17.0001L18.586 12.0001L13.586 7.00005Z" fill="currentColor"/>
+            </svg>
+          </span>
+          <span className='hidden md:inline'>Login</span>
+        </button>
+        <button type="button" aria-label='Sign up' onClick={() => navigate('/signup')} className='px-3 md:px-4 py-1 bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] font-bold border-[2px] border-black rounded-xl text-sm shadow-[1px_3px_4px_0px_rgba(0,_0,_0,_0.1)] text-[#1E3E2B]'>
+          <span className='md:hidden flex items-center justify-center' aria-hidden='true'>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M6 3H14C15.1046 3 16 3.89543 16 5V8H14V5H6V19H14V16H16V19C16 20.1046 15.1046 21 14 21H6C4.89543 21 4 20.1046 4 19V5C4 3.89543 4.89543 3 6 3Z" fill="currentColor"/>
+              <path d="M8 8H12V10H8V8ZM8 12H11V14H8V12Z" fill="currentColor"/>
+              <path d="M19 8V10H17V12H19V14H21V12H23V10H21V8H19Z" fill="currentColor"/>
+            </svg>
+          </span>
+          <span className='hidden md:inline'>Sign up</span>
         </button>
         </div>
         </div>

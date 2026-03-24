@@ -140,17 +140,19 @@ const benefits = [
 
 const stats = [
   { label: 'Customers Financed Successfully', value: 5000, suffix: '+' },
-  { label: 'Bikes Financed', value: 9800, suffix: '+' },
+  { label: 'Bikes Financed', value: 3800, suffix: '+' },
   { label: 'Customer Satisfaction', value: 98, suffix: '%' },
 ]
 
 function Home() {
   const navigate = useNavigate()
   const [activeService, setActiveService] = useState(serviceCards[0])
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const servicesRef = useRef([])
   const stepsRef = useRef([])
   const benefitsRef = useRef([])
   const benefitIconsRef = useRef([])
+  const benefitTitlesRef = useRef([])
   const benefitsLineRef = useRef(null)
   const benefitsSectionRef = useRef(null)
   const statsRef = useRef([])
@@ -195,6 +197,7 @@ function Home() {
 
       const benefitItems = benefitsRef.current.filter(Boolean)
       const benefitIcons = benefitIconsRef.current.filter(Boolean)
+      const benefitTitles = benefitTitlesRef.current.filter(Boolean)
       const benefitTrigger = benefitsSectionRef.current || benefitItems[0]
 
       if (benefitItems.length) {
@@ -234,6 +237,17 @@ function Home() {
         gsap.to(benefitIcons, {
           y: -4,
           scale: 1.05,
+          yoyo: true,
+          repeat: -1,
+          duration: 1.35,
+          ease: 'sine.inOut',
+          stagger: 0.15,
+        })
+      }
+
+      if (benefitTitles.length) {
+        gsap.to(benefitTitles, {
+          y: -4,
           yoyo: true,
           repeat: -1,
           duration: 1.35,
@@ -334,15 +348,25 @@ function Home() {
     }
   }
 
+  const handleMobileNavClick = (path) => {
+    navigate(path)
+    setIsMobileMenuOpen(false)
+  }
+
   return (
     <div>
       <div className='md:px-8 md:pt-6'>
         <div className='w-full bg-[rgba(246,246,246,0.45)] shadow-[1px_3px_4px_0px_rgba(0,_0,_0,_0.1)] md:rounded-full'>
           <div className='flex items-center justify-between py-4 px-2 '>
             <div className='flex gap-0 sm:gap-5'>
-              <div className='pt-2 sm:pl-4 pr-2 md:hidden'>
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none"><path d="m12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.018-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z" /><path fill="#9c9c9c" d="M20 17.5a1.5 1.5 0 0 1 .144 2.993L20 20.5H4a1.5 1.5 0 0 1-.144-2.993L4 17.5zm0-7a1.5 1.5 0 0 1 0 3H4a1.5 1.5 0 0 1 0-3zm0-7a1.5 1.5 0 0 1 0 3H4a1.5 1.5 0 1 1 0-3z" stroke-width="0.5" stroke="#9c9c9c" /></g></svg>
-              </div>
+              <button
+                type='button'
+                aria-label='Toggle navigation menu'
+                onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+                className='pt-2 sm:pl-4 pr-2 md:hidden'
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none"><path d="m12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.018-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z" /><path fill="#9c9c9c" d="M20 17.5a1.5 1.5 0 0 1 .144 2.993L20 20.5H4a1.5 1.5 0 0 1-.144-2.993L4 17.5zm0-7a1.5 1.5 0 0 1 0 3H4a1.5 1.5 0 0 1 0-3zm0-7a1.5 1.5 0 0 1 0 3H4a1.5 1.5 0 1 1 0-3z" strokeWidth="0.5" stroke="#9c9c9c" /></g></svg>
+              </button>
               <div className='md:pl-6'>
                 <Logo />
               </div>
@@ -350,10 +374,26 @@ function Home() {
 
             <div className=''>
               <ul className='hidden md:flex items-center gap-5 font-semibold'>
-                <li>Home</li>
-                <li>About Us</li>
-                <li>Services</li>
-                <li>Contact</li>
+                <li>
+                  <button type='button' onClick={() => navigate('/')} className='text-[#27563C] transition hover:text-[#1E3E2B]'>
+                    Home
+                  </button>
+                </li>
+                <li>
+                  <button type='button' onClick={() => navigate('/about')} className='text-[#27563C] transition hover:text-[#1E3E2B]'>
+                    About Us
+                  </button>
+                </li>
+                <li>
+                  <button type='button' onClick={() => navigate('/services')} className='text-[#27563C] transition hover:text-[#1E3E2B]'>
+                    Services
+                  </button>
+                </li>
+                <li>
+                  <button type='button' onClick={() => navigate('/contact')} className='text-[#27563C] transition hover:text-[#1E3E2B]'>
+                    Contact
+                  </button>
+                </li>
               </ul>
             </div>
 
@@ -383,6 +423,33 @@ function Home() {
               </button>
             </div>
           </div>
+
+          {isMobileMenuOpen && (
+            <div className='border-t border-black/10 px-4 pb-3 pt-2 md:hidden'>
+              <ul className='space-y-2 text-sm font-semibold text-[#27563C]'>
+                <li>
+                  <button type='button' onClick={() => handleMobileNavClick('/')} className='w-full rounded-lg px-2 py-2 text-left hover:bg-[#E0FCED]'>
+                    Home
+                  </button>
+                </li>
+                <li>
+                  <button type='button' onClick={() => handleMobileNavClick('/about')} className='w-full rounded-lg px-2 py-2 text-left hover:bg-[#E0FCED]'>
+                    About Us
+                  </button>
+                </li>
+                <li>
+                  <button type='button' onClick={() => handleMobileNavClick('/services')} className='w-full rounded-lg px-2 py-2 text-left hover:bg-[#E0FCED]'>
+                    Services
+                  </button>
+                </li>
+                <li>
+                  <button type='button' onClick={() => handleMobileNavClick('/contact')} className='w-full rounded-lg px-2 py-2 text-left hover:bg-[#E0FCED]'>
+                    Contact
+                  </button>
+                </li>
+              </ul>
+            </div>
+          )}
         </div>
 
       </div>
@@ -545,27 +612,32 @@ function Home() {
         </div>
 
         <div className='relative mx-auto max-w-5xl'>
-          <div ref={benefitsLineRef} className='absolute left-6 top-6 h-[calc(100%-52px)] w-[2px] bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] md:left-1/2 md:-translate-x-1/2' />
+          <div ref={benefitsLineRef} className='absolute left-6 top-6 h-[calc(100%-52px)] w-[2px] bg-gradient-to-b from-[#B0FF1C] to-[#40FF00]' />
 
           <div className='space-y-6 md:space-y-7'>
             {benefits.map((item, index) => (
               <article
                 key={item.title}
                 ref={setNodeRef(benefitsRef, index)}
-                className={`relative pl-16 md:grid md:grid-cols-2 md:items-center md:gap-10 md:pl-0 ${index % 2 === 0 ? '' : 'md:[&>.benefit-content]:col-start-2 md:[&>.benefit-anchor]:col-start-1'}`}
+                className='relative md:grid md:grid-cols-[18rem_1fr] md:items-center md:gap-4'
               >
-                <div className='benefit-anchor absolute left-0 top-1.5 z-10 flex items-center md:static md:justify-center'>
+                <div className='benefit-anchor relative z-10 mb-3 grid w-full max-w-[11rem] grid-cols-[48px_1fr] items-start gap-3 md:static md:mb-0 md:w-[18rem] md:max-w-none md:grid-cols-[52px_1fr] md:items-center md:justify-start'>
                   <div
                     ref={setNodeRef(benefitIconsRef, index)}
-                    className='inline-flex rounded-xl bg-[#E0FCED] p-3 text-[#27563C] ring-4 ring-white shadow-[0px_6px_14px_rgba(39,86,60,0.14)]'
+                    className='inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#E0FCED] p-3 text-[#27563C] ring-4 ring-white shadow-[0px_6px_14px_rgba(39,86,60,0.14)] md:h-[52px] md:w-[52px]'
                   >
                     {item.icon}
                   </div>
+                  <h3
+                    ref={setNodeRef(benefitTitlesRef, index)}
+                    className='text-base font-extrabold leading-tight text-[#27563C] md:text-lg'
+                  >
+                    {item.title}
+                  </h3>
                 </div>
 
-                <div className='benefit-content rounded-xl border border-black/10 bg-white/70 px-4 py-3 shadow-[1px_3px_4px_0px_rgba(0,_0,_0,_0.08)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0px_12px_22px_rgba(0,_0,_0,_0.12)] md:px-5 md:py-4'>
-                  <h3 className='text-lg font-extrabold text-[#27563C]'>{item.title}</h3>
-                  <p className='pt-1 text-sm font-medium text-[#737373] md:text-base'>{item.text}</p>
+                <div className='benefit-content ml-3 min-w-0 rounded-xl border border-black/10 bg-white/70 px-4 py-3 shadow-[1px_3px_4px_0px_rgba(0,_0,_0,_0.08)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0px_12px_22px_rgba(0,_0,_0,_0.12)] md:ml-0 md:px-5 md:py-4'>
+                  <p className='break-words text-sm font-medium text-[#737373] md:text-base'>{item.text}</p>
                 </div>
               </article>
             ))}

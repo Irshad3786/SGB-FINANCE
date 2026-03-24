@@ -1,6 +1,9 @@
 import './App.css'
 import { Routes, Route } from "react-router-dom";
 import Home from './home/Home';
+import AboutUs from './home/AboutUs';
+import Services from './home/Services';
+import Contact from './home/Contact';
 import Login from './home/Login';
 import Signup from './home/Signup';
 import Subadmin from './subAdmin/Subadmin';
@@ -30,6 +33,9 @@ function App() {
      <Routes>
         {/* Public Pages */}
         <Route path="/" element={<Home/>} />
+        <Route path="/about" element={<AboutUs />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 

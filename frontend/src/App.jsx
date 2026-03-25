@@ -24,6 +24,8 @@ import AdminForgotPassword from './home/AdminForgotPassword';
 import AdminResetPassword from './home/AdminResetPassword';
 import UserDashboard from './user/UserDashboard';
 import EmiCalculator from './home/EmiCalculator';
+import PrivacyPolicy from './home/PrivacyPolicy';
+import Terms from './home/Terms';
 
 
 function App() {
@@ -40,6 +42,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/emi-calculator" element={<EmiCalculator />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<Terms />} />
 
         {/* User */}
         <Route path="/user" element={<UserDashboard/>} />

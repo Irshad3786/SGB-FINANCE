@@ -1,9 +1,13 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import apiClient from '../api/axios'
+import { useToast } from '../components/ToastProvider'
 import Logo from './components/Logo'
 import Footer from './components/Footer'
 
 function Signup() {
+  const navigate = useNavigate()
+  const { showToast } = useToast()
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -25,7 +29,11 @@ function Signup() {
     
     // Validate passwords match
     if (form.password !== form.confirmPassword) {
-      alert('Passwords do not match')
+      showToast({
+        type: 'error',
+        title: 'Password Mismatch',
+        message: 'Passwords do not match. Please try again.'
+      })
       return
     }
 
@@ -43,22 +51,23 @@ function Signup() {
     })
     .then(response => {
       console.log('Signup successful:', response.data)
-      alert('Account created successfully!')
-      // Reset form
-      setForm({
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        vehicleNo: '',
-        chassis: '',
-        password: '',
-        confirmPassword: ''
+      showToast({
+        type: 'success',
+        title: 'Account Created',
+        message: 'Your account has been created successfully!'
       })
+      // Navigate to login after 1.5 seconds to allow toast to show
+      setTimeout(() => {
+        navigate('/login')
+      }, 1500)
     })
     .catch(error => {
       console.error('Signup error:', error.response?.data || error.message)
-      alert('Error: ' + (error.response?.data?.message || 'Failed to create account'))
+      showToast({
+        type: 'error',
+        title: 'Signup Failed',
+        message: error.response?.data?.message || 'Failed to create account. Please try again.'
+      })
     })
   }
 

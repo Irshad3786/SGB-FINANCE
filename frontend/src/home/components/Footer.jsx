@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import Logo from './Logo'
 
 function Footer() {
@@ -47,7 +48,7 @@ function Footer() {
                   <li><a className="hover:text-white" href="/contact">Documentation Guide</a></li>
                   <li><a className="hover:text-white" href="/contact">Track Application</a></li>
                   <li><a className="hover:text-white" href="/contact">Raise a Ticket</a></li>
-                  <li><a className="hover:text-white" href="/contact">Privacy Policy</a></li>
+                  <li><Link className="hover:text-white" to="/privacy-policy">Privacy Policy</Link></li>
                   </ul>
                 </div>
 

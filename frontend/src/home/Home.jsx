@@ -317,6 +317,14 @@ function Home() {
         duration: 1.2,
         ease: 'sine.inOut',
       })
+
+      gsap.to('.emi-float-btn', {
+        y: -8,
+        repeat: -1,
+        yoyo: true,
+        duration: 1.4,
+        ease: 'sine.inOut',
+      })
     })
 
     return () => ctx.revert()
@@ -690,7 +698,7 @@ function Home() {
         onClick={() => navigate('/emi-calculator')}
         type='button'
         aria-label='EMI Calculator'
-        className='fixed bottom-4 right-8 z-40 cursor-pointer rounded-md px-1 py-1 border-0 appearance-none flex flex-col items-center'
+        className='emi-float-btn fixed bottom-4 right-8 z-40 cursor-pointer rounded-2xl bg-white px-3 py-2 border-0 appearance-none flex flex-col items-center gap-1 shadow-[0px_10px_22px_rgba(0,_0,_0,_0.18)]'
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fillRule="evenodd" clipRule="evenodd">
           <defs>

@@ -23,6 +23,7 @@ import AdminOtpLogin from './home/AdminOtpLogin';
 import AdminForgotPassword from './home/AdminForgotPassword';
 import AdminResetPassword from './home/AdminResetPassword';
 import UserDashboard from './user/UserDashboard';
+import EmiCalculator from './home/EmiCalculator';
 
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/emi-calculator" element={<EmiCalculator />} />
 
         {/* User */}
         <Route path="/user" element={<UserDashboard/>} />

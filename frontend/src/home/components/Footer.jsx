@@ -34,7 +34,7 @@ function Footer() {
                   <li><a className="hover:text-white" href="/about">About Us</a></li>
                   <li><a className="hover:text-white" href="/services">Services</a></li>
                   <li><a className="hover:text-white" href="/emi-calculator">EMI Calculator</a></li>
-                  <li><a className="hover:text-white" href="/apply">Apply Now</a></li>
+                  <li><a className="hover:text-white" href="/signup">Apply Now</a></li>
                   <li><a className="hover:text-white" href="/contact">Contact</a></li>
                   </ul>
                 </div>
@@ -42,21 +42,21 @@ function Footer() {
                 <div>
                   <h3 className="font-semibold text-lg mb-4">Customer Support</h3>
                   <ul className="space-y-3 text-sm text-gray-300">
-                  <li><a className="hover:text-white" href="/faqs">FAQs</a></li>
-                  <li><a className="hover:text-white" href="/loan-help">Loan Application Help</a></li>
-                  <li><a className="hover:text-white" href="/documentation-guide">Documentation Guide</a></li>
-                  <li><a className="hover:text-white" href="/track-application">Track Application</a></li>
-                  <li><a className="hover:text-white" href="/support">Raise a Ticket</a></li>
-                  <li><a className="hover:text-white" href="/privacy-policy">Privacy Policy</a></li>
+                  <li><a className="hover:text-white" href="/contact">FAQs</a></li>
+                  <li><a className="hover:text-white" href="/contact">Loan Application Help</a></li>
+                  <li><a className="hover:text-white" href="/contact">Documentation Guide</a></li>
+                  <li><a className="hover:text-white" href="/contact">Track Application</a></li>
+                  <li><a className="hover:text-white" href="/contact">Raise a Ticket</a></li>
+                  <li><a className="hover:text-white" href="/contact">Privacy Policy</a></li>
                   </ul>
                 </div>
 
                 <div>
                   <h3 className="font-semibold text-lg mb-4">Our Services</h3>
                   <ul className="space-y-3 text-sm text-gray-300">
-                  <li>Two Wheeler Finance</li>
-                  <li>Used Vehicle Loans</li>
-                  <li>Loan Against Vehicle</li>
+                  <li><a className="hover:text-white" href="/services">Two Wheeler Finance</a></li>
+                  <li><a className="hover:text-white" href="/services">Used Vehicle Loans</a></li>
+                  <li><a className="hover:text-white" href="/services">Loan Against Vehicle</a></li>
                   </ul>
                 </div>
 

@@ -698,9 +698,9 @@ function Home() {
         onClick={() => navigate('/emi-calculator')}
         type='button'
         aria-label='EMI Calculator'
-        className='emi-float-btn fixed bottom-4 right-8 z-40 cursor-pointer rounded-2xl bg-white px-3 py-2 border-0 appearance-none flex flex-col items-center gap-1 shadow-[0px_10px_22px_rgba(0,_0,_0,_0.18)]'
+        className='emi-float-btn fixed bottom-4 right-5 sm:bottom-4 sm:right-6 md:right-8 z-40 cursor-pointer rounded-xl sm:rounded-xl md:rounded-2xl bg-white px-3 py-2 sm:px-3 sm:py-2 border-0 appearance-none flex flex-col items-center gap-1 shadow-[0px_10px_22px_rgba(0,_0,_0,_0.18)]'
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fillRule="evenodd" clipRule="evenodd">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fillRule="evenodd" clipRule="evenodd" className='w-10 h-10 sm:w-11 sm:h-11 md:w-14 md:h-14'>
           <defs>
             <linearGradient id="emiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#B0FF1C" />
@@ -709,7 +709,7 @@ function Home() {
           </defs>
           <path fill="url(#emiGradient)" d="M12 22c-4.243 0-6.364 0-7.682-1.465C3 19.072 3 16.714 3 12s0-7.071 1.318-8.536S7.758 2 12 2s6.364 0 7.682 1.464C21 4.93 21 7.286 21 12s0 7.071-1.318 8.535S16.242 22 12 22m3-16H9c-.465 0-.697 0-.888.051a1.5 1.5 0 0 0-1.06 1.06C7 7.304 7 7.536 7 8s0 .697.051.888a1.5 1.5 0 0 0 1.06 1.06C8.304 10 8.536 10 9 10h6c.465 0 .697 0 .888-.051a1.5 1.5 0 0 0 1.06-1.06C17 8.696 17 8.464 17 8s0-.697-.051-.888a1.5 1.5 0 0 0-1.06-1.06C15.697 6 15.464 6 15 6m-6 7a1 1 0 1 1-2 0a1 1 0 0 1 2 0m3 1a1 1 0 1 0 0-2a1 1 0 0 0 0 2m5-1a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-1 5a1 1 0 1 0 0-2a1 1 0 0 0 0 2m-3-1a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-5 1a1 1 0 1 0 0-2a1 1 0 0 0 0 2"/>
         </svg>
-        <span className='text-[10px] leading-none font-medium text-[#1E3E2B]'>EMI Calculator</span>
+        <span className='text-[9px] sm:text-[10px] md:text-[11px] leading-none font-medium text-[#1E3E2B]'>EMI</span>
       </button>
 
     </div>

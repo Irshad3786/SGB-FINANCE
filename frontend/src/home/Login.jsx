@@ -89,6 +89,9 @@ function Login() {
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-start py-10 px-6 md:px-10">
+        {/* Select Type Title */}
+        <h3 className="text-center text-lg md:text-xl font-bold text-[#27563C] mb-3">Select Type</h3>
+
         {/* Role toggle (pill switch with sliding indicator) */}
         <div className="w-fit max-w-md mb-6">
           <div className="relative inline-flex bg-[#f5f5f5] rounded-full shadow-md p-1 w-64 overflow-hidden">
@@ -121,6 +124,11 @@ function Login() {
             </div>
           </div>
         </div>
+
+        {/* Selected Type Display */}
+        <p className="text-center text-sm font-semibold text-[#0e6b53] mb-6">
+          Selected: <span className="text-[#27563C] font-bold">{role === 'subadmin' ? 'SubAdmin' : 'User'}</span>
+        </p>
 
         {/* Sign-in card */}
         <div className="w-full max-w-md">

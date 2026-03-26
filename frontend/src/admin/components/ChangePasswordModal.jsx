@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import apiClient from '../../api/axios'
 
 function ChangePasswordModal({ isOpen, onClose }) {
@@ -11,6 +11,20 @@ function ChangePasswordModal({ isOpen, onClose }) {
   const [submitted, setSubmitted] = useState(false)
   const [serverError, setServerError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined
+
+    const originalOverflow = document.body.style.overflow
+
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    }
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+    }
+  }, [isOpen])
 
   const handleChange = (e) => {
     const { name, value } = e.target

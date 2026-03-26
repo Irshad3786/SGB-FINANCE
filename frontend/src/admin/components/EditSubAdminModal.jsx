@@ -27,6 +27,20 @@ function EditSubAdminModal({ isOpen, onClose, subAdmin, onSave }) {
   ]
 
   useEffect(() => {
+    if (typeof document === 'undefined') return undefined
+
+    const originalOverflow = document.body.style.overflow
+
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    }
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+    }
+  }, [isOpen])
+
+  useEffect(() => {
     if (subAdmin) {
       const normalizedPermissions = (subAdmin.permissions || []).map(permission => ({
         module: permission.module,
@@ -49,7 +63,10 @@ function EditSubAdminModal({ isOpen, onClose, subAdmin, onSave }) {
 
   const onChange = (e) => {
     const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
+    const nextValue =
+      name === 'phone' ? value.replace(/\D/g, '').slice(0, 10) : value
+
+    setForm(prev => ({ ...prev, [name]: nextValue }))
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }))
     }
@@ -99,8 +116,8 @@ function EditSubAdminModal({ isOpen, onClose, subAdmin, onSave }) {
 
     if (!form.phone.trim()) {
       newErrors.phone = 'Phone number is required'
-    } else if (!/^[0-9]{10,}$/.test(form.phone.replace(/\D/g, ''))) {
-      newErrors.phone = 'Please enter a valid phone number'
+    } else if (!/^\d{10}$/.test(form.phone)) {
+      newErrors.phone = 'Phone number must be exactly 10 digits'
     }
 
     if (!form.roleName) {
@@ -144,7 +161,10 @@ function EditSubAdminModal({ isOpen, onClose, subAdmin, onSave }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div
+        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
         {/* Header */}
         <div className="sticky top-0 bg-gradient-to-b from-[#eafef2] to-white px-6 md:px-8 py-4 md:py-6 border-b border-gray-200 flex justify-between items-center">
           <h2 className="text-2xl md:text-3xl font-bold text-[#14493b]">Edit SubAdmin</h2>
@@ -191,6 +211,8 @@ function EditSubAdminModal({ isOpen, onClose, subAdmin, onSave }) {
                   name="phone"
                   value={form.phone}
                   onChange={onChange}
+                  inputMode="numeric"
+                  maxLength={10}
                   className="px-4 py-2 rounded-md border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
                   placeholder="Phone No"
                 />

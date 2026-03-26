@@ -21,6 +21,7 @@ function Admin() {
     name: '',
     email: '',
     phoneNo: '',
+    secretCode: '',
     password: '',
     confirmPassword: '',
     roleName: '',
@@ -105,7 +106,10 @@ function Admin() {
 
   function onChange(e) {
     const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
+    const nextValue =
+      name === 'phoneNo' ? value.replace(/\D/g, '').slice(0, 10) : value
+
+    setForm(prev => ({ ...prev, [name]: nextValue }))
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }))
     }
@@ -155,8 +159,12 @@ function Admin() {
 
     if (!form.phoneNo.trim()) {
       newErrors.phoneNo = 'Phone number is required'
-    } else if (!/^[0-9]{10,}$/.test(form.phoneNo.replace(/\D/g, ''))) {
-      newErrors.phoneNo = 'Please enter a valid phone number'
+    } else if (!/^\d{10}$/.test(form.phoneNo)) {
+      newErrors.phoneNo = 'Phone number must be exactly 10 digits'
+    }
+
+    if (!form.secretCode.trim()) {
+      newErrors.secretCode = 'Secret code is required'
     }
 
     if (!form.password) {
@@ -205,6 +213,7 @@ function Admin() {
           name: form.name,
           email: form.email,
           phone: form.phoneNo,
+          secretCode: form.secretCode,
           password: form.password,
           confirmPassword: form.confirmPassword,
           roleName: form.roleName,
@@ -233,6 +242,7 @@ function Admin() {
       name: '',
       email: '',
       phoneNo: '',
+      secretCode: '',
       password: '',
       confirmPassword: '',
       roleName: '',
@@ -376,6 +386,8 @@ function Admin() {
                     name="phoneNo"
                     value={form.phoneNo}
                     onChange={onChange}
+                    inputMode="numeric"
+                    maxLength={10}
                     className="pl-10 w-full px-3 py-2 rounded-md border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
                     placeholder="Phone No"
                   />
@@ -447,6 +459,27 @@ function Admin() {
                   </label>
                 </div>
               </div>
+            </div>
+
+            {/* Secret Code */}
+            <div className="flex flex-col">
+              <label className="text-xs font-extrabold text-[#0e6b53] mb-1">Admin Secret Code</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                    <path fill="#a6a6a6" d="M12 17a2 2 0 0 0 2-2a2 2 0 0 0-2-2a2 2 0 0 0-2 2a2 2 0 0 0 2 2m6-9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2h1V6a5 5 0 0 1 5-5a5 5 0 0 1 5 5v2zm-6-5a3 3 0 0 0-3 3v2h6V6a3 3 0 0 0-3-3"/>
+                  </svg>
+                </span>
+                <input
+                  name="secretCode"
+                  type="password"
+                  value={form.secretCode}
+                  onChange={onChange}
+                  className="pl-10 w-full px-3 py-2 rounded-md border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                  placeholder="Enter admin secret code"
+                />
+              </div>
+              {errors.secretCode && <p className="text-red-500 text-xs mt-1">{errors.secretCode}</p>}
             </div>
 
             {/* Password and Confirm Password Row */}

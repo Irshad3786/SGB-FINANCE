@@ -22,11 +22,11 @@ const AdminOtpVerifyEmail = async (admin) => {
     admin.otpExpiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
     await admin.save();
 
-    //Prepare email using template
+    // Prepare email using template
     const mailOptions = {
       from: `"SGB FINANCE" <${process.env.EMAIL_USER}>`,
       to: admin.email,
-      subject: "OTP for Account Verification",
+      subject: "Verify Your Admin Account - SGB FINANCE",
       html: AdminOtpTemplate(admin, otp), // 👈 use template here
     };
 

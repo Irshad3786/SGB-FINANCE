@@ -20,17 +20,33 @@ const generateAccessAndRefreshToken = async (subAdminId) => {
 
 const registerSubAdmin = async (req, res) => {
   try {
-    const { name, phone, email, password, confirmPassword, roleName, permissions } = req.body;
+    const { name, phone, email, password, confirmPassword, roleName, permissions, secretCode } = req.body;
 
     // 1️⃣ Validate required fields
-    if (!name || !phone || !email || !password || !confirmPassword || !roleName) {
+    if (!name || !phone || !email || !password || !confirmPassword || !roleName || !secretCode) {
       return res.status(400).json({
         success: false,
-        message: "All required fields must be provided (name, phone, email, password, confirmPassword, roleName)",
+        message: "All required fields must be provided (name, phone, email, password, confirmPassword, roleName, secretCode)",
       });
     }
 
-    // 2️⃣ Validate password match
+    // 2️⃣ Validate admin secret code before allowing sub-admin creation
+    if (!req.admin?.secretCode) {
+      return res.status(403).json({
+        success: false,
+        message: "Admin secret code is not configured. Please contact support.",
+      });
+    }
+
+    const isSecretCodeValid = await bcrypt.compare(secretCode.toString(), req.admin.secretCode);
+    if (!isSecretCodeValid) {
+      return res.status(403).json({
+        success: false,
+        message: "Invalid secret code. Sub-admin creation is not allowed.",
+      });
+    }
+
+    // 3️⃣ Validate password match
     if (password !== confirmPassword) {
       return res.status(400).json({
         success: false,
@@ -38,7 +54,7 @@ const registerSubAdmin = async (req, res) => {
       });
     }
 
-    // 3️⃣ Check if SubAdmin already exists
+    // 4️⃣ Check if SubAdmin already exists
     const existingSubAdmin = await SubAdmin.findOne({
       $or: [{ email }, { phone }],
     });
@@ -50,7 +66,7 @@ const registerSubAdmin = async (req, res) => {
       });
     }
 
-    // 4️⃣ Validate roleName
+    // 5️⃣ Validate roleName
     const validRoles = ["Financer", "Collection Agent", "Data Entry"];
     if (!validRoles.includes(roleName)) {
       return res.status(400).json({
@@ -59,13 +75,13 @@ const registerSubAdmin = async (req, res) => {
       });
     }
 
-    // 5️⃣ Generate 6-digit OTP
+    // 6️⃣ Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // 6️⃣ Hash OTP for storage
+    // 7️⃣ Hash OTP for storage
     const hashedOtp = await bcrypt.hash(otp, 10);
 
-    // 7️⃣ Store registration data temporarily
+    // 8️⃣ Store registration data temporarily
     const registrationId = `subadmin_${email}_${Date.now()}`;
     const otpExpiresAt = Date.now() + 5 * 60 * 1000; // 5 min expiry
     
@@ -81,7 +97,7 @@ const registerSubAdmin = async (req, res) => {
       createdAt: Date.now()
     });
 
-    // 8️⃣ Try sending OTP email
+    // 9️⃣ Try sending OTP email
     try {
       const tempSubAdmin = { name, email };
       const emailResponse = await sendSubAdminOtp(tempSubAdmin, otp);
@@ -97,7 +113,7 @@ const registerSubAdmin = async (req, res) => {
       });
     }
 
-    // 9️⃣ Generate token with registration ID
+    // 🔟 Generate token with registration ID
     const otpToken = jwt.sign(
       { registrationId, email },
       process.env.OTP_TOKEN_SECRET,

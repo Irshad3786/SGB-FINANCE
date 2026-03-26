@@ -12,6 +12,20 @@ function SubAdminOtpModal({ isOpen, onClose, otpToken, email, onSuccess }) {
   const [showResend, setShowResend] = useState(false)
 
   useEffect(() => {
+    if (typeof document === 'undefined') return undefined
+
+    const originalOverflow = document.body.style.overflow
+
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    }
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+    }
+  }, [isOpen])
+
+  useEffect(() => {
     if (!isOpen) {
       setOtp('')
       setError('')

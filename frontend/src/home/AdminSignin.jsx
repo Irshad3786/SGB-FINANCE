@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import Logo from './components/Logo'
@@ -11,6 +11,17 @@ function AdminSignin() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const rememberedEmail = localStorage.getItem('adminRememberEmail') || ''
+    const remember = localStorage.getItem('adminRememberMe') === 'true'
+
+    if (remember && rememberedEmail) {
+      setForm(prev => ({ ...prev, email: rememberedEmail, remember: true }))
+    }
+  }, [])
 
   function onChange(e) {
     const { name, value, type, checked } = e.target
@@ -40,6 +51,14 @@ function AdminSignin() {
       }
 
       if (typeof window !== 'undefined') {
+        if (form.remember) {
+          localStorage.setItem('adminRememberMe', 'true')
+          localStorage.setItem('adminRememberEmail', form.email)
+        } else {
+          localStorage.removeItem('adminRememberMe')
+          localStorage.removeItem('adminRememberEmail')
+        }
+
         sessionStorage.setItem('adminPendingOtpToken', receivedOtpToken)
         sessionStorage.removeItem('adminOtpVerified')
       }
@@ -134,10 +153,6 @@ function AdminSignin() {
                 <div className="flex-1 flex flex-col sm:flex-row items-center justify-between gap-2">
                   <div className="flex items-center text-gray-700">
                     <a href="/admin-forgot-password" className="text-blue-600 font-medium hover:underline">Forgot password?</a>
-                  </div>
-
-                  <div className="flex items-center text-gray-700">
-                    <a href="/create-admin" className="text-blue-600 font-medium hover:underline">Create account?</a>
                   </div>
                 </div>
               </div>

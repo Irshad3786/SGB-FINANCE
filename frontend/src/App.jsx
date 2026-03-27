@@ -22,6 +22,8 @@ import AdminOtpCreateAccount from './home/AdminOtpCreateAccount';
 import AdminOtpLogin from './home/AdminOtpLogin';
 import AdminForgotPassword from './home/AdminForgotPassword';
 import AdminResetPassword from './home/AdminResetPassword';
+import UserForgotPassword from './home/UserForgotPassword';
+import UserResetPassword from './home/UserResetPassword';
 import UserDashboard from './user/UserDashboard';
 import EmiCalculator from './home/EmiCalculator';
 import PrivacyPolicy from './home/PrivacyPolicy';
@@ -41,6 +43,8 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/user-forgot-password" element={<UserForgotPassword />} />
+        <Route path="/reset-user-password/:token" element={<UserResetPassword />} />
         <Route path="/emi-calculator" element={<EmiCalculator />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />

@@ -202,13 +202,15 @@ function Login() {
 
                 <div className="flex-1 flex flex-col sm:flex-row items-center justify-between gap-2">
                   <div className="flex items-center text-gray-700">
-                   
-                    <a href="#" className="text-blue-600 font-medium ml-1 hover:underline">Forgot your password ?</a>
+                    {role === 'user' && (
+                      <a href="/user-forgot-password" className="text-blue-600 font-medium ml-1 hover:underline">Forgot your password ?</a>
+                    )}
                   </div>
 
                   <div className="flex items-center text-gray-700">
-                    
-                    <a href="/signup" className="text-blue-600 font-medium ml-1 hover:underline">Dont have an Account ?</a>
+                    {role === 'user' && (
+                      <a href="/signup" className="text-blue-600 font-medium ml-1 hover:underline">Dont have an Account ?</a>
+                    )}
                   </div>
                 </div>
               </div>

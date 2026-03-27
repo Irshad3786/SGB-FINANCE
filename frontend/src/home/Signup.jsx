@@ -14,6 +14,8 @@ function Signup() {
     email: '',
     phone: '',
     vehicleNo: '',
+    vehicleName: '',
+    vehicleManufactureYear: '',
     chassis: '',
     password: '',
     confirmPassword: ''
@@ -21,6 +23,16 @@ function Signup() {
 
   function onChange(e) {
     const { name, value } = e.target
+    if (name === 'phone') {
+      const digitsOnly = value.replace(/\D/g, '').slice(0, 10)
+      setForm(prev => ({ ...prev, [name]: digitsOnly }))
+      return
+    }
+    if (name === 'vehicleManufactureYear') {
+      const digitsOnly = value.replace(/\D/g, '').slice(0, 4)
+      setForm(prev => ({ ...prev, [name]: digitsOnly }))
+      return
+    }
     setForm(prev => ({ ...prev, [name]: value }))
   }
 
@@ -37,6 +49,24 @@ function Signup() {
       return
     }
 
+    if (form.phone.length !== 10) {
+      showToast({
+        type: 'error',
+        title: 'Invalid Phone Number',
+        message: 'Phone number must be exactly 10 digits.'
+      })
+      return
+    }
+
+    if (form.vehicleManufactureYear.length !== 4) {
+      showToast({
+        type: 'error',
+        title: 'Invalid Year',
+        message: 'Vehicle manufacture year must be a 4-digit year.'
+      })
+      return
+    }
+
     // Send data to backend
     const username = `${form.firstName} ${form.lastName}`.trim()
 
@@ -45,6 +75,8 @@ function Signup() {
       email: form.email,
       phoneNumber: form.phone,
       vehicleNumber: form.vehicleNo,
+      vehicleName: form.vehicleName,
+      vehicleManufactureYear: Number(form.vehicleManufactureYear),
       chassisNumber: form.chassis,
       password: form.password,
       confirmPassword: form.confirmPassword
@@ -83,6 +115,10 @@ function Signup() {
         <div className="max-w-5xl w-full">
           <div className="bg-[#eafef2] md:rounded-3xl rounded-lg p-6 md:p-10 shadow-sm">
             <h2 className="text-3xl md:text-4xl font-bold text-[#14493b] mb-6">Create Account</h2>
+
+            <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 mb-4">
+              Caution: Please enter the correct Vehicle Number and Chassis Number. These must match your loan records.
+            </div>
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               {/* First Name */}
@@ -167,10 +203,13 @@ function Signup() {
 
                   <input
                     name="phone"
+                    type="tel"
                     value={form.phone}
                     onChange={onChange}
                     className="pl-10 w-full px-3 py-2 rounded-md border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
                     placeholder="Phone No"
+                    maxLength={10}
+                    pattern="[0-9]{10}"
                   />
                 </div>
               </div>
@@ -194,6 +233,51 @@ function Signup() {
                     onChange={onChange}
                     className="pl-10 w-full px-3 py-2 rounded-md border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
                     placeholder="Vehicle No"
+                  />
+                </div>
+              </div>
+
+              {/* Vehicle Name */}
+              <div className="flex flex-col relative">
+                <label className="text-xs font-extrabold text-[#0e6b53] mb-1">Vehicle Name</label>
+
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48" className="block">
+                      <path fill="#a6a6a6" d="M22.25 8a1.25 1.25 0 1 0 0 2.5h3.35c.677 0 1.293.39 1.582 1.002l3.213 6.79A4.7 4.7 0 0 0 28.75 18h-3.174a8.25 8.25 0 0 0-7.379 4.56L16.977 25H9.5a7.5 7.5 0 1 0 7.23 9.5h4.43a6.25 6.25 0 0 0 5.59-3.455l.773-1.545h-2.796l-.006.014a2 2 0 0 0-.221-.014h-8q-.062 0-.122.004A7.5 7.5 0 0 0 15.09 27.5h13.66a4.75 4.75 0 0 0 4.49-3.195l.967 2.044a7.5 7.5 0 1 0 2.26-1.07l-1.097-2.318q.309.039.63.039h3.75c.69 0 1.25-.56 1.25-1.25v-7.5c0-.69-.56-1.25-1.25-1.25H36c-1.784 0-3.35.935-4.235 2.341l-2.323-4.909A4.25 4.25 0 0 0 25.601 8zM4.5 32.5a5 5 0 1 1 10 0a5 5 0 0 1-10 0m30.8-3.842l2.07 4.377a1.25 1.25 0 1 0 2.26-1.07l-2.07-4.377q.457-.087.94-.088a5 5 0 1 1-3.2 1.158M33.5 18a2.5 2.5 0 0 1 2.5-2.5h2.5v5H36a2.5 2.5 0 0 1-2.5-2.5"/>
+                    </svg>
+                  </span>
+
+                  <input
+                    name="vehicleName"
+                    value={form.vehicleName}
+                    onChange={onChange}
+                    className="pl-10 w-full px-3 py-2 rounded-md border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                    placeholder="Vehicle Name"
+                  />
+                </div>
+              </div>
+
+              {/* Vehicle Manufacture Year */}
+              <div className="flex flex-col relative">
+                <label className="text-xs font-extrabold text-[#0e6b53] mb-1">Manufacture Year</label>
+
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" className="block">
+                      <path fill="#a6a6a6" d="M7 2h2v2h6V2h2v2h3v18H4V4h3zm12 8H5v10h14z"/>
+                    </svg>
+                  </span>
+
+                  <input
+                    name="vehicleManufactureYear"
+                    type="tel"
+                    value={form.vehicleManufactureYear}
+                    onChange={onChange}
+                    className="pl-10 w-full px-3 py-2 rounded-md border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                    placeholder="YYYY"
+                    maxLength={4}
+                    pattern="[0-9]{4}"
                   />
                 </div>
               </div>

@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
+import UserPasswordResetEmail from "../utils/authEmails/sendUserResetPasswordEmail.js";
 
 const generateAccessAndRefreshToken = async (userId) => {
 	try {
@@ -21,15 +22,24 @@ const registerUser = async (req, res) => {
 			email,
 			phoneNumber,
 			vehicleNumber,
+			vehicleName,
+			vehicleManufactureYear,
 			chassisNumber,
 			password,
 			confirmPassword,
 		} = req.body;
 
-		if (!username || !email || !phoneNumber || !vehicleNumber || !chassisNumber || !password) {
+		if (!username || !email || !phoneNumber || !vehicleNumber || !vehicleName || !vehicleManufactureYear || !chassisNumber || !password) {
 			return res.status(400).json({
 				success: false,
 				message: "All fields are required",
+			});
+		}
+
+		if (!/^\d{4}$/.test(String(vehicleManufactureYear))) {
+			return res.status(400).json({
+				success: false,
+				message: "Vehicle manufacture year must be a 4-digit year",
 			});
 		}
 
@@ -61,6 +71,8 @@ const registerUser = async (req, res) => {
 			email,
 			phoneNumber,
 			vehicleNumber,
+			vehicleName,
+			vehicleManufactureYear,
 			chassisNumber,
 			password,
 		});
@@ -74,6 +86,8 @@ const registerUser = async (req, res) => {
 				email: user.email,
 				phoneNumber: user.phoneNumber,
 				vehicleNumber: user.vehicleNumber,
+				vehicleName: user.vehicleName,
+				vehicleManufactureYear: user.vehicleManufactureYear,
 				chassisNumber: user.chassisNumber,
 			},
 		});
@@ -153,6 +167,10 @@ const loginUser = async (req, res) => {
 					username: user.username,
 					email: user.email,
 					phoneNumber: user.phoneNumber,
+					vehicleName: user.vehicleName,
+					vehicleManufactureYear: user.vehicleManufactureYear,
+					vehicleNumber: user.vehicleNumber,
+					chassisNumber: user.chassisNumber,
 				},
 			});
 	} catch (error) {
@@ -225,4 +243,115 @@ const refreshUserToken = async (req, res) => {
 	}
 };
 
-export { registerUser, loginUser, refreshUserToken };
+const forgotUserPassword = async (req, res) => {
+	try {
+		const { email } = req.body;
+
+		if (!email) {
+			return res.status(400).json({
+				success: false,
+				message: "Email is required",
+			});
+		}
+
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+		if (!emailRegex.test(email)) {
+			return res.status(400).json({
+				success: false,
+				message: "Invalid email format",
+			});
+		}
+
+		const user = await User.findOne({ email: email.toLowerCase() });
+		if (!user) {
+			return res.status(404).json({
+				success: false,
+				message: "No user registered with this email",
+			});
+		}
+
+		const result = await UserPasswordResetEmail(user);
+		if (!result.success) {
+			return res.status(500).json({
+				success: false,
+				message: result.message || "Failed to send reset email. Please try again later.",
+			});
+		}
+
+		return res.status(200).json({
+			success: true,
+			message: "Reset email sent successfully",
+		});
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			message: "Internal server error",
+			error: error.message,
+		});
+	}
+};
+
+const resetUserPassword = async (req, res) => {
+	try {
+		const { password, confirmPassword } = req.body;
+		const { token } = req.params;
+
+		if (!token || !password || !confirmPassword) {
+			return res.status(400).json({
+				success: false,
+				message: "Token, password, and confirmPassword are required.",
+			});
+		}
+
+		const passwordRegex =
+			/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+		if (!passwordRegex.test(password)) {
+			return res.status(400).json({
+				success: false,
+				message:
+					"Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.",
+			});
+		}
+
+		if (password !== confirmPassword) {
+			return res.status(400).json({
+				success: false,
+				message: "Password and confirmPassword do not match.",
+			});
+		}
+
+		let payload;
+		try {
+			payload = jwt.verify(token, process.env.RESET_PASSWORD_SECRET);
+		} catch (err) {
+			return res.status(400).json({
+				success: false,
+				message: "Invalid or expired token.",
+			});
+		}
+
+		const user = await User.findById(payload.id).select("+password");
+		if (!user) {
+			return res.status(404).json({
+				success: false,
+				message: "User not found.",
+			});
+		}
+
+		user.password = password;
+		await user.save();
+
+		return res.status(200).json({
+			success: true,
+			message: "Password has been reset successfully. Now you can login.",
+		});
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			message: "Internal server error.",
+			error: error.message,
+		});
+	}
+};
+
+export { registerUser, loginUser, refreshUserToken, forgotUserPassword, resetUserPassword };

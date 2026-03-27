@@ -31,6 +31,19 @@ const userSchema = new mongoose.Schema( {
       lowercase: true
     },
 
+    vehicleName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    vehicleManufactureYear: {
+      type: Number,
+      required: true,
+      min: 1900,
+      max: 2100,
+    },
+
     chassisNumber: {
       type: String,
       required: true,

@@ -145,6 +145,22 @@ function UserNavbar({ userData }) {
                     </div>
                   </div>
 
+                  {/* Action Buttons */}
+                  <div className="mb-6 pb-6 border-b border-gray-200 space-y-3">
+                    <button
+                      onClick={() => {
+                        navigate('/user/finance')
+                        setShowProfileMenu(false)
+                      }}
+                      className="w-full px-4 py-2 bg-gradient-to-r from-[#B0FF1C] to-[#40FF00] text-black font-semibold rounded-lg hover:shadow-md transition-shadow text-sm flex items-center justify-center gap-2"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                      </svg>
+                      View Finance Statement
+                    </button>
+                  </div>
+
                   {/* Logout Button */}
                   <button
                     onClick={handleLogout}

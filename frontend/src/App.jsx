@@ -25,6 +25,7 @@ import AdminResetPassword from './home/AdminResetPassword';
 import UserForgotPassword from './home/UserForgotPassword';
 import UserResetPassword from './home/UserResetPassword';
 import UserDashboard from './user/UserDashboard';
+import UserFinance from './user/pages/UserFinance';
 import EmiCalculator from './home/EmiCalculator';
 import PrivacyPolicy from './home/PrivacyPolicy';
 import Terms from './home/Terms';
@@ -51,6 +52,7 @@ function App() {
 
         {/* User */}
         <Route path="/user" element={<UserDashboard/>} />
+        <Route path="/user/finance" element={<UserFinance/>} />
 
         {/* admin */}
         <Route path="/admin" element={<Admin/>} /> 

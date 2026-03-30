@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 
-function EmailVerificationModal({ userEmail, onClose, onSuccess }) {
-  const [step, setStep] = useState('sending') // 'sending' | 'entering'
+function EmailVerificationModal({ userEmail, onClose, onSuccess, initialStep = 'sending' }) {
+  const [step, setStep] = useState(initialStep) // 'sending' | 'entering'
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')

@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import UserNavbar from './components/UserNavbar'
-import { useToast } from '../components/ToastProvider'
 import axiosInstance from '../api/axios'
 
 function UserDashboard() {
   const navigate = useNavigate()
-  const { showToast } = useToast()
   const [userData, setUserData] = useState(null)
   const [financeData, setFinanceData] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [financeLoading, setFinanceLoading] = useState(false)
 
   useEffect(() => {
     // Get user data from localStorage
@@ -55,7 +52,6 @@ function UserDashboard() {
   }, [])
 
   const fetchFinanceData = async (user) => {
-    setFinanceLoading(true)
     try {
       const response = await axiosInstance.post('/api/user/finance-by-vehicle', {
         vehicleNumber: user?.vehicleNumber,
@@ -64,10 +60,9 @@ function UserDashboard() {
       if (response.data.success) {
         setFinanceData(response.data.data)
       }
-    } catch (error) {
+    } catch {
       console.log('No finance record found')
     } finally {
-      setFinanceLoading(false)
       setLoading(false)
     }
   }
@@ -222,17 +217,11 @@ function UserDashboard() {
                 <div className="bg-blue-50 border-l-4 border-blue-500 rounded-xl p-8">
                   <h2 className="text-2xl font-bold text-blue-900 mb-2">No Finance Record Found</h2>
                   <p className="text-blue-800 mb-6">
-                    We couldn't find any existing finance record for your vehicle. 
-                    You can request finance or view statement using your vehicle details.
+                    We couldn't find any existing finance record for your vehicle.
+                    You can request finance using your vehicle details.
                   </p>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <button
-                      onClick={() => navigate('/user/finance')}
-                      className="bg-[#40FF00] hover:bg-[#38e600] text-black font-bold py-3 px-6 rounded-lg transition-all"
-                    >
-                      Search Finance Statement
-                    </button>
+                  <div className="grid grid-cols-1 gap-4">
                     <button
                       onClick={() => navigate('/user/finance')}
                       className="bg-white border-2 border-[#40FF00] text-black font-bold py-3 px-6 rounded-lg hover:bg-gray-50 transition-all"

@@ -55,9 +55,28 @@ function UserNavbar({ userData }) {
 
               {/* Profile Dropdown Menu */}
               {showProfileMenu && (
-                <div className="absolute right-0 top-14 w-80 md:w-96 max-h-[calc(100vh-80px)] overflow-y-auto overflow-x-hidden scrollbar-hide bg-white rounded-xl shadow-lg border border-gray-200 p-4 md:p-6 animate-in fade-in slide-in-from-top-2 z-50" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                  {/* User Info Card */}
-                  <div className="mb-6 pb-6 border-b border-gray-200">
+                <>
+                  <button
+                    type="button"
+                    aria-label="Close profile menu"
+                    onClick={() => setShowProfileMenu(false)}
+                    className="fixed inset-0 bg-black/30 z-40 md:hidden"
+                  />
+
+                  <div className="fixed left-2 right-2 top-16 bottom-2 md:absolute md:left-auto md:right-0 md:top-14 md:bottom-auto md:w-96 md:max-h-[calc(100vh-80px)] overflow-y-auto overflow-x-hidden scrollbar-hide bg-white rounded-xl shadow-lg border border-gray-200 p-4 md:p-6 animate-in fade-in slide-in-from-top-2 z-50" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    <button
+                      type="button"
+                      aria-label="Close profile menu"
+                      onClick={() => setShowProfileMenu(false)}
+                      className="absolute top-3 right-3 h-8 w-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                      </svg>
+                    </button>
+
+                    {/* User Info Card */}
+                    <div className="mb-6 pb-6 border-b border-gray-200">
                     <div className="flex items-center gap-4 mb-4">
                       <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#B0FF1C] to-[#40FF00] flex items-center justify-center text-black font-bold text-lg">
                         {userData?.username?.[0]?.toUpperCase() || 'U'}
@@ -105,19 +124,16 @@ function UserNavbar({ userData }) {
                       </div>
                       <div className="flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#999">
-                          <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" />
+                          <path d="M6.62 10.79a15.9 15.9 0 006.59 6.59l2.2-2.2a1 1 0 011.03-.24c1.12.37 2.33.57 3.56.57a1 1 0 011 1V20a1 1 0 01-1 1C10.3 21 3 13.7 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.23.2 2.44.57 3.56a1 1 0 01-.24 1.03z" />
                         </svg>
                         <span className="text-sm text-gray-600">{userData?.phoneNumber || 'No phone'}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Vehicle Details Section */}
-                  <div className="mb-6 pb-6 border-b border-gray-200">
-                    <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#000">
-                        <path d="M19 7h-8V4c0-.55-.45-1-1-1s-1 .45-1 1v3H5c-2.76 0-5 2.24-5 5 0 2.64 2.05 4.78 4.65 4.99.45 1.52 1.95 2.56 3.72 2.56s3.27-1.04 3.72-2.56C17.95 16.78 20 14.64 20 12c0-2.76-2.24-5-5-5zm-7 8c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm5 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" />
-                      </svg>
+                    {/* Vehicle Details Section */}
+                    <div className="mb-6 pb-6 border-b border-gray-200">
+                    <h3 className="font-semibold text-gray-900 mb-3">
                       Vehicle Details
                     </h3>
 
@@ -137,16 +153,16 @@ function UserNavbar({ userData }) {
                       </div>
 
                       <div>
-                        <label className="text-xs font-semibold text-gray-700 block mb-1">Vehicle Model</label>
+                        <label className="text-xs font-semibold text-gray-700 block mb-1">Vehicle Name</label>
                         <div className="px-3 py-2 bg-white rounded border border-gray-200 text-sm text-gray-900">
-                          {userData?.vehicleModel || 'Not provided'}
+                          {userData?.vehicleName || userData?.vehicleModel || 'Not provided'}
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="mb-6 pb-6 border-b border-gray-200 space-y-3">
+                    {/* Action Buttons */}
+                    <div className="mb-6 pb-6 border-b border-gray-200 space-y-3">
                     <button
                       onClick={() => {
                         navigate('/user/finance')
@@ -161,8 +177,8 @@ function UserNavbar({ userData }) {
                     </button>
                   </div>
 
-                  {/* Logout Button */}
-                  <button
+                    {/* Logout Button */}
+                    <button
                     onClick={handleLogout}
                     className="w-full px-4 py-2 bg-red-50 text-red-600 font-semibold rounded-lg hover:bg-red-100 transition-colors text-sm flex items-center justify-center gap-2"
                   >
@@ -170,8 +186,9 @@ function UserNavbar({ userData }) {
                       <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" />
                     </svg>
                     Logout
-                  </button>
-                </div>
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           </div>
@@ -182,6 +199,7 @@ function UserNavbar({ userData }) {
       {showVerificationModal && (
         <EmailVerificationModal
           userEmail={userData?.email}
+          initialStep="entering"
           onClose={() => setShowVerificationModal(false)}
           onSuccess={() => {
             setShowVerificationModal(false)

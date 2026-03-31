@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
 import Buyer from "../models/buyerModel.js";
 import UserPasswordResetEmail from "../utils/authEmails/sendUserResetPasswordEmail.js";
+import UserOtpVerifyEmail from "../utils/authEmails/userOtpVerification.js";
 
 const generateAccessAndRefreshToken = async (userId) => {
 	try {
@@ -172,6 +173,7 @@ const loginUser = async (req, res) => {
 					vehicleManufactureYear: user.vehicleManufactureYear,
 					vehicleNumber: user.vehicleNumber,
 					chassisNumber: user.chassisNumber,
+					isEmailVerified: user.isEmailVerified,
 				},
 			});
 	} catch (error) {
@@ -560,4 +562,226 @@ const getUserFinanceByVehicle = async (req, res) => {
 	}
 };
 
-export { registerUser, loginUser, refreshUserToken, forgotUserPassword, resetUserPassword, getUserFinanceByVehicle };
+const sendUserOtp = async (req, res) => {
+	try {
+		const { email } = req.body;
+
+		console.log('📧 [OTP] Received request to send OTP to:', email);
+
+		if (!email) {
+			console.error('❌ [OTP] Email is missing');
+			return res.status(400).json({
+				success: false,
+				message: "Email is required",
+			});
+		}
+
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+		if (!emailRegex.test(email)) {
+			console.error('❌ [OTP] Invalid email format:', email);
+			return res.status(400).json({
+				success: false,
+				message: "Invalid email format",
+			});
+		}
+
+		console.log('🔍 [OTP] Looking for user with email:', email);
+		const user = await User.findOne({ email: email.toLowerCase() });
+		
+		if (!user) {
+			console.error('❌ [OTP] No user found with email:', email);
+			return res.status(404).json({
+				success: false,
+				message: "No user found with this email",
+			});
+		}
+
+		console.log('✅ [OTP] User found:', user._id);
+
+		// Check if user is already verified
+		if (user.isEmailVerified) {
+			console.warn('⚠️ [OTP] User email already verified:', email);
+			return res.status(400).json({
+				success: false,
+				message: "Email is already verified",
+			});
+		}
+
+		// Check if OTP was recently sent (prevent spam - allow resend after 1 minute)
+		if (user.lastOtpSentAt) {
+			const timeDiff = Date.now() - user.lastOtpSentAt;
+			console.log('⏱️ [OTP] Time since last OTP sent:', timeDiff + 'ms');
+			if (timeDiff < 60000) { // 1 minute
+				console.warn('⚠️ [OTP] OTP requested too soon (within 1 minute)');
+				return res.status(429).json({
+					success: false,
+					message: "Please wait before requesting a new OTP",
+				});
+			}
+		}
+
+		// Send OTP email
+		console.log('📤 [OTP] Sending OTP email...');
+		const result = await UserOtpVerifyEmail(user);
+		
+		console.log('📧 [OTP] Email send result:', result);
+
+		if (!result.success) {
+			console.error('❌ [OTP] Failed to send OTP email:', result.message);
+			return res.status(500).json({
+				success: false,
+				message: result.message || "Failed to send OTP email. Please try again later.",
+			});
+		}
+
+		const otpToken = user.generateOtpToken();
+
+		console.log('✅ [OTP] OTP sent successfully to:', email);
+		return res.status(200).json({
+			success: true,
+			message: "OTP sent successfully to your email",
+			otpToken,
+		});
+	} catch (error) {
+		console.error('❌ [OTP] Error in sendUserOtp:', error);
+		return res.status(500).json({
+			success: false,
+			message: "Internal server error",
+			error: error.message,
+		});
+	}
+};
+
+const verifyUserOtp = async (req, res) => {
+	try {
+		const { email, otp } = req.body;
+
+		console.log('🔐 [VerifyOTP] Received verification request for:', email);
+
+		if (!email || !otp) {
+			return res.status(400).json({
+				success: false,
+				message: "Email and OTP are required",
+			});
+		}
+
+		const user = await User.findOne({ email: email.toLowerCase() }).select("+otp");
+		if (!user) {
+			console.error('❌ [VerifyOTP] User not found:', email);
+			return res.status(404).json({
+				success: false,
+				message: "User not found",
+			});
+		}
+
+		console.log('✅ [VerifyOTP] User found:', user._id);
+		console.log('✅ [VerifyOTP] Current isEmailVerified status:', user.isEmailVerified);
+
+		// Check if email is already verified
+		if (user.isEmailVerified) {
+			console.warn('⚠️ [VerifyOTP] Email already verified:', email);
+			return res.status(400).json({
+				success: false,
+				message: "Email is already verified",
+			});
+		}
+
+		// Check if OTP is blocked due to too many attempts
+		if (user.otpBlockedUntil && Date.now() < user.otpBlockedUntil) {
+			console.warn('⚠️ [VerifyOTP] OTP verification is blocked');
+			return res.status(429).json({
+				success: false,
+				message: "Too many incorrect OTP attempts. Please try again later.",
+			});
+		}
+
+		// Check if OTP has expired
+		if (!user.otpExpiresAt || Date.now() > user.otpExpiresAt) {
+			console.warn('⚠️ [VerifyOTP] OTP has expired');
+			return res.status(400).json({
+				success: false,
+				message: "OTP has expired. Please request a new one.",
+			});
+		}
+
+		// Check if OTP is correct
+		console.log('🔍 [VerifyOTP] Comparing OTP...');
+		const isOtpValid = await user.isOtpCorrect(otp);
+		if (!isOtpValid) {
+			user.otpAttemptCount += 1;
+			console.warn('❌ [VerifyOTP] Invalid OTP. Attempt count:', user.otpAttemptCount);
+
+			// Block after 5 attempts for 15 minutes
+			if (user.otpAttemptCount >= 5) {
+				user.otpBlockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+				await user.save();
+				console.warn('🚫 [VerifyOTP] Account blocked after 5 attempts');
+				return res.status(429).json({
+					success: false,
+					message: "Too many incorrect OTP attempts. Please try again after 15 minutes.",
+				});
+			}
+
+			await user.save();
+			return res.status(400).json({
+				success: false,
+				message: `Incorrect OTP. ${5 - user.otpAttemptCount} attempt(s) remaining.`,
+			});
+		}
+
+		console.log('✅ [VerifyOTP] OTP is correct');
+
+		// OTP is correct - mark email as verified
+		user.isEmailVerified = true;
+		user.otp = null;
+		user.otpExpiresAt = null;
+		user.otpAttemptCount = 0;
+		user.otpBlockedUntil = null;
+		await user.save();
+
+		console.log('✅ [VerifyOTP] User marked as email verified:', user._id);
+		console.log('✅ [VerifyOTP] Updated isEmailVerified status:', user.isEmailVerified);
+
+		const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id);
+
+		const isProd = process.env.NODE_ENV === "production";
+		const cookieOptions = {
+			httpOnly: true,
+			secure: isProd,
+			sameSite: isProd ? "None" : "Lax",
+			maxAge: 7 * 24 * 60 * 60 * 1000,
+		};
+
+		console.log('✅ [VerifyOTP] Sending success response with updated user data');
+
+		return res
+			.status(200)
+			.cookie("refreshToken", refreshToken, cookieOptions)
+			.json({
+				success: true,
+				message: "Email verified successfully",
+				accessToken,
+				refreshToken,
+				data: {
+					id: user._id,
+					username: user.username,
+					email: user.email,
+					phoneNumber: user.phoneNumber,
+					vehicleName: user.vehicleName,
+					vehicleManufactureYear: user.vehicleManufactureYear,
+					vehicleNumber: user.vehicleNumber,
+					chassisNumber: user.chassisNumber,
+					isEmailVerified: user.isEmailVerified,
+				},
+			});
+	} catch (error) {
+		console.error('❌ [VerifyOTP] Error in verifyUserOtp:', error);
+		return res.status(500).json({
+			success: false,
+			message: "Internal server error",
+			error: error.message,
+		});
+	}
+};
+
+export { registerUser, loginUser, refreshUserToken, forgotUserPassword, resetUserPassword, getUserFinanceByVehicle, sendUserOtp, verifyUserOtp };

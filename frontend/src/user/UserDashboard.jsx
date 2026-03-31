@@ -8,18 +8,38 @@ function UserDashboard() {
   const [userData, setUserData] = useState(null)
   const [financeData, setFinanceData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showEmailVerification, setShowEmailVerification] = useState(false)
+  const [otpInput, setOtpInput] = useState('')
+  const [otpLoading, setOtpLoading] = useState(false)
+  const [otpMessage, setOtpMessage] = useState('')
+  const [otpError, setOtpError] = useState('')
+  const [sendingOtp, setSendingOtp] = useState(false)
 
   useEffect(() => {
     // Get user data from localStorage
     const storedUserData = localStorage.getItem('userData')
+    console.log('📋 [Dashboard] Stored userData:', storedUserData)
+    
     if (storedUserData) {
       try {
         const parsedData = JSON.parse(storedUserData)
+        console.log('📋 [Dashboard] Parsed userData:', parsedData)
+        console.log('✉️ [Dashboard] isEmailVerified status:', parsedData.isEmailVerified)
+        
         setUserData({
           ...parsedData,
-          isEmailVerified: false,
           vehicleModel: 'Hero Splendor Plus 2020'
         })
+        
+        // Check if email verification is needed
+        if (!parsedData.isEmailVerified) {
+          console.warn('⚠️ [Dashboard] Email not verified - showing OTP modal')
+          setShowEmailVerification(true)
+        } else {
+          console.log('✅ [Dashboard] Email already verified')
+          setShowEmailVerification(false)
+        }
+        
         // Auto-fetch finance data
         fetchFinanceData(parsedData)
       } catch (err) {
@@ -30,26 +50,39 @@ function UserDashboard() {
           phoneNumber: '9876543210',
           vehicleNumber: 'KA-01-AB-1234',
           chassisNumber: 'ABC123XYZ456',
-          vehicleModel: 'Hero Splendor Plus 2020',
+          vehicleName: 'Hero Splendor Plus',
+          vehicleManufactureYear: 2020,
           isEmailVerified: false
         }
         setUserData(mockData)
+        setShowEmailVerification(true)
         fetchFinanceData(mockData)
       }
     } else {
+      console.log('❌ [Dashboard] No stored userData found')
       const mockData = {
         username: 'John Doe',
         email: 'john@example.com',
         phoneNumber: '9876543210',
         vehicleNumber: 'KA-01-AB-1234',
         chassisNumber: 'ABC123XYZ456',
-        vehicleModel: 'Hero Splendor Plus 2020',
+        vehicleName: 'Hero Splendor Plus',
+        vehicleManufactureYear: 2020,
         isEmailVerified: false
       }
       setUserData(mockData)
+      setShowEmailVerification(true)
       fetchFinanceData(mockData)
     }
   }, [])
+
+  // Auto send OTP when email verification modal is shown
+  useEffect(() => {
+    if (showEmailVerification && userData?.email && !sendingOtp) {
+      console.log('Auto-sending OTP to:', userData.email)
+      sendOtp()
+    }
+  }, [showEmailVerification, userData])
 
   const fetchFinanceData = async (user) => {
     try {
@@ -82,9 +115,200 @@ function UserDashboard() {
     return 'text-red-600'
   }
 
+  const sendOtp = async () => {
+    try {
+      setSendingOtp(true)
+      setOtpError('')
+      setOtpMessage('')
+
+      console.log('📧 Sending OTP to:', userData?.email)
+
+      const response = await axiosInstance.post('/api/user/send-otp', {
+        email: userData?.email
+      })
+
+      console.log('✅ OTP Response:', response.data)
+
+      if (response.data.success) {
+        setOtpMessage('✅ OTP sent successfully to your email. Please check your inbox.')
+        setOtpInput('')
+        console.log('✅ OTP sent to:', userData?.email)
+      } else {
+        setOtpError(response.data.message || 'Failed to send OTP')
+        console.error('❌ OTP Error:', response.data.message)
+      }
+    } catch (error) {
+      console.error('❌ Error sending OTP:', error)
+      console.error('❌ Error details:', error.response?.data)
+      
+      const errorMsg = error.response?.data?.message || error.message || 'Error sending OTP'
+      setOtpError(errorMsg)
+    } finally {
+      setSendingOtp(false)
+    }
+  }
+
+  const verifyOtp = async () => {
+    try {
+      if (!otpInput.trim()) {
+        setOtpError('Please enter the OTP')
+        return
+      }
+
+      setOtpLoading(true)
+      setOtpError('')
+      setOtpMessage('')
+
+      console.log('🔐 [Verify OTP] Attempting to verify OTP:', otpInput)
+
+      const response = await axiosInstance.post('/api/user/verify-otp', {
+        email: userData?.email,
+        otp: otpInput
+      })
+
+      console.log('✅ [Verify OTP] Response:', response.data)
+
+      if (response.data.success) {
+        // Update user data with email verification status
+        const updatedUserData = {
+          ...userData,
+          ...response.data.data, // Include all updated user data from backend
+          isEmailVerified: true
+        }
+        
+        console.log('📋 [Verify OTP] Updated userData:', updatedUserData)
+        
+        setUserData(updatedUserData)
+        localStorage.setItem('userData', JSON.stringify(updatedUserData))
+        
+        console.log('💾 [Verify OTP] Saved to localStorage:', updatedUserData)
+        
+        // Store tokens
+        if (response.data.accessToken) {
+          localStorage.setItem('accessToken', response.data.accessToken)
+          console.log('🔑 [Verify OTP] Saved access token')
+        }
+
+        setOtpMessage('Email verified successfully!')
+        console.log('✅ [Verify OTP] Email verification successful')
+        
+        setTimeout(() => {
+          console.log('🔄 [Verify OTP] Hiding modal and updating state')
+          setShowEmailVerification(false)
+          setOtpInput('')
+          setOtpMessage('')
+        }, 1500)
+      } else {
+        const errorMsg = response.data.message || 'Failed to verify OTP'
+        setOtpError(errorMsg)
+        console.error('❌ [Verify OTP] Verification failed:', errorMsg)
+      }
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || error.message || 'Error verifying OTP'
+      setOtpError(errorMsg)
+      console.error('❌ [Verify OTP] Error:', error)
+      console.error('❌ [Verify OTP] Error details:', error.response?.data)
+    } finally {
+      setOtpLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {userData && <UserNavbar userData={userData} />}
+      
+      {/* Email Verification Modal */}
+      {showEmailVerification && !userData?.isEmailVerified && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="inline-block p-3 bg-green-100 rounded-full mb-4">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Verify Your Email</h2>
+              <p className="text-gray-600 text-sm">{userData?.email}</p>
+            </div>
+
+            {/* Sending Status */}
+            {sendingOtp && (
+              <div className="mb-4 p-3 bg-blue-100 border border-blue-400 text-blue-700 rounded-lg text-sm flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Sending OTP...
+              </div>
+            )}
+
+            {otpMessage && (
+              <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-sm">
+                {otpMessage}
+              </div>
+            )}
+
+            {otpError && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+                ❌ {otpError}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Enter OTP</label>
+                <input
+                  type="text"
+                  value={otpInput}
+                  onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  maxLength="6"
+                  className="w-full px-4 py-3 text-center text-2xl tracking-widest font-mono border-2 border-gray-300 rounded-lg focus:border-green-500 focus:outline-none disabled:bg-gray-100"
+                  disabled={otpLoading || sendingOtp}
+                />
+                <p className="text-xs text-gray-500 mt-1">6-digit code sent to your email</p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={verifyOtp}
+                  disabled={otpLoading || otpInput.length !== 6 || sendingOtp}
+                  className="flex-1 bg-gradient-to-r from-[#65B741] to-[#40FF00] hover:from-[#5aa330] hover:to-[#36d900] disabled:from-gray-400 disabled:to-gray-300 text-black font-bold py-3 px-4 rounded-lg transition-all disabled:cursor-not-allowed"
+                >
+                  {otpLoading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Verifying...
+                    </span>
+                  ) : 'Verify OTP'}
+                </button>
+                <button
+                  onClick={sendOtp}
+                  disabled={sendingOtp}
+                  className="flex-1 border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-bold py-3 px-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {sendingOtp ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Sending...
+                    </span>
+                  ) : 'Resend OTP'}
+                </button>
+              </div>
+            </div>
+
+            <p className="text-xs text-center text-gray-500 mt-4">
+              ⏱️ OTP is valid for 10 minutes
+            </p>
+          </div>
+        </div>
+      )}
       
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
         {loading ? (

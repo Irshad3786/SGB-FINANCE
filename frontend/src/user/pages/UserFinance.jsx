@@ -1,18 +1,28 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axiosInstance from '../../api/axios'
 import UserNavbar from '../components/UserNavbar'
 import FinanceRequestForm from '../components/FinanceRequestForm'
 
 const toInr = (value) => Number(value || 0).toLocaleString('en-IN')
 
+const formatBalance = (value) => {
+  const amount = Number(value || 0)
+  if (amount < 0) {
+    return `(${toInr(Math.abs(amount))})`
+  }
+  return toInr(amount)
+}
+
 const getBalanceClass = (balance) => {
   const amount = Number(balance || 0)
-  if (amount < 0) return 'text-red-600'
-  if (amount > 0) return 'text-orange-600'
-  return 'text-green-600'
+  if (amount < 0) return 'text-green-600'
+  if (amount > 0) return 'text-red-600'
+  return 'text-black'
 }
 
 function UserFinance() {
+  const navigate = useNavigate()
   const userData = JSON.parse(localStorage.getItem('userData') || '{}')
 
   const [financeData, setFinanceData] = useState(null)
@@ -55,17 +65,24 @@ function UserFinance() {
 
   const getStatementRows = (emiSchedule = []) => {
     if (!Array.isArray(emiSchedule) || emiSchedule.length === 0) return []
-    return emiSchedule.map((schedule) => ({
-      sno: Number(schedule?.sno || 0),
-      emiDate: schedule?.emiDate || '-',
-      emiAmt: Number(schedule?.emi || 0),
-      paidAmt: Number(schedule?.paidAmount || 0),
-      pendingAmt: Number(schedule?.pendingAmount || 0),
-      balance: Number(schedule?.pendingAmount || 0),
-      paidDate: schedule?.paidDate || '-',
-      bookNo: schedule?.bookNo || '-',
-      pageNo: schedule?.pageNo || '-',
-    }))
+    let runningBalance = 0
+
+    return emiSchedule.map((schedule, idx) => {
+      const emiAmt = Number(schedule?.emi || 0)
+      const paidAmt = Number(schedule?.paidAmount || 0)
+      runningBalance += emiAmt - paidAmt
+
+      return {
+        sno: Number(schedule?.sno || idx + 1),
+        emiDate: schedule?.emiDate || '-',
+        emiAmt,
+        paidAmt,
+        balance: runningBalance,
+        paidDate: schedule?.paidDate || '-',
+        bookNo: schedule?.bookNo || '-',
+        pageNo: schedule?.pageNo || '-',
+      }
+    })
   }
 
   const statementRows = financeData ? getStatementRows(financeData.emiSchedule) : []
@@ -98,6 +115,15 @@ function UserFinance() {
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">
+            <button
+              onClick={() => navigate('/user')}
+              className="inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Back
+            </button>
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
               {financeData ? 'Finance Statement' : 'Request Finance'}
             </h1>
@@ -134,14 +160,13 @@ function UserFinance() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-gray-100">
-                        <th className="px-4 py-3 text-left font-semibold">S.No</th>
-                        <th className="px-4 py-3 text-left font-semibold">EMI Date</th>
-                        <th className="px-4 py-3 text-right font-semibold">EMI Amount</th>
-                        <th className="px-4 py-3 text-right font-semibold">Paid</th>
-                        <th className="px-4 py-3 text-right font-semibold">Pending</th>
-                        <th className="px-4 py-3 text-right font-semibold">Balance</th>
-                        <th className="px-4 py-3 text-left font-semibold">Paid Date</th>
-                        <th className="px-4 py-3 text-left font-semibold">Book/Page</th>
+                        <th className="px-4 py-3 text-left font-semibold">INST.NO</th>
+                        <th className="px-4 py-3 text-left font-semibold">INST.DATE</th>
+                        <th className="px-4 py-3 text-right font-semibold">INST.AMOUNT</th>
+                        <th className="px-4 py-3 text-left font-semibold">PAID DATE</th>
+                        <th className="px-4 py-3 text-right font-semibold">PAID AMT.</th>
+                        <th className="px-4 py-3 text-right font-semibold">BALANCE</th>
+                        <th className="px-4 py-3 text-left font-semibold">RECEIPT NO.</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -150,12 +175,11 @@ function UserFinance() {
                           <td className="px-4 py-3">{row.sno}</td>
                           <td className="px-4 py-3">{row.emiDate}</td>
                           <td className="px-4 py-3 text-right font-semibold">₹ {toInr(row.emiAmt)}</td>
-                          <td className="px-4 py-3 text-right text-green-600 font-semibold">₹ {toInr(row.paidAmt)}</td>
-                          <td className="px-4 py-3 text-right text-orange-600 font-semibold">₹ {toInr(row.pendingAmt)}</td>
-                          <td className={`px-4 py-3 text-right font-semibold ${getBalanceClass(row.balance)}`}>
-                            ₹ {toInr(row.balance)}
-                          </td>
                           <td className="px-4 py-3">{row.paidDate}</td>
+                          <td className="px-4 py-3 text-right text-green-600 font-semibold">₹ {toInr(row.paidAmt)}</td>
+                          <td className={`px-4 py-3 text-right font-semibold ${getBalanceClass(row.balance)}`}>
+                            {formatBalance(row.balance)}
+                          </td>
                           <td className="px-4 py-3">{row.bookNo}/{row.pageNo}</td>
                         </tr>
                       ))}

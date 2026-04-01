@@ -6,6 +6,7 @@ import {
   loginSubAdmin,
   refreshSubAdminToken,
   logOutSubAdmin,
+  getCurrentSubAdmin,
 } from "../controllers/subAdminController.js";
 import { verifyAdminToken } from "../middlewares/adminMiddleware.js";
 import { verifySubAdminToken, verifySubAdminOtpToken } from "../middlewares/subAdminMiddleware.js";
@@ -25,6 +26,9 @@ router.post("/loginSubAdmin", loginSubAdmin);
 
 // Refresh token route
 router.post("/refresh-SubAdmin-Token", refreshSubAdminToken);
+
+// Current profile route
+router.get("/me", verifySubAdminToken, getCurrentSubAdmin);
 
 // Logout route
 router.post("/logOutSubAdmin", verifySubAdminToken, logOutSubAdmin);

@@ -10,6 +10,8 @@ const statusPillClass = {
   open: 'bg-violet-100 text-violet-800',
 }
 
+const statusOptions = ['pending', 'open', 'approved', 'rejected', 'resolved']
+
 const typePillClass = {
   finance: 'bg-lime-100 text-lime-800',
   contact: 'bg-sky-100 text-sky-800',
@@ -42,6 +44,8 @@ function RequestsManagement() {
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
   const [requests, setRequests] = useState([])
+  const [statusDrafts, setStatusDrafts] = useState({})
+  const [updatingRequestId, setUpdatingRequestId] = useState(null)
   const [summary, setSummary] = useState({
     total: 0,
     pending: 0,
@@ -79,6 +83,14 @@ function RequestsManagement() {
         })
 
         setRequests(Array.isArray(response?.data?.data) ? response.data.data : [])
+        setStatusDrafts(
+          Array.isArray(response?.data?.data)
+            ? response.data.data.reduce((accumulator, item) => {
+                accumulator[item.id] = item.status || 'pending'
+                return accumulator
+              }, {})
+            : {}
+        )
         setSummary(response?.data?.summary || {
           total: 0,
           pending: 0,
@@ -110,6 +122,56 @@ function RequestsManagement() {
     fetchRequests()
   }, [activeType, statusFilter, query, page, showToast])
   const typeCounts = useMemo(() => summary?.typeCounts || {}, [summary])
+
+  const handleStatusChange = (requestId, nextStatus) => {
+    setStatusDrafts((previous) => ({
+      ...previous,
+      [requestId]: nextStatus,
+    }))
+  }
+
+  const handleUpdateStatus = async (request) => {
+    const nextStatus = statusDrafts[request.id] || request.status || 'pending'
+
+    if (nextStatus === request.status) {
+      showToast({
+        type: 'info',
+        title: 'No Change',
+        message: 'Select a different status before saving.',
+      })
+      return
+    }
+
+    try {
+      setUpdatingRequestId(request.id)
+      const response = await apiClient.patch(`/api/subadmin/management/requests/${request.id}/status`, {
+        status: nextStatus,
+      })
+
+      const updatedRequest = response?.data?.data
+      setRequests((previous) =>
+        previous.map((item) => (item.id === request.id && updatedRequest ? updatedRequest : item))
+      )
+      setStatusDrafts((previous) => ({
+        ...previous,
+        [request.id]: updatedRequest?.status || nextStatus,
+      }))
+
+      showToast({
+        type: 'success',
+        title: 'Status Updated',
+        message: `Request marked as ${updatedRequest?.status || nextStatus}.`,
+      })
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Update Failed',
+        message: error?.response?.data?.message || 'Failed to update request status',
+      })
+    } finally {
+      setUpdatingRequestId(null)
+    }
+  }
 
   const totalCount = Number(summary?.total || 0)
   const pendingCount = Number(summary?.pending || 0)
@@ -151,34 +213,41 @@ function RequestsManagement() {
   }
 
   return (
-    <div className="px-4 md:px-6 py-4 space-y-6">
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">Requests Management</h1>
-          <p className="text-sm text-gray-500 mt-1">Track finance, contact, support and other incoming requests.</p>
+    <div className="min-h-full bg-gray-50 px-4 md:px-6 py-5 space-y-6">
+      <div className="rounded-3xl border border-gray-200 bg-white px-5 py-5 shadow-sm">
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="inline-flex items-center rounded-full bg-[#e8f7d7] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#4b6b2a]">
+              Requests workspace
+            </p>
+            <h1 className="mt-3 text-2xl md:text-3xl font-bold text-gray-900">Requests Management</h1>
+            <p className="text-sm text-gray-600 mt-1 max-w-2xl">
+              Track finance, contact, support and other incoming requests. Update the status from the row and save it instantly.
+            </p>
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="rounded-2xl p-4 bg-white border shadow-sm">
+        <div className="rounded-2xl p-4 bg-gradient-to-br from-white to-[#f2f8ea] border border-[#dfe9d7] shadow-sm">
           <p className="text-xs uppercase font-semibold text-gray-500">Total Requests</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{totalCount}</p>
         </div>
-        <div className="rounded-2xl p-4 bg-white border shadow-sm">
-          <p className="text-xs uppercase font-semibold text-gray-500">Pending</p>
+        <div className="rounded-2xl p-4 bg-gradient-to-br from-amber-50 to-white border border-amber-100 shadow-sm">
+          <p className="text-xs uppercase font-semibold text-amber-700">Pending</p>
           <p className="text-2xl font-bold text-amber-600 mt-1">{pendingCount}</p>
         </div>
-        <div className="rounded-2xl p-4 bg-white border shadow-sm">
-          <p className="text-xs uppercase font-semibold text-gray-500">Approved</p>
+        <div className="rounded-2xl p-4 bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 shadow-sm">
+          <p className="text-xs uppercase font-semibold text-emerald-700">Approved</p>
           <p className="text-2xl font-bold text-emerald-600 mt-1">{approvedCount}</p>
         </div>
-        <div className="rounded-2xl p-4 bg-white border shadow-sm">
-          <p className="text-xs uppercase font-semibold text-gray-500">Rejected</p>
+        <div className="rounded-2xl p-4 bg-gradient-to-br from-rose-50 to-white border border-rose-100 shadow-sm">
+          <p className="text-xs uppercase font-semibold text-rose-700">Rejected</p>
           <p className="text-2xl font-bold text-rose-600 mt-1">{rejectedCount}</p>
         </div>
       </div>
 
-      <div className="rounded-2xl border bg-white shadow-sm p-4 md:p-5 space-y-4">
+      <div className="rounded-3xl border border-gray-200 bg-white shadow-sm p-4 md:p-5 space-y-4">
         <div className="flex flex-wrap gap-2">
           {[
             { key: 'all', label: 'All' },
@@ -193,10 +262,10 @@ function RequestsManagement() {
               key={tab.key}
               type="button"
               onClick={() => setActiveType(tab.key)}
-              className={`px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+              className={`px-3 py-2 rounded-full text-sm font-semibold transition-all border ${
                 activeType === tab.key
-                  ? 'bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] text-black shadow'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-[#1f2a16] text-white border-[#1f2a16] shadow'
+                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
               }`}
             >
               {tab.label} ({typeCounts[tab.key] || 0})
@@ -216,14 +285,14 @@ function RequestsManagement() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by name, phone, vehicle, purpose..."
-              className="h-11 w-full rounded-xl border border-gray-200 pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#9EEA88]"
+              className="h-11 w-full rounded-2xl border border-gray-200 bg-white pl-10 pr-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#b8e986]"
             />
           </div>
 
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-11 rounded-xl border border-gray-200 px-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#9EEA88]"
+            className="h-11 rounded-2xl border border-gray-200 bg-white px-3 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-[#b8e986]"
           >
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
@@ -235,22 +304,22 @@ function RequestsManagement() {
         </div>
       </div>
 
-      <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
+      <div className="rounded-3xl border border-gray-200 bg-white shadow-sm overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-sm text-gray-500">Loading requests...</div>
+          <div className="p-10 text-center text-sm text-gray-500">Loading requests...</div>
         ) : requests.length === 0 ? (
-          <div className="p-8 text-center">
+          <div className="p-10 text-center bg-gray-50">
             <div className="inline-flex w-14 h-14 rounded-2xl bg-gray-100 items-center justify-center mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                 <path fill="#6b7280" d="M5 3a2 2 0 0 0-2 2v14.5A1.5 1.5 0 0 0 4.5 21H19a2 2 0 0 0 2-2V8.828a2 2 0 0 0-.586-1.414l-3.828-3.828A2 2 0 0 0 15.172 3zm9 1.5V8h3.5zM7 11a1 1 0 1 1 0-2h10a1 1 0 1 1 0 2zm0 4a1 1 0 1 1 0-2h10a1 1 0 1 1 0 2zm0 4a1 1 0 1 1 0-2h7a1 1 0 1 1 0 2"/>
               </svg>
             </div>
             <h3 className="text-lg font-semibold text-gray-900">No requests found</h3>
-            <p className="text-sm text-gray-500 mt-1">Try changing search or filter, or wait for new requests.</p>
+            <p className="text-sm text-gray-500 mt-1">Try changing the search or filter.</p>
           </div>
         ) : (
           <>
-            <div className="hidden lg:grid grid-cols-12 gap-3 px-5 py-3 border-b bg-gray-50 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            <div className="hidden lg:grid grid-cols-12 gap-3 px-5 py-3 border-b border-gray-200 bg-gray-50 text-xs font-semibold text-gray-600 uppercase tracking-wide">
               <div className="col-span-2">Date</div>
               <div className="col-span-2">Requester</div>
               <div className="col-span-2">Contact</div>
@@ -260,11 +329,16 @@ function RequestsManagement() {
               <div className="col-span-1">Status</div>
             </div>
 
-            <div className="divide-y">
-              {requests.map((item) => (
-                <div key={item.id} className="px-4 md:px-5 py-4 hover:bg-gray-50/70 transition-colors">
+            <div className="divide-y divide-gray-200 bg-white">
+              {requests.map((item, index) => (
+                <div key={item.id} className="px-4 md:px-5 py-4 bg-white hover:bg-gray-50 transition-colors">
                   <div className="hidden lg:grid grid-cols-12 gap-3 items-start text-sm">
-                    <div className="col-span-2 text-gray-700">{formatDateTime(item.createdAt)}</div>
+                    <div className="col-span-2 text-gray-700">
+                      <p>{formatDateTime(item.createdAt)}</p>
+                      <p className="mt-1 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-600">
+                        Req {String(index + 1).padStart(2, '0')}
+                      </p>
+                    </div>
                     <div className="col-span-2 font-semibold text-gray-900">{item.name}</div>
                     <div className="col-span-2 text-gray-700 min-w-0">
                       <div className="break-all">{item.phoneNumber}</div>
@@ -278,18 +352,39 @@ function RequestsManagement() {
                     <div className="col-span-2 text-gray-700 break-words">{item.purpose || '-'}</div>
                     <div className="col-span-1 text-gray-900 font-semibold">{item.requestedAmount > 0 ? `Rs ${item.requestedAmount.toLocaleString('en-IN')}` : '-'}</div>
                     <div className="col-span-1">
-                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${statusPillClass[item.status] || 'bg-gray-200 text-gray-800'}`}>
-                        {item.status}
-                      </span>
+                      <div className="space-y-2">
+                        <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${statusPillClass[item.status] || 'bg-gray-200 text-gray-800'}`}>
+                          {item.status}
+                        </span>
+                        <select
+                          value={statusDrafts[item.id] || item.status || 'pending'}
+                          onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                          className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#b8e986]"
+                        >
+                          {statusOptions.map((statusOption) => (
+                            <option key={statusOption} value={statusOption}>
+                              {statusOption}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateStatus(item)}
+                          disabled={updatingRequestId === item.id}
+                          className="w-full rounded-lg bg-[#1f2a16] px-2 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {updatingRequestId === item.id ? 'Saving...' : 'Save'}
+                        </button>
+                      </div>
                     </div>
                   </div>
 
                   {getDetailItems(item).length > 0 && (
-                    <div className="hidden lg:block mt-3 rounded-lg bg-gray-50 border border-gray-200 p-3">
+                    <div className="hidden lg:block mt-3 rounded-2xl border border-gray-200 bg-gray-50 p-3">
                       <p className="text-xs font-semibold text-gray-700 mb-2">Request Details</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
                         {getDetailItems(item).map((detail, idx) => (
-                          <div key={`${item.id}-detail-${idx}`} className="text-xs text-gray-700 break-words whitespace-pre-wrap overflow-hidden">
+                          <div key={`${item.id}-detail-${idx}`} className="text-xs text-gray-700 break-words whitespace-pre-wrap overflow-hidden rounded-xl border border-gray-200 bg-white p-2">
                             <span className="font-semibold text-gray-900">{detail.label}:</span>{' '}
                             <span className="break-all">{detail.value}</span>
                           </div>
@@ -298,7 +393,7 @@ function RequestsManagement() {
                     </div>
                   )}
 
-                  <div className="lg:hidden space-y-2 text-sm">
+                  <div className="lg:hidden space-y-3 text-sm">
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-semibold text-gray-900">{item.name}</p>
                       <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${statusPillClass[item.status] || 'bg-gray-200 text-gray-800'}`}>
@@ -314,11 +409,33 @@ function RequestsManagement() {
                     <p className="text-gray-700 break-all">{item.phoneNumber} | {item.email}</p>
                     <p className="text-gray-700">Purpose: <span className="font-medium">{item.purpose || '-'}</span></p>
                     {item.requestedAmount > 0 && <p className="text-gray-900 font-semibold">Amount: Rs {item.requestedAmount.toLocaleString('en-IN')}</p>}
+                    <div className="space-y-2 pt-1 rounded-2xl border border-gray-200 bg-gray-50 p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Change Status</p>
+                      <select
+                        value={statusDrafts[item.id] || item.status || 'pending'}
+                        onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#b8e986]"
+                      >
+                        {statusOptions.map((statusOption) => (
+                          <option key={statusOption} value={statusOption}>
+                            {statusOption}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateStatus(item)}
+                        disabled={updatingRequestId === item.id}
+                        className="w-full rounded-lg bg-[#1f2a16] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {updatingRequestId === item.id ? 'Saving...' : 'Save Status'}
+                      </button>
+                    </div>
                     {getDetailItems(item).length > 0 && (
-                      <div className="rounded-lg bg-gray-50 border border-gray-200 p-2 space-y-1">
+                      <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3 space-y-1">
                         <p className="text-xs font-semibold text-gray-700">Request Details</p>
                         {getDetailItems(item).map((detail, idx) => (
-                          <p key={`${item.id}-mobile-detail-${idx}`} className="text-xs text-gray-700 break-words whitespace-pre-wrap overflow-hidden">
+                          <p key={`${item.id}-mobile-detail-${idx}`} className="text-xs text-gray-700 break-words whitespace-pre-wrap overflow-hidden rounded-lg border border-gray-200 bg-white p-2">
                             <span className="font-semibold text-gray-900">{detail.label}:</span>{' '}
                             <span className="break-all">{detail.value}</span>
                           </p>
@@ -330,7 +447,7 @@ function RequestsManagement() {
               ))}
             </div>
 
-            <div className="flex items-center justify-between px-4 md:px-5 py-3 border-t bg-gray-50">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 md:px-5 py-4 border-t border-gray-200 bg-gray-50">
               <p className="text-xs text-gray-600">
                 Page {pagination.page || 1} of {pagination.totalPages || 1}
               </p>
@@ -339,7 +456,7 @@ function RequestsManagement() {
                   type="button"
                   disabled={!pagination.hasPrev}
                   onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                  className="px-3 py-1.5 rounded-md border text-sm disabled:opacity-50"
+                  className="px-3 py-1.5 rounded-md border border-gray-200 bg-white text-sm disabled:opacity-50"
                 >
                   Prev
                 </button>
@@ -347,7 +464,7 @@ function RequestsManagement() {
                   type="button"
                   disabled={!pagination.hasNext}
                   onClick={() => setPage((prev) => prev + 1)}
-                  className="px-3 py-1.5 rounded-md border text-sm disabled:opacity-50"
+                  className="px-3 py-1.5 rounded-md border border-gray-200 bg-white text-sm disabled:opacity-50"
                 >
                   Next
                 </button>

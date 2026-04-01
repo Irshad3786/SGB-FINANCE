@@ -495,6 +495,35 @@ const logOutSubAdmin = async (req, res) => {
   }
 };
 
+const getCurrentSubAdmin = async (req, res) => {
+  try {
+    if (!req.subAdmin) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized. SubAdmin not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "SubAdmin profile fetched successfully",
+      data: {
+        id: req.subAdmin._id,
+        name: req.subAdmin.name,
+        email: req.subAdmin.email,
+        phone: req.subAdmin.phone,
+        roleName: req.subAdmin.roleName,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch sub-admin profile",
+      error: error.message,
+    });
+  }
+};
+
 export {
   generateAccessAndRefreshToken,
   registerSubAdmin,
@@ -502,5 +531,6 @@ export {
   resendSubAdminOtp,
   loginSubAdmin,
   refreshSubAdminToken,
-  logOutSubAdmin
+  logOutSubAdmin,
+  getCurrentSubAdmin,
 };

@@ -2,6 +2,14 @@ import React, { useEffect, useState } from 'react'
 import { useToast } from '../../components/ToastProvider'
 import apiClient from '../../api/axios'
 
+const statusPillClass = {
+  pending: 'bg-amber-100 text-amber-800',
+  open: 'bg-violet-100 text-violet-800',
+  approved: 'bg-emerald-100 text-emerald-800',
+  rejected: 'bg-rose-100 text-rose-800',
+  resolved: 'bg-blue-100 text-blue-800',
+}
+
 function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
   const { showToast } = useToast()
   const userData = JSON.parse(localStorage.getItem('userData') || '{}')
@@ -49,6 +57,12 @@ function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
   useEffect(() => {
     loadMyRequests()
   }, [])
+
+  useEffect(() => {
+    if (isRequestsPanelOpen) {
+      loadMyRequests()
+    }
+  }, [isRequestsPanelOpen])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -175,7 +189,7 @@ function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
                   <td className="px-4 py-3 text-gray-700">₹ {Number(request?.requestedAmount || 0).toLocaleString('en-IN')}</td>
                   <td className="px-4 py-3 text-gray-700 capitalize">{request?.purpose || '-'}</td>
                   <td className="px-4 py-3">
-                    <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 capitalize">
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold capitalize ${statusPillClass[request?.status] || statusPillClass.pending}`}>
                       {request?.status || 'pending'}
                     </span>
                   </td>

@@ -10,6 +10,7 @@ import vehicleStockRoute from "./routes/subAdminManagementRoutes/vehicleStockRou
 import pendingPaymentsRoute from "./routes/subAdminManagementRoutes/pendingPaymentsRoute.js";
 import financeRoute from "./routes/subAdminManagementRoutes/financeRoute.js";
 import dashboardRoute from "./routes/subAdminManagementRoutes/dashboardRoute.js";
+import requestsManagementRoute from "./routes/subAdminManagementRoutes/requestsManagementRoute.js";
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use("/api/subadmin/management", vehicleStockRoute);
 app.use("/api/subadmin/management", pendingPaymentsRoute);
 app.use("/api/subadmin/management", financeRoute);
 app.use("/api/subadmin/management", dashboardRoute);
+app.use("/api/subadmin/management", requestsManagementRoute);
 
 export { app, configureCORS };
 

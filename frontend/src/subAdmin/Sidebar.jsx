@@ -120,6 +120,21 @@ function Sidebar({toggle, onNavigate}) {
           </div>
           Pending Payments
         </NavLink>
+
+        <NavLink
+          to="/subadmin/requests-management"
+          onClick={() => onNavigate && onNavigate('Requests Management')}
+          className={({ isActive }) =>
+            `p-4 rounded-xl flex items-center gap-2 ${isActive ? "bg-gradient-to-b from-[#B0FF1C]  to-[#40FF00] font-semibold shadow-[-1px_8px_7px_-2px_rgba(0,_0,_0,_0.25)]" : "bg-gray-100 font-semibold"} hover:shadow-[-1px_8px_7px_-2px_rgba(0,_0,_0,_0.25)] transition-shadow`
+          }
+        >
+          <div>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+              <path fill="#000" d="M5 3a2 2 0 0 0-2 2v14.5A1.5 1.5 0 0 0 4.5 21H19a2 2 0 0 0 2-2V8.828a2 2 0 0 0-.586-1.414l-3.828-3.828A2 2 0 0 0 15.172 3zm9 1.5V8h3.5zM7 11a1 1 0 1 1 0-2h10a1 1 0 1 1 0 2zm0 4a1 1 0 1 1 0-2h10a1 1 0 1 1 0 2zm0 4a1 1 0 1 1 0-2h7a1 1 0 1 1 0 2z"/>
+            </svg>
+          </div>
+          Requests Management
+        </NavLink>
       </nav>
 
       <div className="flex-shrink-0 pb-2 pt-4">

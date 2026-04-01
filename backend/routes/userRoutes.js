@@ -9,6 +9,12 @@ import {
 	sendUserOtp,
 	verifyUserOtp,
 } from "../controllers/userController.js";
+import {
+	createFinanceRequest,
+	createContactRequest,
+	getMyRequests,
+} from "../controllers/requestController.js";
+import { verifyUserToken } from "../middlewares/userMiddleware.js";
 
 const router = express.Router();
 
@@ -20,5 +26,8 @@ router.post("/reset-User-Password/:token", resetUserPassword);
 router.post("/finance-by-vehicle", getUserFinanceByVehicle);
 router.post("/send-otp", sendUserOtp);
 router.post("/verify-otp", verifyUserOtp);
+router.post("/requests/contact", createContactRequest);
+router.post("/requests/finance", verifyUserToken, createFinanceRequest);
+router.get("/requests/my", verifyUserToken, getMyRequests);
 
 export default router;

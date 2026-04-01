@@ -15,6 +15,7 @@ import Finance from './subAdmin/pages/Finance';
 import Collection from './subAdmin/pages/Collection';
 import VehicleStock from './subAdmin/pages/VehicleStock';
 import PendingDownpayment from './subAdmin/pages/PendingDownpayment';
+import RequestsManagement from './subAdmin/pages/RequestsManagement';
 import CreateAccountAdmin from './home/CreateAccountAdmin';
 import AdminSignin from './home/AdminSignin';
 import Admin from './admin/Admin';
@@ -75,6 +76,7 @@ function App() {
           <Route path="collection" element={<Collection/>} />
           <Route path="vehicle-stock" element={<VehicleStock/>} />
           <Route path="pending-downpayment" element={<PendingDownpayment/>} />
+          <Route path="requests-management" element={<RequestsManagement/>} />
 
 
         </Route>

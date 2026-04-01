@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useToast } from '../../components/ToastProvider'
+import apiClient from '../../api/axios'
 
 function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
   const { showToast } = useToast()
@@ -24,33 +25,25 @@ function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
   const [isRequestsPanelOpen, setIsRequestsPanelOpen] = useState(false)
   const hasExistingRequest = myRequests.length > 0
 
-  const getStoredRequests = () => {
+  const loadMyRequests = async () => {
     try {
-      const requests = JSON.parse(localStorage.getItem('financeRequests') || '[]')
-      return Array.isArray(requests) ? requests : []
-    } catch {
-      return []
-    }
-  }
-
-  const loadMyRequests = () => {
-    const allRequests = getStoredRequests()
-    const currentEmail = String(userData?.email || '').toLowerCase()
-    const currentPhone = String(userData?.phoneNumber || '')
-
-    const filteredRequests = allRequests
-      .filter((request) => {
-        const requestEmail = String(request?.email || '').toLowerCase()
-        const requestPhone = String(request?.phoneNumber || '')
-
-        return (
-          (currentEmail && requestEmail === currentEmail) ||
-          (currentPhone && requestPhone === currentPhone)
-        )
+      const response = await apiClient.get('/api/user/requests/my', {
+        params: {
+          type: 'finance',
+          page: 1,
+          limit: 20,
+        },
       })
-      .sort((a, b) => new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime())
 
-    setMyRequests(filteredRequests)
+      const requests = response?.data?.data || []
+      setMyRequests(Array.isArray(requests) ? requests : [])
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error?.response?.data?.message || 'Failed to load your requests',
+      })
+    }
   }
 
   useEffect(() => {
@@ -100,19 +93,8 @@ function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
     setLoading(true)
 
     try {
-      // Store the request in localStorage for now
-      // In a real app, this would be sent to backend
-      const request = {
-        id: Date.now(),
-        ...formData,
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-      }
-
-      const existingRequests = JSON.parse(localStorage.getItem('financeRequests') || '[]')
-      existingRequests.push(request)
-      localStorage.setItem('financeRequests', JSON.stringify(existingRequests))
-      loadMyRequests()
+      await apiClient.post('/api/user/requests/finance', formData)
+      await loadMyRequests()
 
       setSubmitted(true)
       showToast({

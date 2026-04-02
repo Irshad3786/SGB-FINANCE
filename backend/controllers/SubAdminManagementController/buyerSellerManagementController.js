@@ -55,6 +55,7 @@ const saveBuyerOrSeller = async (req, res) => {
       role,
       fullName,
       soWoCo,
+      occupation,
       phone,
       alternatePhone,
       aadhaar,
@@ -150,6 +151,7 @@ const saveBuyerOrSeller = async (req, res) => {
       const sellerPayload = {
         fullName,
         sowoco: soWoCo,
+        occupation,
         phoneNo: phone,
         alternatePhoneNo: alternatePhone,
         aadharNo: aadhaar,
@@ -315,6 +317,7 @@ const saveBuyerOrSeller = async (req, res) => {
       const buyerPayload = {
         name: fullName,
         sowoco: soWoCo,
+        occupation,
         mode: resolvedMode,
         agreementNo: normalizedAgreementNo || undefined,
         phoneNo: phone,

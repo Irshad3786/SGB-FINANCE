@@ -21,6 +21,7 @@ const usedSpareSchema = new mongoose.Schema({
 const buyerSchema = new mongoose.Schema({
     name: String,
     sowoco:String,
+    occupation: String,
     mode: {
         type: String,
         enum: ["refinance", "buy"],

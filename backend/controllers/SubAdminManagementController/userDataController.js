@@ -1,5 +1,6 @@
 import Buyer from "../../models/buyerModel.js";
 import Seller from "../../models/sellerModel.js";
+import mongoose from "mongoose";
 
 const normalizeKey = (value) => {
   if (value === undefined || value === null) return "";
@@ -64,11 +65,11 @@ const getUserData = async (req, res) => {
     const shouldApplyDateRange = Boolean(fromDate && toDate);
 
     const sellers = await Seller.find({})
-      .select("fullName phoneNo aadharNo dateOfBirth fullAddress vehicle referralName referralPhoneNo")
+      .select("fullName sowoco occupation phoneNo aadharNo dateOfBirth district mandal fullAddress vehicle referralName referralPhoneNo")
       .lean();
 
     const buyers = await Buyer.find({})
-      .select("name phoneNo aadharNo dateOfBirth fullAddress soldamount oldHAnumber vehicle finance guarantor referralName referralPhoneNo")
+      .select("name sowoco occupation phoneNo aadharNo dateOfBirth district mandal fullAddress soldamount oldHAnumber vehicle finance guarantor referralName referralPhoneNo")
       .lean();
 
     const buyerByVehicleOrChassis = new Map();
@@ -121,10 +122,21 @@ const getUserData = async (req, res) => {
           buyerDob: matchedBuyer?.dateOfBirth || null,
           sellerPhone: seller?.phoneNo || "",
           buyerPhone: matchedBuyer?.phoneNo || "",
+          sellerSoWoCo: seller?.sowoco || "",
+          buyerSoWoCo: matchedBuyer?.sowoco || "",
+          sowoco: matchedBuyer?.sowoco || seller?.sowoco || "",
+          sellerOccupation: seller?.occupation || "",
+          buyerOccupation: matchedBuyer?.occupation || "",
           sellerAadhaar: seller?.aadharNo || "",
           buyerAadhaar: matchedBuyer?.aadharNo || "",
           sellerAddress: seller?.fullAddress || "",
           buyerAddress: matchedBuyer?.fullAddress || "",
+          sellerDistrict: seller?.district || "",
+          sellerMandal: seller?.mandal || "",
+          buyerDistrict: matchedBuyer?.district || "",
+          buyerMandal: matchedBuyer?.mandal || "",
+          district: matchedBuyer?.district || seller?.district || "",
+          mandal: matchedBuyer?.mandal || seller?.mandal || "",
           sellerReferenceName: seller?.referralName || "",
           sellerReferencePhone: seller?.referralPhoneNo || "",
           buyerReferenceName: matchedBuyer?.referralName || "",
@@ -174,10 +186,21 @@ const getUserData = async (req, res) => {
           buyerDob: buyer?.dateOfBirth || null,
           sellerPhone: "",
           buyerPhone: buyer?.phoneNo || "",
+          sellerSoWoCo: "",
+          buyerSoWoCo: buyer?.sowoco || "",
+          sowoco: buyer?.sowoco || "",
+          sellerOccupation: "",
+          buyerOccupation: buyer?.occupation || "",
           sellerAadhaar: "",
           buyerAadhaar: buyer?.aadharNo || "",
           sellerAddress: "",
           buyerAddress: buyer?.fullAddress || "",
+          sellerDistrict: "",
+          sellerMandal: "",
+          buyerDistrict: buyer?.district || "",
+          buyerMandal: buyer?.mandal || "",
+          district: buyer?.district || "",
+          mandal: buyer?.mandal || "",
           sellerReferenceName: "",
           sellerReferencePhone: "",
           buyerReferenceName: buyer?.referralName || "",
@@ -367,6 +390,7 @@ const updateUserData = async (req, res) => {
       model,
       chassis,
       seller,
+      sellerOccupation,
       sellerPhone,
       sellerAadhaar,
       sellerDob,
@@ -375,6 +399,7 @@ const updateUserData = async (req, res) => {
       sellerReferencePhone,
       soldAmount,
       buyerName,
+      buyerOccupation,
       buyerPhone,
       buyerAadhaar,
       buyerDob,
@@ -407,6 +432,7 @@ const updateUserData = async (req, res) => {
       emiAmount !== undefined || emiMonths !== undefined || emiDate !== undefined;
 
     setIfProvided(sellerSet, "fullName", seller);
+    setIfProvided(sellerSet, "occupation", sellerOccupation);
     setIfProvided(sellerSet, "phoneNo", sellerPhone);
     setIfProvided(sellerSet, "aadharNo", sellerAadhaar);
     setIfProvided(sellerSet, "dateOfBirth", sellerDob, toNullableDate);
@@ -420,6 +446,7 @@ const updateUserData = async (req, res) => {
     setIfProvided(sellerSet, "vehicle.bikePrice", soldAmount, toNullableNumber);
 
     setIfProvided(buyerSet, "name", buyerName);
+    setIfProvided(buyerSet, "occupation", buyerOccupation);
     setIfProvided(buyerSet, "phoneNo", buyerPhone);
     setIfProvided(buyerSet, "aadharNo", buyerAadhaar);
     setIfProvided(buyerSet, "dateOfBirth", buyerDob, toNullableDate);
@@ -515,4 +542,72 @@ const updateUserData = async (req, res) => {
   }
 };
 
-export { getUserData, updateUserData };
+const deleteUserData = async (req, res) => {
+  try {
+    const { sellerId, buyerId } = req.body || {};
+
+    if (!sellerId && !buyerId) {
+      return res.status(400).json({
+        success: false,
+        message: "sellerId or buyerId is required",
+      });
+    }
+
+    if (sellerId && !mongoose.Types.ObjectId.isValid(sellerId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid sellerId",
+      });
+    }
+
+    if (buyerId && !mongoose.Types.ObjectId.isValid(buyerId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid buyerId",
+      });
+    }
+
+    const [deletedSeller, deletedBuyer] = await Promise.all([
+      sellerId ? Seller.findByIdAndDelete(sellerId).lean() : Promise.resolve(null),
+      buyerId ? Buyer.findByIdAndDelete(buyerId).lean() : Promise.resolve(null),
+    ]);
+
+    if (sellerId && !deletedSeller && buyerId && !deletedBuyer) {
+      return res.status(404).json({
+        success: false,
+        message: "Seller and buyer records not found",
+      });
+    }
+
+    if (sellerId && !deletedSeller && !buyerId) {
+      return res.status(404).json({
+        success: false,
+        message: "Seller record not found",
+      });
+    }
+
+    if (buyerId && !deletedBuyer && !sellerId) {
+      return res.status(404).json({
+        success: false,
+        message: "Buyer record not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "User record(s) deleted permanently",
+      data: {
+        sellerId: deletedSeller?._id || null,
+        buyerId: deletedBuyer?._id || null,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete user data",
+      error: error.message,
+    });
+  }
+};
+
+export { getUserData, updateUserData, deleteUserData };

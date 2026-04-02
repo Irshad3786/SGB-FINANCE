@@ -369,6 +369,7 @@ function Finance() {
                     <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-300">Party Details</h3>
                     <div className="text-sm text-gray-700 space-y-2">
                       <div className="font-semibold text-gray-900">{modalData.seller}</div>
+                      <div className="text-gray-600">Occupation : {modalData.occupation || '-'}</div>
                       <div className="text-gray-600">Age : {modalData.age}</div>
                       <div className="text-gray-600">Phone No: {modalData.phoneNo}</div>
                       <div className="text-gray-600">Address: {modalData.address}</div>
@@ -397,6 +398,7 @@ function Finance() {
                     <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-300">Guarantor Details</h3>
                     <div className="text-sm text-gray-700 space-y-2">
                       <div className="font-semibold text-gray-900">{modalData.guarantorName || '-'}</div>
+                      <div className="text-gray-600">Occupation : {modalData.guarantorOccupation || '-'}</div>
                       <div className="text-gray-600">Age : {modalData.guarantorAge || '-'}</div>
                       <div className="text-gray-600">Phone No: {modalData.guarantorPhoneNo || '-'}</div>
                       <div className="text-gray-600">Address: {modalData.guarantorAddress || '-'}</div>

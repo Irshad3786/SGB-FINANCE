@@ -10,6 +10,7 @@ const sellerUsedSpareSchema = new mongoose.Schema({
 const sellerSchema = new mongoose.Schema({
     fullName: String,
     sowoco:String,
+    occupation: String,
     phoneNo: String,
     alternatePhoneNo: String,
     aadharNo: String,

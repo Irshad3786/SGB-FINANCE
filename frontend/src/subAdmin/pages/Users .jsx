@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { useReactToPrint } from 'react-to-print'
 import EditUserModal from '../components/EditUserModal'
+import InvoicePreviewModal from '../components/InvoicePreviewModal'
 import apiClient from '../../api/axios'
 import { useToast } from '../../components/ToastProvider'
 
@@ -25,6 +27,10 @@ function Users () {
   const [search, setSearch] = useState('')
   const [deleteUserId, setDeleteUserId] = useState(null)
   const [page, setPage] = useState(1)
+  const [showInvoicePreview, setShowInvoicePreview] = useState(false)
+  const [invoice, setInvoice] = useState(null)
+  const [invoiceMode, setInvoiceMode] = useState(null)
+  const printInvoiceRef = useRef(null)
   const [pagination, setPagination] = useState({
     page: 1,
     limit: PAGE_SIZE,
@@ -178,12 +184,126 @@ function Users () {
     }
   }
 
-  function handleDelete() {
-    if (deleteUserId) {
-      setUsers(prev => prev.filter(u => u.id !== deleteUserId))
+  async function handleDelete() {
+    if (!deleteUserId) return
+
+    const selectedUser =
+      users.find((u) => u.id === deleteUserId) ||
+      (modalUser?.id === deleteUserId ? modalUser : null)
+
+    if (!selectedUser) {
+      setDeleteUserId(null)
+      return
+    }
+
+    try {
+      setError(null)
+      const payload = {
+        sellerId: selectedUser.sellerId || null,
+        buyerId: selectedUser.buyerId || null,
+      }
+
+      const response = await apiClient.delete('/api/subadmin/management/users', {
+        data: payload,
+      })
+
+      await fetchUsers(page)
       setDeleteUserId(null)
       setModalUser(null)
+
+      showToast({
+        type: 'success',
+        title: 'Deleted',
+        message: response?.data?.message || 'User deleted permanently',
+      })
+    } catch (err) {
+      console.error('Error deleting user:', err)
+      setError(err.response?.data?.message || 'Failed to delete user data')
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: err.response?.data?.message || 'Failed to delete user data',
+      })
     }
+  }
+
+  // Invoice functions
+  const buildSellerInvoice = () => {
+    // Map from different possible field names (sowoco from model, sellerSoWoCo from form, etc.)
+    const soWoCo = modalUser.sellerSoWoCo || modalUser.sowoco || modalUser.soWoCo || ''
+    const district = modalUser.sellerDistrict || modalUser.sellerData?.district || modalUser.district || ''
+    const mandal = modalUser.sellerMandal || modalUser.sellerData?.mandal || modalUser.mandal || ''
+    
+    const invoiceData = {
+      mode: 'seller',
+      typeLabel: 'Seller',
+      invoiceNo: `INV-${modalUser.id}`,
+      date: new Date().toISOString().split('T')[0],
+      fullName: modalUser.seller || '',
+      soWoCo: soWoCo,
+      phone: modalUser.sellerPhone || modalUser.phoneNo || '',
+      aadhaar: modalUser.sellerAadhaar || modalUser.aadharNo || '',
+      address: modalUser.sellerAddress || modalUser.fullAddress || '',
+      district: district,
+      mandal: mandal,
+      vehicleNo: modalUser.vehicle || '',
+      vehicleName: modalUser.vehicleName || '',
+      regNo: modalUser.regNo || '',
+      model: modalUser.model || '',
+      chassisNo: modalUser.chassis || modalUser.chassisNo || '',
+      saleAmount: modalUser.soldAmount || 0,
+    }
+    setInvoice(invoiceData)
+    setInvoiceMode('seller')
+    setShowInvoicePreview(true)
+  }
+
+  const buildBuyerInvoice = () => {
+    // Map from different possible field names (sowoco from model, buyerSoWoCo from form, etc.)
+    const soWoCo = modalUser.buyerSoWoCo || modalUser.sowoco || modalUser.soWoCo || ''
+    const district = modalUser.buyerDistrict || modalUser.buyerData?.district || modalUser.district || ''
+    const mandal = modalUser.buyerMandal || modalUser.buyerData?.mandal || modalUser.mandal || ''
+    
+    const invoiceData = {
+      mode: 'buyer',
+      typeLabel: 'Buyer',
+      invoiceNo: `INV-${modalUser.id}`,
+      date: new Date().toISOString().split('T')[0],
+      fullName: modalUser.buyerName || modalUser.name || '',
+      soWoCo: soWoCo,
+      phone: modalUser.buyerPhone || modalUser.phoneNo || '',
+      aadhaar: modalUser.buyerAadhaar || modalUser.aadharNo || '',
+      address: modalUser.buyerAddress || modalUser.fullAddress || '',
+      district: district,
+      mandal: mandal,
+      vehicleNo: modalUser.vehicle || modalUser.vehicleNumber || '',
+      vehicleName: modalUser.vehicleName || '',
+      regNo: modalUser.regNo || '',
+      model: modalUser.model || '',
+      chassisNo: modalUser.chassis || modalUser.chassisNo || '',
+      saleAmount: modalUser.buyAmount || modalUser.soldamount || 0,
+      agreementNo: modalUser.agreementNo || '',
+      financeAmount: modalUser.financeAmount || null,
+      emiAmount: modalUser.emiAmount || null,
+      emiMonths: modalUser.emiMonths || null,
+      emiDate: modalUser.emiDate || '',
+      pendingAmount: modalUser.pendingAmount || null,
+      pendingDate: modalUser.pendingDate || '',
+    }
+    setInvoice(invoiceData)
+    setInvoiceMode('buyer')
+    setShowInvoicePreview(true)
+  }
+
+  const printInvoice = useReactToPrint({
+    contentRef: printInvoiceRef,
+    documentTitle: `Invoice-${invoice?.invoiceNo || 'N/A'}`,
+  })
+
+  const handleInvoicePreviewClose = () => {
+    setShowInvoicePreview(false)
+    setInvoice(null)
+    setInvoiceMode(null)
   }
 
   return (
@@ -501,10 +621,24 @@ function Users () {
                   <h4 className="text-center font-semibold mb-4">Seller</h4>
                   <div className="flex flex-col items-center gap-4">
                     <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center">IMG</div>
+                    <button
+                      onClick={buildSellerInvoice}
+                      className="w-full px-3 py-2 rounded-lg bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="12" y1="19" x2="12" y2="12"/>
+                        <line x1="9" y1="16" x2="15" y2="16"/>
+                      </svg>
+                      View Invoice
+                    </button>
                     <div className="w-full bg-white rounded-xl p-4 shadow">
                       <h5 className="text-sm font-semibold mb-2">Customer Details</h5>
                       <div className="text-sm text-gray-700 space-y-1">
-                        <div><strong>Name:</strong> {modalUser.seller}</div>
+                        <div><strong>Name:</strong> {modalUser.seller || '-'}</div>
+                        <div><strong>S/O C/O W/O:</strong> {modalUser.sowoco || modalUser.sellerSoWoCo || modalUser.soWoCo || '-'}</div>
+                        <div><strong>Occupation:</strong> {modalUser.sellerOccupation || '-'}</div>
                         <div><strong>DOB:</strong> {modalUser.sellerDob || '-'}</div>
                         <div><strong>Phone:</strong> {modalUser.sellerPhone || '-'}</div>
                         <div className="flex items-center gap-2"><strong>Aadhar No:</strong> <span>{modalUser.sellerAadhaar || '-'}</span> <span className="ml-2 text-xs bg-yellow-100 px-2 py-0.5 rounded">view</span></div>
@@ -523,10 +657,24 @@ function Users () {
                   <h4 className="text-center font-semibold mb-4">Buyer</h4>
                   <div className="flex flex-col items-center gap-4">
                     <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center">IMG</div>
+                    <button
+                      onClick={buildBuyerInvoice}
+                      className="w-full px-3 py-2 rounded-lg bg-green-500 text-white text-sm font-medium hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="12" y1="19" x2="12" y2="12"/>
+                        <line x1="9" y1="16" x2="15" y2="16"/>
+                      </svg>
+                      View Invoice
+                    </button>
                     <div className="w-full bg-white rounded-xl p-4 shadow">
                       <h5 className="text-sm font-semibold mb-2">Customer Details</h5>
                       <div className="text-sm text-gray-700 space-y-1">
                         <div><strong>Name:</strong> {modalUser.buyerName || '-'}</div>
+                        <div><strong>S/O C/O W/O:</strong> {modalUser.buyerSoWoCo || modalUser.sowoco || modalUser.soWoCo || '-'}</div>
+                        <div><strong>Occupation:</strong> {modalUser.buyerOccupation || '-'}</div>
                         <div><strong>DOB:</strong> {modalUser.buyerDob || '-'}</div>
                         <div><strong>Phone:</strong> {modalUser.buyerPhone || '-'}</div>
                         <div className="flex items-center gap-2"><strong>Aadhar No:</strong> <span>{modalUser.buyerAadhaar || '-'}</span> <span className="ml-2 text-xs bg-yellow-100 px-2 py-0.5 rounded">view</span></div>
@@ -617,6 +765,16 @@ function Users () {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Invoice Preview Modal */}
+      {showInvoicePreview && invoice && (
+        <InvoicePreviewModal
+          invoice={invoice}
+          invoiceRef={printInvoiceRef}
+          onClose={handleInvoicePreviewClose}
+          onPrint={printInvoice}
+        />
       )}
         </>
       )}

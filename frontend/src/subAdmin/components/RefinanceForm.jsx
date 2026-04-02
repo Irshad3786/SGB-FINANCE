@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
+import { useReactToPrint } from "react-to-print";
 import { apDistricts, apMandals } from "../constants/apLocations";
 import apiClient from "../../api/axios";
 import { useToast } from "../../components/ToastProvider";
+import InvoicePreviewModal from "./InvoicePreviewModal";
 
 function RefinanceForm({ inputBase, labelClass }) {
   const baseInput =
@@ -12,6 +14,7 @@ function RefinanceForm({ inputBase, labelClass }) {
   const [form, setForm] = useState({
     fullName: "",
     soWoCo: "",
+    occupation: "",
     phone: "",
     alternatePhone: "",
     aadhaar: "",
@@ -51,7 +54,53 @@ function RefinanceForm({ inputBase, labelClass }) {
   });
 
   const [showGuarantor, setShowGuarantor] = useState(false);
+  const [showInvoicePreview, setShowInvoicePreview] = useState(false);
+  const [invoice, setInvoice] = useState(null);
+  const invoiceRef = useRef(null);
   const { showToast } = useToast();
+  const printInvoice = useReactToPrint({
+    contentRef: invoiceRef,
+    documentTitle: "refinance-invoice",
+  });
+
+  const handleInvoicePreviewClose = () => {
+    setShowInvoicePreview(false);
+  };
+
+  const handleInvoicePrint = () => {
+    printInvoice?.();
+  };
+
+  const buildRefinanceInvoice = (responseData) => {
+    const saved = responseData?.data || {};
+    const vehicle = saved?.vehicle || {};
+    const finance = saved?.finance || {};
+
+    return {
+      mode: "refinance",
+      typeLabel: "Refinance Invoice",
+      invoiceNo: saved?._id || "-",
+      date: new Date().toLocaleDateString("en-IN"),
+      fullName: form.fullName,
+      soWoCo: form.soWoCo,
+      occupation: form.occupation,
+      phone: form.phone,
+      aadhaar: form.aadhaar,
+      vehicleName: form.vehicleName || vehicle.vehicleName,
+      vehicleNo: form.vehicleNo || vehicle.vehicleNumber,
+      model: form.model || vehicle.model,
+      chassisNo: form.chassisNo || vehicle.chassisNo,
+      saleAmount: form.saleAmount || saved?.soldamount || vehicle.bikePrice || "-",
+      address: form.address,
+      district: form.district === "Other" ? form.customDistrict : form.district,
+      mandal: form.mandal === "Other" ? form.customMandal : form.mandal,
+      agreementNo: form.agreementNo || saved?.agreementNo || "-",
+      financeAmount: form.financeAmount || finance.financeAmount || "-",
+      emiAmount: form.emiAmount || finance.emiAmount || "-",
+      emiMonths: form.emiMonths || finance.months || "-",
+      emiDate: form.emiDate || "-",
+    };
+  };
 
   const onChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -99,6 +148,8 @@ function RefinanceForm({ inputBase, labelClass }) {
         title: "Success",
         message: response.data?.message || "Refinance saved successfully",
       });
+      setInvoice(buildRefinanceInvoice(response.data));
+      setShowInvoicePreview(true);
     } catch (error) {
       console.error("refinance save error:", error?.response?.data || error.message);
       showToast({
@@ -173,6 +224,22 @@ function RefinanceForm({ inputBase, labelClass }) {
         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
             <path fill="#a6a6a6" d="M3 14s-1 0-1-1s1-4 6-4s6 3 6 4s-1 1-1 1zm5-6a3 3 0 1 0 0-6a3 3 0 0 0 0 6"/>
+          </svg>
+        </div>
+      </div>
+
+      <label className={baseLabel}>occupation</label>
+      <div className="relative">
+        <input
+          name="occupation"
+          value={form.occupation}
+          onChange={onChange}
+          placeholder="Enter occupation"
+          className={baseInput}
+        />
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+            <path fill="#a6a6a6" d="M1.5 3A1.5 1.5 0 0 1 3 1.5h10A1.5 1.5 0 0 1 14.5 3v1h-13zm13 2H7v7h7.5zm-8.5 0H1.5v7H6zm7.5 8H3A1.5 1.5 0 0 1 1.5 11.5V13A1.5 1.5 0 0 0 3 14.5h10a1.5 1.5 0 0 0 1.5-1.5v-1.5A1.5 1.5 0 0 1 13 13"/>
           </svg>
         </div>
       </div>
@@ -847,6 +914,15 @@ function RefinanceForm({ inputBase, labelClass }) {
           Save Refinance
         </button>
       </div>
+
+      {showInvoicePreview && invoice && (
+        <InvoicePreviewModal
+          invoice={invoice}
+          invoiceRef={invoiceRef}
+          onClose={handleInvoicePreviewClose}
+          onPrint={handleInvoicePrint}
+        />
+      )}
     </div>
   );
 }

@@ -11,6 +11,8 @@ export default function EditUserModal({ user, onSave, onClose }) {
       chassis: '',
       // seller
       seller: '',
+      sellerSoWoCo: '',
+      sellerOccupation: '',
       sellerPhone: '',
       sellerAadhaar: '',
       sellerDob: '',
@@ -19,6 +21,8 @@ export default function EditUserModal({ user, onSave, onClose }) {
       sellerReferencePhone: '',
       // buyer
       buyerName: '',
+      buyerSoWoCo: '',
+      buyerOccupation: '',
       buyerPhone: '',
       buyerAadhaar: '',
       buyerDob: '',
@@ -65,6 +69,8 @@ export default function EditUserModal({ user, onSave, onClose }) {
         model: user.model ?? prev.model,
         chassis: user.chassis ?? prev.chassis,
         seller: user.seller ?? prev.seller,
+        sellerSoWoCo: user.sellerSoWoCo ?? prev.sellerSoWoCo,
+        sellerOccupation: user.sellerOccupation ?? prev.sellerOccupation,
         sellerPhone: user.phone ?? prev.sellerPhone,
         sellerAadhaar: user.aadhaar ?? prev.sellerAadhaar,
         sellerDob: user.dob ?? prev.sellerDob,
@@ -72,6 +78,8 @@ export default function EditUserModal({ user, onSave, onClose }) {
         sellerReferenceName: user.referenceName ?? prev.sellerReferenceName,
         sellerReferencePhone: user.referencePhone ?? prev.sellerReferencePhone,
         buyerName: user.buyerName ?? prev.buyerName,
+        buyerSoWoCo: user.buyerSoWoCo ?? prev.buyerSoWoCo,
+        buyerOccupation: user.buyerOccupation ?? prev.buyerOccupation,
         buyerPhone: user.buyerPhone ?? user.phone ?? prev.buyerPhone,
         buyerAadhaar: user.buyerAadhaar ?? user.aadhaar ?? prev.buyerAadhaar,
         buyerDob: user.buyerDob ?? user.dob ?? prev.buyerDob,
@@ -321,8 +329,16 @@ export default function EditUserModal({ user, onSave, onClose }) {
               <input name="seller" value={form.seller || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
             </div>
             <div>
+              <label className="text-xs text-gray-600">S/O C/O W/O</label>
+              <input name="sellerSoWoCo" value={form.sellerSoWoCo || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
+            </div>
+            <div>
               <label className="text-xs text-gray-600">Phone</label>
               <input name="sellerPhone" value={form.sellerPhone || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
+            </div>
+            <div>
+              <label className="text-xs text-gray-600">Occupation</label>
+              <input name="sellerOccupation" value={form.sellerOccupation || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
             </div>
             <div>
               <label className="text-xs text-gray-600">Aadhaar</label>
@@ -358,8 +374,16 @@ export default function EditUserModal({ user, onSave, onClose }) {
               <input name="buyerName" value={form.buyerName || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
             </div>
             <div>
+              <label className="text-xs text-gray-600">S/O C/O W/O</label>
+              <input name="buyerSoWoCo" value={form.buyerSoWoCo || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
+            </div>
+            <div>
               <label className="text-xs text-gray-600">Phone</label>
               <input name="buyerPhone" value={form.buyerPhone || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
+            </div>
+            <div>
+              <label className="text-xs text-gray-600">Occupation</label>
+              <input name="buyerOccupation" value={form.buyerOccupation || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
             </div>
             <div>
               <label className="text-xs text-gray-600">Aadhaar</label>

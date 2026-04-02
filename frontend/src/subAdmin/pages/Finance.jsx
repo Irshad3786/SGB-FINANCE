@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useReactToPrint } from 'react-to-print'
 import apiClient from '../../api/axios'
 import { useToast } from '../../components/ToastProvider'
 
@@ -43,6 +44,80 @@ function Finance() {
   const [filters, setFilters] = useState({ from: '', to: '', status: 'all' })
   const [modalData, setModalData] = useState(null)
   const [openingStatementId, setOpeningStatementId] = useState('')
+  const statementPrintRef = useRef(null)
+
+  const printStatement = useReactToPrint({
+    contentRef: statementPrintRef,
+    documentTitle: `finance-statement-${modalData?.agreementNo || 'record'}`,
+    pageStyle: `
+      @page {
+        size: A4 portrait;
+        margin: 4mm;
+      }
+
+      @media print {
+        .finance-statement-print {
+          transform: scale(var(--statement-print-scale));
+          transform-origin: top left;
+          width: calc(100% / var(--statement-print-scale));
+          color: #000 !important;
+        }
+
+        .finance-statement-print * {
+          line-height: 1.08 !important;
+        }
+
+        .finance-statement-print .mb-8 {
+          margin-bottom: 0.45rem !important;
+        }
+
+        .finance-statement-print .mb-6 {
+          margin-bottom: 0.35rem !important;
+        }
+
+        .finance-statement-print .mb-4 {
+          margin-bottom: 0.25rem !important;
+        }
+
+        .finance-statement-print .p-6 {
+          padding: 0.45rem !important;
+        }
+
+        .finance-statement-print .p-4 {
+          padding: 0.28rem !important;
+        }
+
+        .finance-statement-print .p-3 {
+          padding: 0.2rem !important;
+        }
+
+        .finance-statement-print table th,
+        .finance-statement-print table td {
+          padding: 2px 3px !important;
+          font-size: 8px !important;
+        }
+
+        .finance-statement-print .text-3xl {
+          font-size: 1rem !important;
+        }
+
+        .finance-statement-print .text-2xl,
+        .finance-statement-print .text-xl,
+        .finance-statement-print .text-lg {
+          font-size: 0.72rem !important;
+        }
+
+        .finance-statement-print .text-sm,
+        .finance-statement-print .text-xs {
+          font-size: 0.58rem !important;
+        }
+
+        .finance-statement-print .statement-print-hide {
+          display: none !important;
+        }
+      }
+    `,
+  })
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -156,6 +231,13 @@ function Finance() {
     ? Number(statementRows[statementRows.length - 1]?.balance || 0)
     : 0
   const statementPending = Math.max(statementBalance, 0)
+  const statementPrintScale = statementRows.length > 18
+    ? 0.42
+    : statementRows.length > 14
+      ? 0.48
+      : statementRows.length > 10
+        ? 0.54
+        : 0.6
 
   return (
     <div className="p-6">
@@ -357,11 +439,12 @@ function Finance() {
               ✕
             </button>
 
-            <h2 className="text-3xl font-bold text-center mb-2 text-gray-800">Finance Statement</h2>
-            <div className="text-center text-sm text-gray-500 mb-8">Agreement No : {modalData.agreementNo}</div>
+            <div ref={statementPrintRef} className="finance-statement-print" style={{ '--statement-print-scale': statementPrintScale }}>
+              <h2 className="text-3xl font-bold text-center mb-2 text-gray-800">Finance Statement</h2>
+              <div className="text-center text-sm text-gray-500 mb-8">Agreement No : {modalData.agreementNo}</div>
 
-            {/* Header with Images on Right */}
-            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              {/* Header with Images on Right */}
+              <div className="grid md:grid-cols-2 gap-6 mb-8">
               {/* Left: Party Details with Image - Bordered Box */}
               <div className="border-2 border-gray-300 rounded-2xl p-6">
                 <div className="flex gap-4">
@@ -376,7 +459,7 @@ function Finance() {
                     </div>
                   </div>
                   {/* Party Image - Right side */}
-                  <div className="shrink-0">
+                  <div className="shrink-0 statement-print-hide">
                     <div className="bg-white border-2 border-gray-300 rounded-lg p-3 flex flex-col items-center">
                       {modalData.partyPhoto ? (
                         <img src={modalData.partyPhoto} alt="Party" className="w-28 h-28 rounded-lg object-cover mb-2" />
@@ -405,7 +488,7 @@ function Finance() {
                     </div>
                   </div>
                   {/* Guarantor Image - Right side */}
-                  <div className="shrink-0">
+                  <div className="shrink-0 statement-print-hide">
                     <div className="bg-white border-2 border-gray-300 rounded-lg p-3 flex flex-col items-center">
                       {modalData.guarantorPhoto ? (
                         <img src={modalData.guarantorPhoto} alt="Guarantor" className="w-28 h-28 rounded-lg object-cover mb-2" />
@@ -419,10 +502,10 @@ function Finance() {
                   </div>
                 </div>
               </div>
-            </div>
+              </div>
 
-            {/* Vehicle Details */}
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 mb-8">
+              {/* Vehicle Details */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 mb-8">
               <h3 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b border-blue-300">Vehicle Details</h3>
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-white rounded-lg p-4 shadow-sm">
@@ -442,10 +525,10 @@ function Finance() {
                   <div className="text-lg font-bold text-gray-900">{modalData.vehicleModel}</div>
                 </div>
               </div>
-            </div>
+              </div>
 
-            {/* Finance Details */}
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 mb-8">
+              {/* Finance Details */}
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 mb-8">
               <h3 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b border-purple-300">Finance Details</h3>
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-white rounded-lg p-4 shadow-sm">
@@ -465,56 +548,66 @@ function Finance() {
                   <div className="text-lg font-bold text-purple-900">₹ {toInr(modalData.totalAmount)}</div>
                 </div>
               </div>
-            </div>
+              </div>
 
-            {/* EMI Schedule */}
-            {modalData.emiSchedule && modalData.emiSchedule.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-xl font-bold text-gray-800 mb-4 pb-3 border-b border-gray-300">EMI Schedule : ₹ {toInr(modalData.emi)} x {modalData.months || modalData.emiSchedule.length} months</h3>
-                <div className="overflow-x-auto rounded-lg border border-gray-200">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-gray-800 text-white">
-                        <th className="px-4 py-3 text-left font-semibold">INST.NO</th>
-                        <th className="px-4 py-3 text-left font-semibold">INST.DATE</th>
-                        <th className="px-4 py-3 text-left font-semibold">INST.AMOUNT</th>
-                        <th className="px-4 py-3 text-left font-semibold">PAID DATE</th>
-                        <th className="px-4 py-3 text-left font-semibold">PAID AMT.</th>
-                        <th className="px-4 py-3 text-left font-semibold">BALANCE</th>
-                        <th className="px-4 py-3 text-left font-semibold">RECEIPT NO.</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {statementRows.map((schedule, idx) => (
-                        <tr key={`${schedule.instNo}-${idx}`} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                          <td className="px-4 py-3 font-semibold text-gray-900">{schedule.instNo}</td>
-                          <td className="px-4 py-3 text-gray-700">{schedule.instDate}</td>
-                          <td className="px-4 py-3 text-gray-700">{schedule.instAmount === '' ? '' : `₹ ${toInr(schedule.instAmount)}`}</td>
-                          <td className="px-4 py-3 text-gray-700">{schedule.paidDate}</td>
-                          <td className="px-4 py-3 text-gray-700">₹ {toInr(schedule.paidAmt)}</td>
-                          <td className={`px-4 py-3 font-semibold ${getBalanceClass(schedule.balance)}`}>
-                            {formatBalance(schedule.balance)}
-                          </td>
-                          <td className="px-4 py-3 text-gray-700">{schedule.receiptNo}</td>
+              {/* EMI Schedule */}
+              {modalData.emiSchedule && modalData.emiSchedule.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 pb-3 border-b border-gray-300">EMI Schedule : ₹ {toInr(modalData.emi)} x {modalData.months || modalData.emiSchedule.length} months</h3>
+                  <div className="overflow-x-auto rounded-lg border border-gray-200">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-gray-800 text-white">
+                          <th className="px-4 py-3 text-left font-semibold">INST.NO</th>
+                          <th className="px-4 py-3 text-left font-semibold">INST.DATE</th>
+                          <th className="px-4 py-3 text-left font-semibold">INST.AMOUNT</th>
+                          <th className="px-4 py-3 text-left font-semibold">PAID DATE</th>
+                          <th className="px-4 py-3 text-left font-semibold">PAID AMT.</th>
+                          <th className="px-4 py-3 text-left font-semibold">BALANCE</th>
+                          <th className="px-4 py-3 text-left font-semibold">RECEIPT NO.</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {statementRows.map((schedule, idx) => (
+                          <tr key={`${schedule.instNo}-${idx}`} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                            <td className="px-4 py-3 font-semibold text-gray-900">{schedule.instNo}</td>
+                            <td className="px-4 py-3 text-gray-700">{schedule.instDate}</td>
+                            <td className="px-4 py-3 text-gray-700">{schedule.instAmount === '' ? '' : `₹ ${toInr(schedule.instAmount)}`}</td>
+                            <td className="px-4 py-3 text-gray-700">{schedule.paidDate}</td>
+                            <td className="px-4 py-3 text-gray-700">₹ {toInr(schedule.paidAmt)}</td>
+                            <td className={`px-4 py-3 font-semibold ${getBalanceClass(schedule.balance)}`}>
+                              {formatBalance(schedule.balance)}
+                            </td>
+                            <td className="px-4 py-3 text-gray-700">{schedule.receiptNo}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Summary */}
+              <div className="bg-gray-100 rounded-xl p-6 flex justify-between items-center">
+                <div>
+                  <div className="text-xs text-gray-500 font-semibold mb-1">TOTAL PAID</div>
+                  <div className="text-2xl font-bold text-green-600">₹ {toInr(statementTotalPaid)}</div>
+                </div>
+                <div className="h-12 w-px bg-gray-300"></div>
+                <div>
+                  <div className="text-xs text-gray-500 font-semibold mb-1">PENDING AMOUNT</div>
+                  <div className="text-2xl font-bold text-red-600">₹ {toInr(statementPending)}</div>
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* Summary */}
-            <div className="bg-gray-100 rounded-xl p-6 flex justify-between items-center">
-              <div>
-                <div className="text-xs text-gray-500 font-semibold mb-1">TOTAL PAID</div>
-                <div className="text-2xl font-bold text-green-600">₹ {toInr(statementTotalPaid)}</div>
-              </div>
-              <div className="h-12 w-px bg-gray-300"></div>
-              <div>
-                <div className="text-xs text-gray-500 font-semibold mb-1">PENDING AMOUNT</div>
-                <div className="text-2xl font-bold text-red-600">₹ {toInr(statementPending)}</div>
-              </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => printStatement?.()}
+                className="px-5 py-2 rounded-lg bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] font-semibold text-gray-900 shadow hover:shadow-md transition-shadow"
+              >
+                Print Statement
+              </button>
             </div>
           </div>
         </div>

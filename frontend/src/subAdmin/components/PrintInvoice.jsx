@@ -146,6 +146,26 @@ const PrintInvoice = forwardRef(function PrintInvoice({ invoice }, ref) {
         </div>
       )}
 
+      {invoice.mode === 'refinance' && (
+        <div style={{ marginTop: '18px', border: '1px solid #d1d5db', borderRadius: '10px', padding: '12px', background: '#f8fafc' }}>
+          <div style={{ fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>REFINANCE AGREEMENT DESCRIPTION</div>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>English</div>
+          <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.8, color: '#0f172a' }}>
+            Today, I am taking refinance on my vehicle. I am accepting this refinance voluntarily, without any force or pressure, and I give my full consent for the same.
+          </p>
+          <p style={{ margin: '8px 0 0', fontSize: '13px', lineHeight: 1.8, color: '#0f172a' }}>
+            I take full responsibility to pay the finance amount, EMIs, and all related payments on time without any delay.
+          </p>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: '#334155', marginTop: '10px', marginBottom: '6px' }}>Telugu</div>
+          <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.8, color: '#0f172a' }}>
+            ఈరోజు నేను నా వాహనముపై రీఫైనాన్స్ తీసుకుంటున్నాను. ఈ రీఫైనాన్స్‌ను నేను నా స్వచ్ఛందంగా, ఎలాంటి బలవంతం లేకుండా స్వీకరిస్తున్నాను మరియు దీనికి పూర్తి సమ్మతి తెలియజేస్తున్నాను.
+          </p>
+          <p style={{ margin: '8px 0 0', fontSize: '13px', lineHeight: 1.8, color: '#0f172a' }}>
+            ఈ వాహనమునకు సంబంధించిన ఫైనాన్స్ మొత్తం, EMIలు మరియు ఇతర చెల్లింపులను నేను సమయానికి ఎలాంటి ఆలస్యం లేకుండా చెల్లించుటకు పూర్తి బాధ్యత వహించుచున్నాను.
+          </p>
+        </div>
+      )}
+
       {invoice.mode === 'seller' && (
         <div style={{ marginTop: '18px', border: '1px solid #d1d5db', borderRadius: '10px', padding: '12px', background: '#f8fafc' }}>
           <div style={{ fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>SELLER AGREEMENT DESCRIPTION</div>

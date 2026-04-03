@@ -52,68 +52,121 @@ function Finance() {
     pageStyle: `
       @page {
         size: A4 portrait;
-        margin: 4mm;
+        margin: 6mm;
       }
 
       @media print {
         .finance-statement-print {
-          transform: scale(var(--statement-print-scale));
-          transform-origin: top left;
-          width: calc(100% / var(--statement-print-scale));
           color: #000 !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+          transform: scale(0.8);
+          transform-origin: top left;
+          width: 125%;
         }
 
-        .finance-statement-print * {
-          line-height: 1.08 !important;
+        .finance-statement-print .statement-header-grid {
+          display: grid !important;
+          grid-template-columns: 1fr 1fr !important;
+          gap: 0.6rem !important;
+          margin-bottom: 0.6rem !important;
         }
 
-        .finance-statement-print .mb-8 {
+        .finance-statement-print .statement-mid-grid {
+          display: grid !important;
+          grid-template-columns: 1fr 1fr !important;
+          gap: 0.45rem !important;
           margin-bottom: 0.45rem !important;
         }
 
-        .finance-statement-print .mb-6 {
-          margin-bottom: 0.35rem !important;
+        .finance-statement-print .statement-block {
+          padding: 0.5rem !important;
+          border-radius: 0.65rem !important;
         }
 
-        .finance-statement-print .mb-4 {
-          margin-bottom: 0.25rem !important;
+        .finance-statement-print .statement-grid-compact {
+          gap: 0.45rem !important;
         }
 
-        .finance-statement-print .p-6 {
-          padding: 0.45rem !important;
+        .finance-statement-print .statement-grid-compact > div {
+          padding: 0.4rem !important;
         }
 
-        .finance-statement-print .p-4 {
-          padding: 0.28rem !important;
+        .finance-statement-print .statement-mid-grid .statement-block {
+          padding: 0.4rem !important;
         }
 
-        .finance-statement-print .p-3 {
-          padding: 0.2rem !important;
+        .finance-statement-print .statement-mid-grid .statement-section-title {
+          font-size: 0.78rem !important;
+          margin-bottom: 0.3rem !important;
+          padding-bottom: 0.2rem !important;
         }
 
-        .finance-statement-print table th,
-        .finance-statement-print table td {
-          padding: 2px 3px !important;
-          font-size: 8px !important;
+        .finance-statement-print .statement-mid-grid .statement-grid-compact {
+          gap: 0.3rem !important;
         }
 
-        .finance-statement-print .text-3xl {
+        .finance-statement-print .statement-mid-grid .statement-grid-compact > div {
+          padding: 0.3rem !important;
+        }
+
+        .finance-statement-print .statement-mid-grid .text-xs {
+          font-size: 0.52rem !important;
+          line-height: 1.1 !important;
+        }
+
+        .finance-statement-print .statement-mid-grid .text-sm {
+          font-size: 0.62rem !important;
+          line-height: 1.15 !important;
+        }
+
+        .finance-statement-print .statement-mid-grid .text-lg {
+          font-size: 0.74rem !important;
+          line-height: 1.15 !important;
+        }
+
+        .finance-statement-print .statement-title {
+          font-size: 1.25rem !important;
+          margin-bottom: 0.2rem !important;
+        }
+
+        .finance-statement-print .statement-subtitle {
+          font-size: 0.72rem !important;
+          margin-bottom: 0.55rem !important;
+        }
+
+        .finance-statement-print .statement-section-title {
+          font-size: 0.88rem !important;
+          margin-bottom: 0.4rem !important;
+          padding-bottom: 0.25rem !important;
+        }
+
+        .finance-statement-print .statement-text-sm,
+        .finance-statement-print .statement-text-sm * {
+          font-size: 0.66rem !important;
+          line-height: 1.25 !important;
+        }
+
+        .finance-statement-print .statement-table th,
+        .finance-statement-print .statement-table td {
+          padding: 3px 4px !important;
+          font-size: 0.62rem !important;
+          line-height: 1.2 !important;
+        }
+
+        .finance-statement-print .statement-summary {
+          padding: 0.55rem !important;
+        }
+
+        .finance-statement-print .statement-summary .text-2xl {
           font-size: 1rem !important;
         }
 
-        .finance-statement-print .text-2xl,
-        .finance-statement-print .text-xl,
-        .finance-statement-print .text-lg {
-          font-size: 0.72rem !important;
-        }
-
-        .finance-statement-print .text-sm,
-        .finance-statement-print .text-xs {
-          font-size: 0.58rem !important;
-        }
-
-        .finance-statement-print .statement-print-hide {
-          display: none !important;
+        .finance-statement-print table,
+        .finance-statement-print tr,
+        .finance-statement-print td,
+        .finance-statement-print th {
+          break-inside: avoid;
         }
       }
     `,
@@ -231,13 +284,6 @@ function Finance() {
     ? Number(statementRows[statementRows.length - 1]?.balance || 0)
     : 0
   const statementPending = Math.max(statementBalance, 0)
-  const statementPrintScale = statementRows.length > 18
-    ? 0.42
-    : statementRows.length > 14
-      ? 0.48
-      : statementRows.length > 10
-        ? 0.54
-        : 0.6
 
   return (
     <div className="p-6">
@@ -439,22 +485,24 @@ function Finance() {
               ✕
             </button>
 
-            <div ref={statementPrintRef} className="finance-statement-print" style={{ '--statement-print-scale': statementPrintScale }}>
-              <h2 className="text-3xl font-bold text-center mb-2 text-gray-800">Finance Statement</h2>
-              <div className="text-center text-sm text-gray-500 mb-8">Agreement No : {modalData.agreementNo}</div>
+            <div ref={statementPrintRef} className="finance-statement-print">
+              <h2 className="text-3xl font-bold text-center mb-2 text-gray-800 statement-title">Finance Statement</h2>
+              <div className="text-center text-sm text-gray-500 mb-8 statement-subtitle">Agreement No : {modalData.agreementNo}</div>
 
               {/* Header with Images on Right */}
-              <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="grid md:grid-cols-2 gap-6 mb-8 statement-header-grid">
               {/* Left: Party Details with Image - Bordered Box */}
-              <div className="border-2 border-gray-300 rounded-2xl p-6">
+              <div className="border-2 border-gray-300 rounded-2xl p-6 statement-block">
                 <div className="flex gap-4">
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-300">Party Details</h3>
-                    <div className="text-sm text-gray-700 space-y-2">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-300 statement-section-title">Party Details</h3>
+                    <div className="text-sm text-gray-700 space-y-2 statement-text-sm">
                       <div className="font-semibold text-gray-900">{modalData.seller}</div>
+                      <div className="text-gray-600">S/O C/O W/O : {modalData.sowoco || '-'}</div>
                       <div className="text-gray-600">Occupation : {modalData.occupation || '-'}</div>
-                      <div className="text-gray-600">Age : {modalData.age}</div>
-                      <div className="text-gray-600">Phone No: {modalData.phoneNo}</div>
+                      <div className="text-gray-600">Age : {modalData.age || '-'}</div>
+                      <div className="text-gray-600">Phone No: {modalData.phoneNo || '-'}</div>
+                      <div className="text-gray-600">Alternate Phone No: {modalData.alternatePhoneNo || '-'}</div>
                       <div className="text-gray-600">Address: {modalData.address}</div>
                     </div>
                   </div>
@@ -475,15 +523,17 @@ function Finance() {
               </div>
 
               {/* Right: Guarantor Details with Image - Bordered Box */}
-              <div className="border-2 border-gray-300 rounded-2xl p-6">
+              <div className="border-2 border-gray-300 rounded-2xl p-6 statement-block">
                 <div className="flex gap-4">
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-300">Guarantor Details</h3>
-                    <div className="text-sm text-gray-700 space-y-2">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-300 statement-section-title">Guarantor Details</h3>
+                    <div className="text-sm text-gray-700 space-y-2 statement-text-sm">
                       <div className="font-semibold text-gray-900">{modalData.guarantorName || '-'}</div>
+                      <div className="text-gray-600">S/O C/O W/O : {modalData.guarantorSowoco || '-'}</div>
                       <div className="text-gray-600">Occupation : {modalData.guarantorOccupation || '-'}</div>
                       <div className="text-gray-600">Age : {modalData.guarantorAge || '-'}</div>
                       <div className="text-gray-600">Phone No: {modalData.guarantorPhoneNo || '-'}</div>
+                      <div className="text-gray-600">Alternate Phone No: {modalData.guarantorAlternatePhoneNo || '-'}</div>
                       <div className="text-gray-600">Address: {modalData.guarantorAddress || '-'}</div>
                     </div>
                   </div>
@@ -504,58 +554,61 @@ function Finance() {
               </div>
               </div>
 
-              {/* Vehicle Details */}
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 mb-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b border-blue-300">Vehicle Details</h3>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-xs text-gray-500 font-semibold mb-2">VEHICLE NO</div>
-                  <div className="text-lg font-bold text-gray-900">{modalData.vehicle}</div>
+              {/* Vehicle + Finance details side by side */}
+              <div className="grid md:grid-cols-2 gap-6 mb-8 statement-mid-grid">
+                {/* Vehicle Details */}
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 statement-block">
+                <h3 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b border-blue-300 statement-section-title">Vehicle Details</h3>
+                <div className="grid grid-cols-2 gap-6 statement-grid-compact">
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 font-semibold mb-2">VEHICLE NO</div>
+                    <div className="text-lg font-bold text-gray-900">{modalData.vehicle}</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 font-semibold mb-2">VEHICLE NAME</div>
+                    <div className="text-lg font-bold text-gray-900">{modalData.vehicleName}</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 font-semibold mb-2">CHASSIS NO</div>
+                    <div className="text-sm font-bold text-gray-900">{modalData.chassisNo}</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 font-semibold mb-2">MODEL</div>
+                    <div className="text-lg font-bold text-gray-900">{modalData.vehicleModel}</div>
+                  </div>
                 </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-xs text-gray-500 font-semibold mb-2">VEHICLE NAME</div>
-                  <div className="text-lg font-bold text-gray-900">{modalData.vehicleName}</div>
                 </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-xs text-gray-500 font-semibold mb-2">CHASSIS NO</div>
-                  <div className="text-sm font-bold text-gray-900">{modalData.chassisNo}</div>
-                </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-xs text-gray-500 font-semibold mb-2">MODEL</div>
-                  <div className="text-lg font-bold text-gray-900">{modalData.vehicleModel}</div>
-                </div>
-              </div>
-              </div>
 
-              {/* Finance Details */}
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 mb-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b border-purple-300">Finance Details</h3>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-xs text-gray-500 font-semibold mb-2">VEHICLE PRICE</div>
-                  <div className="text-lg font-bold text-gray-900">₹ {toInr(modalData.vehiclePrice)}</div>
+                {/* Finance Details */}
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 statement-block">
+                <h3 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b border-purple-300 statement-section-title">Finance Details</h3>
+                <div className="grid grid-cols-2 gap-6 statement-grid-compact">
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 font-semibold mb-2">VEHICLE PRICE</div>
+                    <div className="text-lg font-bold text-gray-900">₹ {toInr(modalData.vehiclePrice)}</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 font-semibold mb-2">FINANCE AMOUNT</div>
+                    <div className="text-lg font-bold text-gray-900">₹ {toInr(modalData.financeAmount)}</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 font-semibold mb-2">CHARGES & INTEREST</div>
+                    <div className="text-lg font-bold text-gray-900">₹ {toInr(modalData.charges)}</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 shadow-sm border-2 border-purple-300">
+                    <div className="text-xs text-gray-500 font-semibold mb-2">TOTAL AMOUNT</div>
+                    <div className="text-lg font-bold text-purple-900">₹ {toInr(modalData.totalAmount)}</div>
+                  </div>
                 </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-xs text-gray-500 font-semibold mb-2">FINANCE AMOUNT</div>
-                  <div className="text-lg font-bold text-gray-900">₹ {toInr(modalData.financeAmount)}</div>
                 </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-xs text-gray-500 font-semibold mb-2">CHARGES & INTEREST</div>
-                  <div className="text-lg font-bold text-gray-900">₹ {toInr(modalData.charges)}</div>
-                </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm border-2 border-purple-300">
-                  <div className="text-xs text-gray-500 font-semibold mb-2">TOTAL AMOUNT</div>
-                  <div className="text-lg font-bold text-purple-900">₹ {toInr(modalData.totalAmount)}</div>
-                </div>
-              </div>
               </div>
 
               {/* EMI Schedule */}
               {modalData.emiSchedule && modalData.emiSchedule.length > 0 && (
                 <div className="mb-8">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4 pb-3 border-b border-gray-300">EMI Schedule : ₹ {toInr(modalData.emi)} x {modalData.months || modalData.emiSchedule.length} months</h3>
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 pb-3 border-b border-gray-300 statement-section-title">EMI Schedule : ₹ {toInr(modalData.emi)} x {modalData.months || modalData.emiSchedule.length} months</h3>
                   <div className="overflow-x-auto rounded-lg border border-gray-200">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-sm statement-table">
                       <thead>
                         <tr className="bg-gray-800 text-white">
                           <th className="px-4 py-3 text-left font-semibold">INST.NO</th>
@@ -588,7 +641,7 @@ function Finance() {
               )}
 
               {/* Summary */}
-              <div className="bg-gray-100 rounded-xl p-6 flex justify-between items-center">
+              <div className="bg-gray-100 rounded-xl p-6 flex justify-between items-center statement-summary">
                 <div>
                   <div className="text-xs text-gray-500 font-semibold mb-1">TOTAL PAID</div>
                   <div className="text-2xl font-bold text-green-600">₹ {toInr(statementTotalPaid)}</div>

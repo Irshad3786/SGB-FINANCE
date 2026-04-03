@@ -63,9 +63,13 @@ const buyerSchema = new mongoose.Schema({
     guarantor:{
         fullName: String,
         sowoco:String,
+        occupation: String,
         phoneNo: String,
+        alternatePhoneNo: String,
         dateOfBirth: Date,
         aadharNo: String,
+        district: String,
+        mandal: String,
         address: String,
         guarantorPhoto: String
     },

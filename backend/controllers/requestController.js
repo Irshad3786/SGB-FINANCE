@@ -422,3 +422,30 @@ export const updateRequestStatus = async (req, res) => {
     });
   }
 };
+
+export const deleteRequestForManagement = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deleted = await Request.findByIdAndDelete(id).lean();
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Request not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Request deleted successfully",
+      data: { id: String(deleted._id) },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete request",
+      error: error.message,
+    });
+  }
+};

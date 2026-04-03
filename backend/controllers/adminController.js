@@ -210,7 +210,7 @@ const resendAdminOtp = async (req, res) => {
     admin.otpExpiresAt = Date.now() + 5 * 60 * 1000; // 5 min expiry
     
     // Send OTP email
-    const sendOtp = await sendAdminOtp(admin, otp);
+    const sendOtp = await sendAdminOtp(admin, otp, "resend");
     if (!sendOtp.success) {
       return res.status(500).json({
         success: false,

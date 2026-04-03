@@ -13,10 +13,35 @@ const formatDisplayDate = (value) => {
 	return `${day}-${month}-${year}`;
 };
 
+const parseDateOfBirth = (value) => {
+	if (!value) return null;
+
+	if (value instanceof Date) {
+		return Number.isNaN(value.getTime()) ? null : value;
+	}
+
+	const raw = String(value).trim();
+	if (!raw) return null;
+
+	// Handles ISO date formats first.
+	const directParsed = new Date(raw);
+	if (!Number.isNaN(directParsed.getTime())) return directParsed;
+
+	// Handles dd-mm-yyyy and dd/mm/yyyy formats.
+	const match = raw.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+	if (!match) return null;
+
+	const day = Number(match[1]);
+	const month = Number(match[2]);
+	const year = Number(match[3]);
+	const parsed = new Date(year, month - 1, day);
+	if (Number.isNaN(parsed.getTime())) return null;
+	return parsed;
+};
+
 const calculateAge = (dateOfBirth) => {
-	if (!dateOfBirth) return "";
-	const dob = new Date(dateOfBirth);
-	if (Number.isNaN(dob.getTime())) return "";
+	const dob = parseDateOfBirth(dateOfBirth);
+	if (!dob) return "";
 
 	const today = new Date();
 	let age = today.getFullYear() - dob.getFullYear();
@@ -24,7 +49,29 @@ const calculateAge = (dateOfBirth) => {
 	if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
 		age -= 1;
 	}
-	return age;
+	return age < 0 ? "" : age;
+};
+
+const toValidAgeValue = (value) => {
+	const parsed = Number.parseInt(value, 10);
+	if (Number.isNaN(parsed) || parsed <= 0 || parsed > 120) return "";
+	return parsed;
+};
+
+const resolveAge = (person = {}, dateCandidates = []) => {
+	// Support legacy records that may have explicit age fields.
+	const directAge =
+		toValidAgeValue(person?.age) ||
+		toValidAgeValue(person?.Age) ||
+		toValidAgeValue(person?.personAge);
+	if (directAge) return directAge;
+
+	for (const candidate of dateCandidates) {
+		const ageFromDob = calculateAge(candidate);
+		if (ageFromDob !== "") return ageFromDob;
+	}
+
+	return "";
 };
 
 const calculateEmiProgress = (emiDates = []) => {
@@ -110,6 +157,22 @@ const mapBuyerToFinanceStatement = (buyer) => {
 	const finance = buyer?.finance || {};
 	const vehicle = buyer?.vehicle || {};
 	const guarantor = buyer?.guarantor || {};
+	const resolvedDistrict = buyer?.district || "";
+	const resolvedMandal = buyer?.mandal || "";
+	const resolvedAddressParts = [buyer?.fullAddress || buyer?.street || "", resolvedMandal, resolvedDistrict]
+		.map((part) => String(part || "").trim())
+		.filter(Boolean);
+	const resolvedAddress = [...new Set(resolvedAddressParts)].join(", ");
+	const resolvedGuarantorDistrict = guarantor?.district || "";
+	const resolvedGuarantorMandal = guarantor?.mandal || "";
+	const resolvedGuarantorAddressParts = [
+		guarantor?.address || "",
+		resolvedGuarantorMandal,
+		resolvedGuarantorDistrict,
+	]
+		.map((part) => String(part || "").trim())
+		.filter(Boolean);
+	const resolvedGuarantorAddress = [...new Set(resolvedGuarantorAddressParts)].join(", ");
 	const emiSchedule = mapEmiSchedule(finance?.emiDates || []);
 	const paymentEntries = mapPaymentEntries(finance?.paymentEntries || []);
 	const totalInstalmentAmount = emiSchedule.reduce((sum, item) => sum + Number(item?.emi || 0), 0);
@@ -128,14 +191,18 @@ const mapBuyerToFinanceStatement = (buyer) => {
 		id: String(buyer?._id),
 		seller: buyer?.name || "",
 		buyerName: buyer?.name || "",
+		sowoco: buyer?.sowoco || "",
 		occupation: buyer?.occupation || "",
 		vehicle: vehicle?.vehicleNumber || "",
 		phoneNo: buyer?.phoneNo || "",
+		alternatePhoneNo: buyer?.alternatePhoneNo || buyer?.alternatePhone || "",
 		financeAmount,
 		emiDate: formatDisplayDate(finance?.emiStartDate || finance?.emiDate),
 		emi: emiAmount,
-		age: calculateAge(buyer?.dateOfBirth),
-		address: buyer?.fullAddress || "",
+		age: resolveAge(buyer, [buyer?.dateOfBirth, buyer?.dob, buyer?.birthDate, buyer?.date_of_birth]),
+		address: resolvedAddress,
+		district: resolvedDistrict,
+		mandal: resolvedMandal,
 		agreementNo: buyer?.agreementNo || "",
 		vehiclePrice: Number(vehicle?.bikePrice || 0),
 		charges,
@@ -149,10 +216,14 @@ const mapBuyerToFinanceStatement = (buyer) => {
 		vehicleModel: vehicle?.model || "",
 		months: emiMonths,
 		guarantorName: guarantor?.fullName || "",
+		guarantorSowoco: guarantor?.sowoco || "",
 		guarantorOccupation: guarantor?.occupation || "",
-		guarantorAge: calculateAge(guarantor?.dateOfBirth),
+		guarantorAge: resolveAge(guarantor, [guarantor?.dateOfBirth, guarantor?.dob, guarantor?.birthDate, guarantor?.guarantorDob]),
 		guarantorPhoneNo: guarantor?.phoneNo || "",
-		guarantorAddress: guarantor?.address || "",
+		guarantorAlternatePhoneNo: guarantor?.alternatePhoneNo || "",
+		guarantorAddress: resolvedGuarantorAddress,
+		guarantorDistrict: resolvedGuarantorDistrict,
+		guarantorMandal: resolvedGuarantorMandal,
 		partyPhoto: buyer?.profile || "",
 		guarantorPhoto: guarantor?.guarantorPhoto || "",
 		status: finance?.status || "pending",
@@ -213,7 +284,7 @@ export const getFinanceList = async (req, res) => {
 		const skip = (safePage - 1) * parsedLimit;
 
 		const buyers = await Buyer.find(query)
-			.select("name occupation agreementNo phoneNo fullAddress dateOfBirth vehicle finance guarantor profile")
+			.select("name sowoco occupation agreementNo phoneNo alternatePhoneNo district mandal fullAddress dateOfBirth vehicle finance guarantor profile")
 			.sort({ _id: -1 })
 			.skip(skip)
 			.limit(parsedLimit)
@@ -248,7 +319,7 @@ export const getFinanceStatement = async (req, res) => {
 		const { buyerId } = req.params;
 
 		const buyer = await Buyer.findById(buyerId)
-			.select("name occupation agreementNo phoneNo fullAddress dateOfBirth vehicle finance guarantor profile")
+			.select("name sowoco occupation agreementNo phoneNo alternatePhoneNo district mandal fullAddress dateOfBirth vehicle finance guarantor profile")
 			.lean();
 
 		if (!buyer) {

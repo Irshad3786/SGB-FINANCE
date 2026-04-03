@@ -57,7 +57,39 @@ const adminRegisterEmailTemplate = (name, otp) => {
   `;
 };
 
-export const sendAdminOtp = async (user, otp) => {
+const adminResendOtpEmailTemplate = (name, otp) => {
+  return `
+    <div style="font-family: 'Arial', sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+      <div style="background: linear-gradient(135deg, #0e6b53 0%, #14493b 100%); padding: 30px 20px; text-align: center;">
+        <div style="font-size: 30px; font-weight: 900; color: #B0FF1C; margin-bottom: 8px; letter-spacing: 1px;">SGB FINANCE</div>
+        <div style="font-size: 12px; color: #bff86a; letter-spacing: 2px; text-transform: uppercase;">OTP Resent</div>
+      </div>
+
+      <div style="padding: 36px 30px; background-color: #ffffff;">
+        <h2 style="color: #0e6b53; font-size: 22px; margin-bottom: 10px; font-weight: 700;">Your New Verification OTP</h2>
+        <div style="width: 60px; height: 4px; background: linear-gradient(90deg, #B0FF1C 0%, #40FF00 100%); margin-bottom: 20px; border-radius: 2px;"></div>
+
+        <p style="color: #333333; font-size: 16px; line-height: 1.6; margin-bottom: 15px;">Hello <strong>${name}</strong>,</p>
+        <p style="color: #555555; font-size: 15px; line-height: 1.6; margin-bottom: 20px;">You requested a new OTP for admin email verification. Use the code below to continue:</p>
+
+        <div style="background: #f0fff2; border: 2px solid #bff86a; border-radius: 8px; padding: 26px; text-align: center; margin: 24px 0;">
+          <p style="color: #0e6b53; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; font-weight: bold;">Verification OTP</p>
+          <div style="font-size: 44px; font-weight: 900; color: #0e6b53; letter-spacing: 8px; font-family: 'Courier New', monospace; margin-bottom: 8px;">${otp}</div>
+          <p style="color: #14493b; font-size: 13px; margin: 0;"><strong>Valid for 5 minutes</strong></p>
+        </div>
+
+        <p style="color: #666666; font-size: 14px; line-height: 1.6; margin-bottom: 0;">If you did not request this OTP, please ignore this email.</p>
+      </div>
+
+      <div style="background-color: #f0f0f0; padding: 24px 20px; text-align: center; border-top: 1px solid #e0e0e0;">
+        <p style="color: #0e6b53; font-size: 14px; font-weight: bold; margin-bottom: 8px;">SGB FINANCE</p>
+        <p style="color: #999999; font-size: 11px; margin: 0;">This is an automated message. Please do not reply.</p>
+      </div>
+    </div>
+  `;
+};
+
+export const sendAdminOtp = async (user, otp, emailType = "register") => {
   try {
     // 1️⃣ Configure Nodemailer
     const transport = nodemailer.createTransport({
@@ -72,11 +104,17 @@ export const sendAdminOtp = async (user, otp) => {
     });
 
     // prepare email using template
+    const isResend = emailType === "resend";
+
     const mailOptions = {
       from: `"SGB FINANCE" <${process.env.EMAIL_USER}>`,
       to: user.email,
-      subject: "Verify Your Admin Account - SGB FINANCE",
-      html: adminRegisterEmailTemplate(user.name, otp),
+      subject: isResend
+        ? "Your New Admin OTP - SGB FINANCE"
+        : "Verify Your Admin Account - SGB FINANCE",
+      html: isResend
+        ? adminResendOtpEmailTemplate(user.name, otp)
+        : adminRegisterEmailTemplate(user.name, otp),
     };
 
     await transport.sendMail(mailOptions);

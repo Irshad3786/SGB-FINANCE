@@ -44,9 +44,15 @@ function Buy() {
         // guarantor
         guarantorName: '',
         guarantorSoWoCo: '',
+        guarantorOccupation: '',
         guarantorPhone: '',
+        guarantorAlternatePhone: '',
         guarantorAadhaar: '',
         guarantorDob: '',
+        guarantorDistrict: '',
+        guarantorCustomDistrict: '',
+        guarantorMandal: '',
+        guarantorCustomMandal: '',
         guarantorAddress: '',
         referralName: '',
         referralPhone: '',
@@ -805,6 +811,52 @@ function Buy() {
                 <input name="guarantorPhone" value={form.guarantorPhone} onChange={onChange} placeholder="Enter phone no" className={inputBase} />
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" fillRule="evenodd" d="m16.1 13.359l.456-.453c.63-.626 1.611-.755 2.417-.317l1.91 1.039c1.227.667 1.498 2.302.539 3.255l-1.42 1.412c-.362.36-.81.622-1.326.67c-1.192.111-3.645.051-6.539-1.643zm-5.91-5.876l.287-.286c.707-.702.774-1.83.157-2.654L9.374 2.86C8.61 1.84 7.135 1.705 6.26 2.575l-1.57 1.56c-.433.432-.723.99-.688 1.61c.065 1.14.453 3.22 2.149 5.776z" clipRule="evenodd"/><path fill="#a6a6a6" d="M12.063 11.497c-2.946-2.929-1.88-4.008-1.873-4.015l-4.039 4.04c.667 1.004 1.535 2.081 2.664 3.204c1.14 1.134 2.26 1.975 3.322 2.596L16.1 13.36s-1.082 1.076-4.037-1.862" opacity="0.6"/></svg></div>
               </div>
+
+              <label className={labelClass}>Guarantor alternate phone no</label>
+              <div className="relative">
+                <input name="guarantorAlternatePhone" value={form.guarantorAlternatePhone} onChange={onChange} placeholder="Enter alternate phone no" className={inputBase} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" fillRule="evenodd" d="m16.1 13.359l.456-.453c.63-.626 1.611-.755 2.417-.317l1.91 1.039c1.227.667 1.498 2.302.539 3.255l-1.42 1.412c-.362.36-.81.622-1.326.67c-1.192.111-3.645.051-6.539-1.643zm-5.91-5.876l.287-.286c.707-.702.774-1.83.157-2.654L9.374 2.86C8.61 1.84 7.135 1.705 6.26 2.575l-1.57 1.56c-.433.432-.723.99-.688 1.61c.065 1.14.453 3.22 2.149 5.776z" clipRule="evenodd"/><path fill="#a6a6a6" d="M12.063 11.497c-2.946-2.929-1.88-4.008-1.873-4.015l-4.039 4.04c.667 1.004 1.535 2.081 2.664 3.204c1.14 1.134 2.26 1.975 3.322 2.596L16.1 13.36s-1.082 1.076-4.037-1.862" opacity="0.6"/></svg></div>
+              </div>
+
+              <label className={labelClass}>Guarantor occupation</label>
+              <div className="relative">
+                <input name="guarantorOccupation" value={form.guarantorOccupation} onChange={onChange} placeholder="Enter occupation" className={inputBase} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="#a6a6a6" d="M1.5 3A1.5 1.5 0 0 1 3 1.5h10A1.5 1.5 0 0 1 14.5 3v1h-13zm13 2H7v7h7.5zm-8.5 0H1.5v7H6zm7.5 8H3A1.5 1.5 0 0 1 1.5 11.5V13A1.5 1.5 0 0 0 3 14.5h10a1.5 1.5 0 0 0 1.5-1.5v-1.5A1.5 1.5 0 0 1 13 13"/></svg></div>
+              </div>
+
+              <label className={labelClass}>Guarantor district</label>
+              <div className="relative">
+                <input name="guarantorDistrict" value={form.guarantorDistrict} onChange={onChange} list="guarantor-district-options-buy" placeholder="Select district" className={inputBase} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M12 11.5A2.5 2.5 0 0 1 9.5 9A2.5 2.5 0 0 1 12 6.5A2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/></svg></div>
+              </div>
+              {form.guarantorDistrict === 'Other' && (
+                <div className="relative">
+                  <input name="guarantorCustomDistrict" value={form.guarantorCustomDistrict} onChange={onChange} placeholder="Enter district" className={inputBase} />
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M12 11.5A2.5 2.5 0 0 1 9.5 9A2.5 2.5 0 0 1 12 6.5A2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/></svg></div>
+                </div>
+              )}
+              <datalist id="guarantor-district-options-buy">
+                {apDistricts.map((d) => (
+                  <option key={d} value={d} />
+                ))}
+              </datalist>
+
+              <label className={labelClass}>Guarantor mandal</label>
+              <div className="relative">
+                <input name="guarantorMandal" value={form.guarantorMandal} onChange={onChange} list="guarantor-mandal-options-buy" placeholder="Select mandal" className={inputBase} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M12 11.5A2.5 2.5 0 0 1 9.5 9A2.5 2.5 0 0 1 12 6.5A2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/></svg></div>
+              </div>
+              {form.guarantorMandal === 'Other' && (
+                <div className="relative">
+                  <input name="guarantorCustomMandal" value={form.guarantorCustomMandal} onChange={onChange} placeholder="Enter mandal" className={inputBase} />
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M12 11.5A2.5 2.5 0 0 1 9.5 9A2.5 2.5 0 0 1 12 6.5A2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/></svg></div>
+                </div>
+              )}
+              <datalist id="guarantor-mandal-options-buy">
+                {apMandals.map((m) => (
+                  <option key={m} value={m} />
+                ))}
+              </datalist>
 
               <label className={labelClass}>Guarantor aadhaar no</label>
               <div className="relative">

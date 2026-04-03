@@ -85,9 +85,15 @@ const saveBuyerOrSeller = async (req, res) => {
       pendingDate,
       guarantorName,
       guarantorSoWoCo,
+      guarantorOccupation,
       guarantorPhone,
+      guarantorAlternatePhone,
       guarantorAadhaar,
       guarantorDob,
+      guarantorDistrict,
+      guarantorCustomDistrict,
+      guarantorMandal,
+      guarantorCustomMandal,
       guarantorAddress,
       aadharFront,
       aadharBack,
@@ -114,6 +120,8 @@ const saveBuyerOrSeller = async (req, res) => {
 
     const resolvedDistrict = pickLocation(district, customDistrict);
     const resolvedMandal = pickLocation(mandal, customMandal);
+    const resolvedGuarantorDistrict = pickLocation(guarantorDistrict, guarantorCustomDistrict);
+    const resolvedGuarantorMandal = pickLocation(guarantorMandal, guarantorCustomMandal);
 
     let savedRecord;
     let wasUpdated = false;
@@ -345,9 +353,13 @@ const saveBuyerOrSeller = async (req, res) => {
         guarantor: {
           fullName: guarantorName,
           sowoco: guarantorSoWoCo,
+          occupation: guarantorOccupation,
           phoneNo: guarantorPhone,
+          alternatePhoneNo: guarantorAlternatePhone,
           dateOfBirth: guarantorDob || undefined,
           aadharNo: guarantorAadhaar,
+          district: resolvedGuarantorDistrict,
+          mandal: resolvedGuarantorMandal,
           address: guarantorAddress,
           guarantorPhoto,
         },

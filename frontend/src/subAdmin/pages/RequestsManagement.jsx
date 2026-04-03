@@ -46,6 +46,8 @@ function RequestsManagement() {
   const [requests, setRequests] = useState([])
   const [statusDrafts, setStatusDrafts] = useState({})
   const [updatingRequestId, setUpdatingRequestId] = useState(null)
+  const [deletingRequestId, setDeletingRequestId] = useState(null)
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, request: null })
   const [summary, setSummary] = useState({
     total: 0,
     pending: 0,
@@ -170,6 +172,73 @@ function RequestsManagement() {
       })
     } finally {
       setUpdatingRequestId(null)
+    }
+  }
+
+  const openDeleteConfirm = (request) => {
+    setDeleteConfirm({ isOpen: true, request })
+  }
+
+  const closeDeleteConfirm = () => {
+    if (deletingRequestId) return
+    setDeleteConfirm({ isOpen: false, request: null })
+  }
+
+  const handleDeleteRequest = async () => {
+    const request = deleteConfirm?.request
+    if (!request?.id) return
+
+    try {
+      setDeletingRequestId(request.id)
+      await apiClient.delete(`/api/subadmin/management/requests/${request.id}`)
+
+      setRequests((previous) => previous.filter((item) => item.id !== request.id))
+      setStatusDrafts((previous) => {
+        const next = { ...previous }
+        delete next[request.id]
+        return next
+      })
+      setSummary((previous) => {
+        const nextTotal = Math.max(0, Number(previous?.total || 0) - 1)
+        const nextPending = request.status === 'pending' ? Math.max(0, Number(previous?.pending || 0) - 1) : Number(previous?.pending || 0)
+        const nextApproved = request.status === 'approved' ? Math.max(0, Number(previous?.approved || 0) - 1) : Number(previous?.approved || 0)
+        const nextRejected = request.status === 'rejected' ? Math.max(0, Number(previous?.rejected || 0) - 1) : Number(previous?.rejected || 0)
+
+        const currentTypeCounts = previous?.typeCounts || {}
+        const requestType = request?.type || 'other'
+        const nextTypeCounts = {
+          ...currentTypeCounts,
+          all: Math.max(0, Number(currentTypeCounts?.all || 0) - 1),
+        }
+
+        if (Object.prototype.hasOwnProperty.call(nextTypeCounts, requestType)) {
+          nextTypeCounts[requestType] = Math.max(0, Number(nextTypeCounts[requestType] || 0) - 1)
+        }
+
+        return {
+          ...previous,
+          total: nextTotal,
+          pending: nextPending,
+          approved: nextApproved,
+          rejected: nextRejected,
+          typeCounts: nextTypeCounts,
+        }
+      })
+
+      showToast({
+        type: 'success',
+        title: 'Deleted',
+        message: 'Request deleted successfully.',
+      })
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Delete Failed',
+        message: error?.response?.data?.message || 'Failed to delete request',
+      })
+    } finally {
+      setDeletingRequestId(null)
+      setDeleteConfirm({ isOpen: false, request: null })
     }
   }
 
@@ -375,6 +444,18 @@ function RequestsManagement() {
                         >
                           {updatingRequestId === item.id ? 'Saving...' : 'Save'}
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => openDeleteConfirm(item)}
+                          disabled={deletingRequestId === item.id}
+                          className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-2 py-1.5 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          title="Delete request"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="currentColor" d="M9 3h6l1 2h4v2H4V5h4zm1 6h2v9h-2zm4 0h2v9h-2zM7 9h2v9H7zm-1 12a2 2 0 0 1-2-2V8h16v11a2 2 0 0 1-2 2z"/>
+                          </svg>
+                          <span>{deletingRequestId === item.id ? 'Deleting...' : 'Delete'}</span>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -430,6 +511,17 @@ function RequestsManagement() {
                       >
                         {updatingRequestId === item.id ? 'Saving...' : 'Save Status'}
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => openDeleteConfirm(item)}
+                        disabled={deletingRequestId === item.id}
+                        className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                          <path fill="currentColor" d="M9 3h6l1 2h4v2H4V5h4zm1 6h2v9h-2zm4 0h2v9h-2zM7 9h2v9H7zm-1 12a2 2 0 0 1-2-2V8h16v11a2 2 0 0 1-2 2z"/>
+                        </svg>
+                        <span>{deletingRequestId === item.id ? 'Deleting...' : 'Delete Request'}</span>
+                      </button>
                     </div>
                     {getDetailItems(item).length > 0 && (
                       <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3 space-y-1">
@@ -473,6 +565,47 @@ function RequestsManagement() {
           </>
         )}
       </div>
+
+      {deleteConfirm.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={closeDeleteConfirm} />
+          <div className="relative w-full max-w-md rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-100">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="#be123c" d="M9 3h6l1 2h4v2H4V5h4zm1 6h2v9h-2zm4 0h2v9h-2zM7 9h2v9H7zm-1 12a2 2 0 0 1-2-2V8h16v11a2 2 0 0 1-2 2z"/>
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Confirm Delete</h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  Delete request from <span className="font-semibold text-gray-900">{deleteConfirm.request?.name || 'this requester'}</span>?
+                </p>
+                <p className="mt-1 text-xs text-rose-700">This action cannot be undone.</p>
+              </div>
+            </div>
+
+            <div className="mt-5 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeDeleteConfirm}
+                disabled={Boolean(deletingRequestId)}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteRequest}
+                disabled={Boolean(deletingRequestId)}
+                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
+              >
+                {deletingRequestId ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -30,6 +30,43 @@ const getBalanceClass = (balance) => {
   return 'text-black'
 }
 
+const parseDisplayDate = (value) => {
+  if (!value || value === '-') return null
+
+  const raw = String(value).trim()
+  if (!raw) return null
+
+  const match = raw.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/)
+  if (match) {
+    const day = Number(match[1])
+    const month = Number(match[2])
+    const year = Number(match[3])
+    const parsed = new Date(year, month - 1, day)
+    if (Number.isNaN(parsed.getTime())) return null
+
+    parsed.setHours(0, 0, 0, 0)
+    return parsed
+  }
+
+  const direct = new Date(raw)
+  if (!Number.isNaN(direct.getTime())) {
+    direct.setHours(0, 0, 0, 0)
+    return direct
+  }
+
+  return null
+}
+
+const getMissingDaysFromDates = (instDate, paidDate) => {
+  const startDate = parseDisplayDate(instDate)
+  const endDate = parseDisplayDate(paidDate)
+  if (!startDate || !endDate) return 0
+
+  const msPerDay = 24 * 60 * 60 * 1000
+  const diffDays = Math.floor((endDate.getTime() - startDate.getTime()) / msPerDay)
+  return Math.max(diffDays, 0)
+}
+
 function Finance() {
   const navigate = useNavigate()
   const { showToast } = useToast()
@@ -279,6 +316,11 @@ function Finance() {
   const statementRows = modalData
     ? getStatementRows(modalData.emiSchedule, modalData.paymentEntries)
     : []
+  const statementRowsWithMissing = statementRows.map((row) => ({
+    ...row,
+    missingDays: getMissingDaysFromDates(row.instDate, row.paidDate),
+  }))
+  const totalMissingDays = statementRowsWithMissing.reduce((sum, row) => sum + Number(row?.missingDays || 0), 0)
   const statementTotalPaid = statementRows.reduce((sum, row) => sum + Number(row?.paidAmt || 0), 0)
   const statementBalance = statementRows.length > 0
     ? Number(statementRows[statementRows.length - 1]?.balance || 0)
@@ -618,10 +660,11 @@ function Finance() {
                           <th className="px-4 py-3 text-left font-semibold">PAID AMT.</th>
                           <th className="px-4 py-3 text-left font-semibold">BALANCE</th>
                           <th className="px-4 py-3 text-left font-semibold">RECEIPT NO.</th>
+                          <th className="px-4 py-3 text-left font-semibold">MISSING DAYS</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {statementRows.map((schedule, idx) => (
+                        {statementRowsWithMissing.map((schedule, idx) => (
                           <tr key={`${schedule.instNo}-${idx}`} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                             <td className="px-4 py-3 font-semibold text-gray-900">{schedule.instNo}</td>
                             <td className="px-4 py-3 text-gray-700">{schedule.instDate}</td>
@@ -632,10 +675,14 @@ function Finance() {
                               {formatBalance(schedule.balance)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">{schedule.receiptNo}</td>
+                            <td className={`px-4 py-3 font-semibold ${schedule.missingDays > 0 ? 'text-red-600' : 'text-green-600'}`}>{schedule.missingDays}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                  <div className="mt-3 text-sm font-semibold text-gray-700">
+                    Total Missing Days: <span className="text-red-600">{totalMissingDays}</span>
                   </div>
                 </div>
               )}

@@ -415,6 +415,29 @@ export const createEmiEntry = async (req, res) => {
 			});
 		}
 
+		const currentEmiProgress = calculateEmiProgress(buyer.finance.emiDates || []);
+		const totalPendingBeforeEntry = currentEmiProgress.reduce(
+			(sum, item) => sum + Number(item?.pendingAmount || 0),
+			0
+		);
+
+		if (totalPendingBeforeEntry <= 0) {
+			return res.status(400).json({
+				success: false,
+				message: "Total paid completed. No EMI will be added further.",
+			});
+		}
+
+		if (paidAmount > totalPendingBeforeEntry) {
+			return res.status(400).json({
+				success: false,
+				message: `Entered amount exceeds pending amount (₹${totalPendingBeforeEntry}).`,
+				data: {
+					pendingAmount: totalPendingBeforeEntry,
+				},
+			});
+		}
+
 		const emiDates = buyer.finance.emiDates;
 		const targetIndex = resolveTargetEmiIndex(emiDates, paymentDate);
 		const hasPendingInstalment = targetIndex >= 0;

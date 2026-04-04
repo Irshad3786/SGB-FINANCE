@@ -88,6 +88,7 @@ const formatBalance = (value) => {
 }
 
 const getBalanceClass = (balance) => {
+  if (balance === null || balance === undefined || balance === '') return 'text-black'
   const amount = Number(balance || 0)
   if (amount < 0) return 'text-green-600'
   if (amount > 0) return 'text-red-600'
@@ -97,16 +98,46 @@ const getBalanceClass = (balance) => {
 const getStatementRows = (emiSchedule = [], paymentEntries = []) => {
   let runningBalance = 0
   const entries = Array.isArray(paymentEntries) ? paymentEntries : []
+  let paymentIndex = 0
+  let blankCarryRows = 0
 
   const rows = emiSchedule.map((schedule, idx) => {
-    const paymentEntry = entries[idx] || null
-    const paidAmt = Number(paymentEntry?.amount ?? 0)
-    const paidDate = paymentEntry?.paidDate || '-'
-    const receiptNo = paymentEntry?.bookNo && paymentEntry?.pageNo
-      ? `${paymentEntry.bookNo}/${paymentEntry.pageNo}`
-      : '-'
-
     const instAmount = Number(schedule?.emi || 0)
+    let paidAmt = 0
+    let paidDate = '-'
+    let receiptNo = '-'
+
+    if (blankCarryRows > 0) {
+      blankCarryRows -= 1
+      return {
+        instNo: Number(schedule?.sno || idx + 1),
+        instDate: schedule?.emiDate || '-',
+        instAmount,
+        paidDate: '-',
+        paidAmt: null,
+        balance: runningBalance,
+        displayBalance: null,
+        receiptNo: '-',
+        skipDisplay: true,
+      }
+    } else if (paymentIndex < entries.length) {
+      const paymentEntry = entries[paymentIndex] || null
+      paidAmt = Number(paymentEntry?.amount ?? 0)
+      paidDate = paymentEntry?.paidDate || '-'
+      receiptNo = paymentEntry?.bookNo && paymentEntry?.pageNo
+        ? `${paymentEntry.bookNo}/${paymentEntry.pageNo}`
+        : '-'
+      paymentIndex += 1
+
+      const remainingAfterCurrent = paidAmt - instAmount
+      if (instAmount > 0 && remainingAfterCurrent > 0) {
+        const fullExtraRows = Math.floor(remainingAfterCurrent / instAmount)
+        const remainder = remainingAfterCurrent % instAmount
+        const halfThresholdRows = remainder >= instAmount * 0.5 ? 1 : 0
+        blankCarryRows = fullExtraRows + halfThresholdRows
+      }
+    }
+
     runningBalance += instAmount - paidAmt
 
     return {
@@ -116,11 +147,12 @@ const getStatementRows = (emiSchedule = [], paymentEntries = []) => {
       paidDate,
       paidAmt,
       balance: runningBalance,
+      displayBalance: runningBalance,
       receiptNo,
     }
   })
 
-  const extraEntries = entries.slice(emiSchedule.length)
+  const extraEntries = entries.slice(paymentIndex)
   extraEntries.forEach((entry, index) => {
     const paidAmt = Number(entry?.amount || 0)
     const receiptNo = entry?.bookNo && entry?.pageNo
@@ -135,6 +167,7 @@ const getStatementRows = (emiSchedule = [], paymentEntries = []) => {
       paidDate: entry?.paidDate || '-',
       paidAmt,
       balance: runningBalance,
+      displayBalance: runningBalance,
       receiptNo,
     })
   })
@@ -448,6 +481,36 @@ function Collection() {
       return
     }
 
+    const pendingAmount = Number(selectedAgreement?.totalPending || 0)
+    const enteredAmount = Number(emiEntryForm.amount)
+
+    if (pendingAmount <= 0) {
+      showToast({
+        type: 'error',
+        title: 'No Pending EMI',
+        message: 'Total paid completed. No EMI will be added further.',
+      })
+      return
+    }
+
+    if (!Number.isFinite(enteredAmount) || enteredAmount <= 0) {
+      showToast({
+        type: 'error',
+        title: 'Validation',
+        message: 'Amount must be a valid number greater than 0',
+      })
+      return
+    }
+
+    if (enteredAmount > pendingAmount) {
+      showToast({
+        type: 'error',
+        title: 'Amount Exceeded',
+        message: `Entered amount exceeds pending amount (₹${toInr(pendingAmount)}).`,
+      })
+      return
+    }
+
     if (hasDuplicateBookPageConflict) {
       showToast({
         type: 'error',
@@ -599,10 +662,10 @@ function Collection() {
     ? getStatementRows(financeModal.emiSchedule, financeModal.paymentEntries)
     : []
   const statementTotalPaid = statementRows.reduce((sum, row) => sum + Number(row?.paidAmt || 0), 0)
-  const statementBalance = statementRows.length > 0
-    ? Number(statementRows[statementRows.length - 1]?.balance || 0)
+  const statementTotalEmi = financeModal
+    ? Number(financeModal?.emiSchedule?.reduce((sum, row) => sum + Number(row?.emi || 0), 0) || 0)
     : 0
-  const statementPending = Math.max(statementBalance, 0)
+  const statementPending = Math.max(statementTotalEmi - statementTotalPaid, 0)
 
   return (
     <div className="p-3 sm:p-6 overflow-x-hidden max-w-full break-words w-full">
@@ -1237,9 +1300,9 @@ function Collection() {
                           <td className="px-4 py-3 text-gray-700">{schedule.instDate}</td>
                           <td className="px-4 py-3 text-gray-700">{schedule.instAmount === '' ? '' : `₹ ${toInr(schedule.instAmount)}`}</td>
                           <td className="px-4 py-3 text-gray-700">{schedule.paidDate}</td>
-                          <td className="px-4 py-3 text-gray-700">₹ {toInr(schedule.paidAmt)}</td>
-                          <td className={`px-4 py-3 font-semibold ${getBalanceClass(schedule.balance)}`}>
-                            {formatBalance(schedule.balance)}
+                          <td className="px-4 py-3 text-gray-700">{schedule.paidAmt === null ? '-' : `₹ ${toInr(schedule.paidAmt)}`}</td>
+                          <td className={`px-4 py-3 font-semibold ${getBalanceClass(schedule.displayBalance ?? schedule.balance)}`}>
+                            {schedule.displayBalance === null ? '-' : formatBalance(schedule.displayBalance)}
                           </td>
                           <td className="px-4 py-3 text-gray-700">{schedule.receiptNo}</td>
                         </tr>

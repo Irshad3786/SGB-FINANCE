@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
+import { useReactToPrint } from 'react-to-print'
 import PublicTopNav from './components/PublicTopNav'
 import Footer from './components/Footer'
 
@@ -7,6 +8,92 @@ const ALLOWED_MONTHS = [6, 10, 12, 15, 18, 24]
 function EmiCalculator() {
   const [financeAmount, setFinanceAmount] = useState('')
   const [selectedMonths, setSelectedMonths] = useState(12)
+  const printAreaRef = useRef(null)
+
+  const handlePrint = useReactToPrint({
+    contentRef: printAreaRef,
+    documentTitle: 'emi-calculator',
+    pageStyle: `
+      @page {
+        size: A4 portrait;
+        margin: 4mm;
+      }
+
+      @media print {
+        * {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
+        .emi-print-root {
+          zoom: 0.7;
+          width: 100%;
+          padding: 8px !important;
+          border-radius: 12px !important;
+        }
+
+        .emi-print-root .text-xs {
+          font-size: 0.95rem !important;
+          line-height: 1.15 !important;
+        }
+
+        .emi-print-root .text-sm {
+          font-size: 1.03rem !important;
+          line-height: 1.18 !important;
+        }
+
+        .emi-print-root .text-lg {
+          font-size: 1.26rem !important;
+          line-height: 1.2 !important;
+        }
+
+        .emi-print-root .text-xl {
+          font-size: 1.42rem !important;
+          line-height: 1.2 !important;
+        }
+
+        .emi-print-root h1 {
+          font-size: 2.2rem !important;
+          line-height: 1.15 !important;
+        }
+
+        .emi-print-root h2 {
+          font-size: 1.3rem !important;
+          line-height: 1.2 !important;
+        }
+
+        .emi-grid-print {
+          gap: 0.45rem !important;
+          margin-top: 0.5rem !important;
+        }
+
+        .emi-two-col {
+          display: grid !important;
+          grid-template-columns: 1fr 1fr !important;
+          align-items: start !important;
+        }
+
+        .emi-print-tight {
+          padding: 0.55rem !important;
+        }
+
+        .emi-list-scroll {
+          max-height: none !important;
+          overflow: visible !important;
+          padding-right: 0 !important;
+        }
+
+        .emi-no-break {
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+
+        .emi-print-btn {
+          display: none !important;
+        }
+      }
+    `,
+  })
 
   const result = useMemo(() => {
     const amount = Number(financeAmount)
@@ -47,7 +134,7 @@ function EmiCalculator() {
       <PublicTopNav />
 
       <section className='mx-auto max-w-4xl px-4 pb-16 pt-12 sm:px-6 lg:px-8'>
-        <div className='rounded-3xl bg-[rgba(224,252,237,0.4)] p-6 md:p-10'>
+        <div ref={printAreaRef} className='emi-print-root rounded-3xl bg-[rgba(224,252,237,0.4)] p-6 md:p-10'>
           <h1 className='text-[2rem] font-black text-[#27563C] md:text-[2.5rem]'>EMI Calculator</h1>
           <p className='mt-2 text-sm font-medium text-[#4B5563] md:text-base'>
             Enter finance amount to view EMI options.
@@ -69,8 +156,8 @@ function EmiCalculator() {
           </div>
 
           {result && (
-            <div className='mt-8 grid grid-cols-1 gap-4'>
-              <div className='rounded-2xl border border-black/10 bg-white p-5'>
+            <div className='emi-grid-print mt-8 grid grid-cols-1 gap-4'>
+              <div className='emi-no-break emi-print-tight rounded-2xl border border-black/10 bg-white p-5'>
                 <h2 className='text-lg font-black text-[#27563C]'>Select Months (Scroll)</h2>
                 <div className='mt-4'>
                   <input
@@ -97,8 +184,8 @@ function EmiCalculator() {
                 </div>
               </div>
 
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                <div className='rounded-2xl border border-black/10 bg-white p-5'>
+              <div className='emi-grid-print emi-two-col grid grid-cols-1 gap-4 md:grid-cols-2'>
+                <div className='emi-no-break emi-print-tight rounded-2xl border border-black/10 bg-white p-5'>
                   <h2 className='text-lg font-black text-[#27563C]'>EMI List</h2>
                   <p className='mt-1 text-xs font-medium text-[#6B7280]'>Showing plans up to selected month</p>
 
@@ -109,7 +196,7 @@ function EmiCalculator() {
                       <span className='text-right'>Monthly EMI</span>
                     </div>
 
-                    <div className='max-h-64 overflow-y-auto pr-1'>
+                    <div className='emi-list-scroll max-h-64 overflow-y-auto pr-1'>
                       {result.emiList.map((item) => (
                         <div
                           key={item.month}
@@ -128,7 +215,7 @@ function EmiCalculator() {
                   </div>
                 </div>
 
-                <div className='rounded-2xl border border-black/10 bg-white p-5'>
+                <div className='emi-no-break emi-print-tight rounded-2xl border border-black/10 bg-white p-5'>
                   <h2 className='text-lg font-black text-[#27563C]'>Breakdown</h2>
                   <p className='mt-1 text-xs font-medium text-[#6B7280]'>How total payable is calculated</p>
 
@@ -147,7 +234,7 @@ function EmiCalculator() {
                     </div>
                   </div>
 
-                  <div className='mt-4 rounded-xl border border-[#27563C]/20 bg-[rgba(224,252,237,0.45)] px-4 py-3'>
+                  <div className='emi-no-break emi-print-tight mt-4 rounded-xl border border-[#27563C]/20 bg-[rgba(224,252,237,0.45)] px-4 py-3'>
                     <div className='flex items-center justify-between'>
                       <span className='text-sm font-bold text-[#27563C]'>Total Amount</span>
                       <span className='text-xl font-black text-[#27563C]'>₹{formatINR(result.total)}</span>
@@ -159,8 +246,8 @@ function EmiCalculator() {
               <div>
                 <button
                   type='button'
-                  onClick={() => window.print()}
-                  className='rounded-xl border-[2px] border-black bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] px-5 py-2 text-sm font-bold text-[#1E3E2B] shadow-[1px_3px_4px_0px_rgba(0,_0,_0,_0.1)]'
+                  onClick={() => handlePrint?.()}
+                  className='emi-print-btn rounded-xl border-[2px] border-black bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] px-5 py-2 text-sm font-bold text-[#1E3E2B] shadow-[1px_3px_4px_0px_rgba(0,_0,_0,_0.1)]'
                 >
                   Print
                 </button>

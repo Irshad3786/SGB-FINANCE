@@ -65,6 +65,16 @@ function Login() {
           localStorage.setItem('userData', JSON.stringify(response.data.data));
         }
 
+        if (role === 'user') {
+          if (response.data.otpSent && response.data.data?.email) {
+            localStorage.setItem('userOtpAutoSentAt', String(Date.now()))
+            localStorage.setItem('userOtpAutoSentEmail', response.data.data.email.toLowerCase())
+          } else {
+            localStorage.removeItem('userOtpAutoSentAt')
+            localStorage.removeItem('userOtpAutoSentEmail')
+          }
+        }
+
         // Redirect based on role
         if (role === 'subadmin') {
           navigate('/subadmin/dashboard')

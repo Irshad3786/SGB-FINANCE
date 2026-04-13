@@ -145,6 +145,18 @@ const loginUser = async (req, res) => {
 			});
 		}
 
+		let otpSent = false;
+		let otpMessage = "";
+		if (!user.isEmailVerified) {
+			const otpResult = await UserOtpVerifyEmail(user);
+			if (otpResult.success) {
+				otpSent = true;
+				otpMessage = "OTP sent to your email. Please verify to continue.";
+			} else {
+				otpMessage = otpResult.message || "Failed to auto-send OTP. Please use resend OTP.";
+			}
+		}
+
 		const { accessToken, refreshToken } =
 			await generateAccessAndRefreshToken(user._id);
 
@@ -161,9 +173,13 @@ const loginUser = async (req, res) => {
 			.cookie("refreshToken", refreshToken, cookieOptions)
 			.json({
 				success: true,
-				message: "Login successful",
+				message: user.isEmailVerified
+					? "Login successful"
+					: "Login successful. Please verify your email with OTP.",
 				accessToken,
 				refreshToken,
+				otpSent,
+				otpMessage,
 				data: {
 					id: user._id,
 					username: user.username,

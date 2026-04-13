@@ -5,12 +5,12 @@ import { useToast } from '../../components/ToastProvider'
 
 function StatCard({ label, value, className, icon }) {
   return (
-    <div className={`flex flex-wrap items-center border-[2px] border-[#f0f0f0] justify-between p-4 shadow-[7px_9px_7px_-4px_rgba(0,_0,_0,_0.25)] rounded-xl ${className} min-h-[72px] hover:shadow-2xl hover:-translate-y-1 transition-all` }>
-      <div>
-        <div className="text-xs font-semibold sm:text-sm text-gray-600">{label}</div>
-        <div className="text-2xl sm:text-3xl font-bold">{value}</div>
+    <div className={`flex w-full flex-col sm:flex-row sm:items-center items-start justify-between gap-3 border-[2px] border-[#f0f0f0] p-3 sm:p-4 shadow-[7px_9px_7px_-4px_rgba(0,_0,_0,_0.25)] rounded-xl ${className} min-h-[96px] sm:min-h-[72px] hover:shadow-2xl hover:-translate-y-1 transition-all`}>
+      <div className="min-w-0 flex-1">
+        <div className="text-[11px] sm:text-sm font-semibold text-gray-600 leading-tight">{label}</div>
+        <div className="mt-1 text-xl sm:text-3xl font-bold leading-tight break-words">{value}</div>
       </div>
-      <div className="ml-4 flex-shrink-0  ">
+      <div className="self-end sm:self-auto flex-shrink-0">
         {icon}
       </div>
     </div>
@@ -215,6 +215,16 @@ export default function Dashboard() {
       totalWithHA: 0,
       totalWithoutHA: 0,
     },
+    requestSummary: {
+      all: 0,
+      finance: 0,
+      contact: 0,
+      support: 0,
+      application: 0,
+      documentation: 0,
+      ticket: 0,
+      other: 0,
+    },
     charts: {
       monthlyCollection: { labels: ['Jan', 'Feb', 'Mar', 'Apr'], values: [0, 0, 0, 0] },
       collectionDistribution: { collectionDone: 0, pendingCollection: 0 },
@@ -245,6 +255,7 @@ export default function Dashboard() {
   }, [showToast])
 
   const stats = dashboard?.stats || {}
+  const requestSummary = dashboard?.requestSummary || {}
   const monthlyCollection = dashboard?.charts?.monthlyCollection || { labels: [], values: [] }
   const collectionDistribution = dashboard?.charts?.collectionDistribution || { collectionDone: 0, pendingCollection: 0 }
 
@@ -301,6 +312,102 @@ export default function Dashboard() {
               icon={(
                 <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-violet-200 rounded-xl flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="#a06cff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path fill="#a06cff" d="M16.948 9.95L14.998 8v6.587c0 .89-1.077 1.337-1.707.707L11.996 14c-.5-.5-1.701-.8-2.502 0s-.5 2 0 2.5l3.603 4.4A3 3 0 0 0 15.42 22H18a1 1 0 0 0 1-1v-6.1a7 7 0 0 0-2.052-4.95"/><path d="M11 2h2a2 2 0 0 1 2 2v2m-4-4c0 1.333.8 4 4 4m-4-4H9m6 4v6M5 12v2a2 2 0 0 0 2 2h2c0-1.333-.8-4-4-4m0 0V6m4-4H7a2 2 0 0 0-2 2v2m4-4c0 1.333-.8 4-4 4"/><circle cx="10" cy="9" r="1" transform="rotate(90 10 9)"/></g></svg>
+                </div>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Request Categories Section */}
+        <div className="bg-white rounded-2xl p-4 sm:p-6 mt-6 border shadow-[0px_6px_7px_-4px_rgba(0,_0,_0,_0.25)]">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg sm:text-xl font-extrabold">Request Categories</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <StatCard
+              label="All Requests"
+              value={requestSummary.all || 0}
+              className="bg-slate-50"
+              icon={(
+                <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-slate-200 rounded-xl flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#475569" d="M4 4h16v12H5.17L4 17.17zM2 2v21l4-4h16V2z"/></svg>
+                </div>
+              )}
+            />
+
+            <StatCard
+              label="Finance Requests"
+              value={requestSummary.finance || 0}
+              className="bg-lime-50"
+              icon={(
+                <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-lime-200 rounded-xl flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#65a30d" d="M12 1a7 7 0 0 0-7 7v1H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1V8a7 7 0 0 0-7-7m-5 8V8a5 5 0 1 1 10 0v1z"/></svg>
+                </div>
+              )}
+            />
+
+            <StatCard
+              label="Contact Requests"
+              value={requestSummary.contact || 0}
+              className="bg-sky-50"
+              icon={(
+                <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-sky-200 rounded-xl flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#0284c7" d="M12 13c1.657 0 3-1.343 3-3V5a3 3 0 1 0-6 0v5c0 1.657 1.343 3 3 3m5-3a1 1 0 0 0-2 0a3 3 0 0 1-6 0a1 1 0 0 0-2 0a5 5 0 0 0 4 4.9V19H8a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2h-3v-4.1A5 5 0 0 0 17 10"/></svg>
+                </div>
+              )}
+            />
+
+            <StatCard
+              label="Support Requests"
+              value={requestSummary.support || 0}
+              className="bg-violet-50"
+              icon={(
+                <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-violet-200 rounded-xl flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#7c3aed" d="M12 2a9 9 0 0 0-9 9v6a3 3 0 0 0 3 3h1v-7H6v-2a6 6 0 1 1 12 0v2h-1v7h1a3 3 0 0 0 3-3v-6a9 9 0 0 0-9-9"/></svg>
+                </div>
+              )}
+            />
+
+            <StatCard
+              label="Application Requests"
+              value={requestSummary.application || 0}
+              className="bg-amber-50"
+              icon={(
+                <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-amber-200 rounded-xl flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#d97706" d="M7 2h7l5 5v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2m6 1.5V8h4.5zM8 12h8v2H8zm0 4h8v2H8z"/></svg>
+                </div>
+              )}
+            />
+
+            <StatCard
+              label="Documentation Requests"
+              value={requestSummary.documentation || 0}
+              className="bg-green-50"
+              icon={(
+                <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-green-200 rounded-xl flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#16a34a" d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2m8 1.5V8h4.5zM8 12h8v2H8zm0 4h8v2H8z"/></svg>
+                </div>
+              )}
+            />
+
+            <StatCard
+              label="Ticket Requests"
+              value={requestSummary.ticket || 0}
+              className="bg-orange-50"
+              icon={(
+                <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-orange-200 rounded-xl flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#ea580c" d="M12 2l3 5l5 1l-3.5 4l1 6l-5.5-2.5L6.5 18l1-6L4 8l5-1z"/></svg>
+                </div>
+              )}
+            />
+
+            <StatCard
+              label="Other Requests"
+              value={requestSummary.other || 0}
+              className="bg-gray-50"
+              icon={(
+                <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-gray-200 rounded-xl flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#334155" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2m1 15h-2v-2h2Zm0-4h-2V7h2Z"/></svg>
                 </div>
               )}
             />

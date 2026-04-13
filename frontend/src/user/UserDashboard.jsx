@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import UserNavbar from './components/UserNavbar'
 import axiosInstance from '../api/axios'
@@ -14,6 +14,7 @@ function UserDashboard() {
   const [otpMessage, setOtpMessage] = useState('')
   const [otpError, setOtpError] = useState('')
   const [sendingOtp, setSendingOtp] = useState(false)
+  const autoOtpSentRef = useRef({})
 
   useEffect(() => {
     // Get user data from localStorage
@@ -78,11 +79,33 @@ function UserDashboard() {
 
   // Auto send OTP when email verification modal is shown
   useEffect(() => {
-    if (showEmailVerification && userData?.email && !sendingOtp) {
-      console.log('Auto-sending OTP to:', userData.email)
-      sendOtp()
+    const email = userData?.email?.toLowerCase()
+    if (!showEmailVerification || !email || sendingOtp) return
+
+    if (autoOtpSentRef.current[email]) return
+    autoOtpSentRef.current[email] = true
+
+    const autoSentEmail = localStorage.getItem('userOtpAutoSentEmail')
+    if (autoSentEmail === email) {
+      setOtpError('')
+      setOtpMessage('✅ OTP sent to your email. Please check your inbox.')
+      return
     }
-  }, [showEmailVerification, userData])
+
+    console.log('Auto-sending OTP to:', email)
+    sendOtp(true)
+  }, [showEmailVerification, userData?.email])
+
+  useEffect(() => {
+    if (!showEmailVerification) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [showEmailVerification])
 
   const fetchFinanceData = async (user) => {
     try {
@@ -115,11 +138,13 @@ function UserDashboard() {
     return 'text-red-600'
   }
 
-  const sendOtp = async () => {
+  const sendOtp = async (isAuto = false) => {
     try {
       setSendingOtp(true)
       setOtpError('')
-      setOtpMessage('')
+      if (!isAuto) {
+        setOtpMessage('')
+      }
 
       console.log('📧 Sending OTP to:', userData?.email)
 
@@ -142,6 +167,13 @@ function UserDashboard() {
       console.error('❌ Error details:', error.response?.data)
       
       const errorMsg = error.response?.data?.message || error.message || 'Error sending OTP'
+
+      if (error.response?.status === 429 && /wait before requesting a new OTP/i.test(errorMsg)) {
+        setOtpError('')
+        setOtpMessage('✅ OTP already sent recently. Please check your inbox and spam folder.')
+        return
+      }
+
       setOtpError(errorMsg)
     } finally {
       setSendingOtp(false)
@@ -180,6 +212,8 @@ function UserDashboard() {
         
         setUserData(updatedUserData)
         localStorage.setItem('userData', JSON.stringify(updatedUserData))
+        localStorage.removeItem('userOtpAutoSentAt')
+        localStorage.removeItem('userOtpAutoSentEmail')
         
         console.log('💾 [Verify OTP] Saved to localStorage:', updatedUserData)
         

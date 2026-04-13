@@ -1,6 +1,7 @@
 import Buyer from "../../models/buyerModel.js";
 import Seller from "../../models/sellerModel.js";
 import CollectionEntry from "../../models/collectionEntryModel.js";
+import Request from "../../models/requestModel.js";
 
 const MONTHS_TO_SHOW = 4;
 
@@ -93,12 +94,16 @@ const getFinanceSummary = (buyers = []) => {
 
 export const getDashboardData = async (req, res) => {
   try {
-    const [buyers, totalSellers, totalCollectionEntries] = await Promise.all([
+    const [buyers, totalSellers, totalCollectionEntries, requestTypeRows, totalRequests] = await Promise.all([
       Buyer.find({})
         .select("mode agreementNo finance.paymentEntries finance.emiDates finance.financeAmount finance.emiAmount finance.months finance.status")
         .lean(),
       Seller.countDocuments({}),
       CollectionEntry.countDocuments({}),
+      Request.aggregate([
+        { $group: { _id: "$requestType", count: { $sum: 1 } } },
+      ]),
+      Request.countDocuments({}),
     ]);
 
     const totalBuyers = buyers.length;
@@ -114,6 +119,24 @@ export const getDashboardData = async (req, res) => {
     const financeSummary = getFinanceSummary(buyers);
     const monthlyLabels = getLastMonthLabels(MONTHS_TO_SHOW);
     const monthlyValues = getMonthlyCollection(buyers, MONTHS_TO_SHOW);
+
+    const requestTypeCounts = {
+      all: totalRequests,
+      finance: 0,
+      contact: 0,
+      support: 0,
+      application: 0,
+      documentation: 0,
+      ticket: 0,
+      other: 0,
+    };
+
+    requestTypeRows.forEach((row) => {
+      const key = String(row?._id || "other").toLowerCase();
+      if (Object.prototype.hasOwnProperty.call(requestTypeCounts, key)) {
+        requestTypeCounts[key] = Number(row?.count || 0);
+      }
+    });
 
     return res.status(200).json({
       success: true,
@@ -132,6 +155,7 @@ export const getDashboardData = async (req, res) => {
           totalWithoutHA: Math.round(financeSummary.totalWithoutHA),
           totalCollections: totalCollectionEntries,
         },
+        requestSummary: requestTypeCounts,
         charts: {
           monthlyCollection: {
             labels: monthlyLabels,

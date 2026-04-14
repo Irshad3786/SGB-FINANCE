@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { useReactToPrint } from 'react-to-print'
 import RefinanceForm from '../components/RefinanceForm'
 import InvoicePreviewModal from '../components/InvoicePreviewModal'
-import { apDistricts, apMandals } from '../constants/apLocations'
+import { apDistricts, apMandals, fetchLocationLookup, normalizeKey } from '../constants/apLocations'
 import apiClient from '../../api/axios'
 import { useToast } from '../../components/ToastProvider'
 
@@ -73,6 +73,9 @@ function Buy() {
       const [showRefinance, setShowRefinance] = useState(false)
       const [showInvoicePreview, setShowInvoicePreview] = useState(false)
       const [invoice, setInvoice] = useState(null)
+      const [districtOptions, setDistrictOptions] = useState(apDistricts)
+      const [allMandalOptions, setAllMandalOptions] = useState(apMandals)
+      const [mandalsByDistrict, setMandalsByDistrict] = useState({})
       const [suggestedAgreementNo, setSuggestedAgreementNo] = useState('')
       const invoiceRef = useRef(null)
     
@@ -112,6 +115,32 @@ function Buy() {
 
       useEffect(() => {
         fetchNextAgreementNumber()
+      }, [])
+
+      useEffect(() => {
+        let isMounted = true
+
+        const loadLocationOptions = async () => {
+          try {
+            const lookup = await fetchLocationLookup()
+            if (!isMounted) return
+
+            setDistrictOptions(lookup.districtOptions.length > 0 ? lookup.districtOptions : apDistricts)
+            setAllMandalOptions(lookup.mandalOptions.length > 0 ? lookup.mandalOptions : apMandals)
+            setMandalsByDistrict(lookup.mandalsByDistrict || {})
+          } catch {
+            if (!isMounted) return
+            setDistrictOptions(apDistricts)
+            setAllMandalOptions(apMandals)
+            setMandalsByDistrict({})
+          }
+        }
+
+        loadLocationOptions()
+
+        return () => {
+          isMounted = false
+        }
       }, [])
 
       function buildBuyerInvoice(responseData) {
@@ -190,6 +219,42 @@ function Buy() {
           customMandal: value === 'Other' ? prev.customMandal : ''
         }))
       }
+
+      function onGuarantorDistrictChange(e) {
+        const value = e.target.value
+        setForm(prev => ({
+          ...prev,
+          guarantorDistrict: value,
+          guarantorMandal: '',
+          guarantorCustomMandal: '',
+          guarantorCustomDistrict: value === 'Other' ? prev.guarantorCustomDistrict : ''
+        }))
+      }
+
+      function onGuarantorMandalChange(e) {
+        const value = e.target.value
+        setForm(prev => ({
+          ...prev,
+          guarantorMandal: value,
+          guarantorCustomMandal: value === 'Other' ? prev.guarantorCustomMandal : ''
+        }))
+      }
+
+      const selectedDistrictMandals = form.district && form.district !== 'Other'
+        ? (mandalsByDistrict[normalizeKey(form.district)] || [])
+        : []
+
+      const selectedGuarantorDistrictMandals = form.guarantorDistrict && form.guarantorDistrict !== 'Other'
+        ? (mandalsByDistrict[normalizeKey(form.guarantorDistrict)] || [])
+        : []
+
+      const mandalOptions = selectedDistrictMandals.length > 0
+        ? [...selectedDistrictMandals, 'Other']
+        : allMandalOptions
+
+      const guarantorMandalOptions = selectedGuarantorDistrictMandals.length > 0
+        ? [...selectedGuarantorDistrictMandals, 'Other']
+        : allMandalOptions
     
       function onFileChange(e, key) {
         const file = e.target.files[0] || null
@@ -572,7 +637,7 @@ function Buy() {
             </div>
           )}
           <datalist id="district-options-buy">
-            {apDistricts.map((d) => (
+            {districtOptions.map((d) => (
               <option key={d} value={d} />
             ))}
           </datalist>
@@ -606,7 +671,7 @@ function Buy() {
             </div>
           )}
           <datalist id="mandal-options-buy">
-            {apMandals.map((m) => (
+            {mandalOptions.map((m) => (
               <option key={m} value={m} />
             ))}
           </datalist>
@@ -905,7 +970,7 @@ function Buy() {
 
               <label className={labelClass}>Guarantor district</label>
               <div className="relative">
-                <input name="guarantorDistrict" value={form.guarantorDistrict} onChange={onChange} list="guarantor-district-options-buy" placeholder="Select district" className={inputBase} />
+                <input name="guarantorDistrict" value={form.guarantorDistrict} onChange={onGuarantorDistrictChange} list="guarantor-district-options-buy" placeholder="Select district" className={inputBase} />
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M12 11.5A2.5 2.5 0 0 1 9.5 9A2.5 2.5 0 0 1 12 6.5A2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/></svg></div>
               </div>
               {form.guarantorDistrict === 'Other' && (
@@ -915,14 +980,14 @@ function Buy() {
                 </div>
               )}
               <datalist id="guarantor-district-options-buy">
-                {apDistricts.map((d) => (
+                {districtOptions.map((d) => (
                   <option key={d} value={d} />
                 ))}
               </datalist>
 
               <label className={labelClass}>Guarantor mandal</label>
               <div className="relative">
-                <input name="guarantorMandal" value={form.guarantorMandal} onChange={onChange} list="guarantor-mandal-options-buy" placeholder="Select mandal" className={inputBase} />
+                <input name="guarantorMandal" value={form.guarantorMandal} onChange={onGuarantorMandalChange} list="guarantor-mandal-options-buy" placeholder="Select mandal" className={inputBase} />
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M12 11.5A2.5 2.5 0 0 1 9.5 9A2.5 2.5 0 0 1 12 6.5A2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/></svg></div>
               </div>
               {form.guarantorMandal === 'Other' && (
@@ -932,7 +997,7 @@ function Buy() {
                 </div>
               )}
               <datalist id="guarantor-mandal-options-buy">
-                {apMandals.map((m) => (
+                {guarantorMandalOptions.map((m) => (
                   <option key={m} value={m} />
                 ))}
               </datalist>

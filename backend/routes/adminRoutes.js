@@ -20,6 +20,13 @@ import {
   getCreatedSubAdmins,
   updateCreatedSubAdmin,
 } from "../controllers/AdminManagementController/subAdminManagementController.js";
+import {
+  createDistrictLocation,
+  deleteDistrictLocation,
+  getDistrictLocations,
+  getDistrictMandals,
+  updateDistrictLocation,
+} from "../controllers/AdminManagementController/districtLocationController.js";
 import { otpRateLimiter } from "../middlewares/rateLimitMiddleware.js";
 
 const router = express.Router();
@@ -44,5 +51,12 @@ router.post("/logOutAdmin",verifyAdminToken,logOutAdmin);
 // created sub-admin management routes
 router.get("/subadmins", verifyAdminToken, getCreatedSubAdmins);
 router.put("/subadmins/:id", verifyAdminToken, updateCreatedSubAdmin);
+
+// district / mandal management routes
+router.get("/district-locations", verifyAdminToken, getDistrictLocations);
+router.get("/district-locations/:district/mandals", verifyAdminToken, getDistrictMandals);
+router.post("/district-locations", verifyAdminToken, createDistrictLocation);
+router.put("/district-locations/:id", verifyAdminToken, updateDistrictLocation);
+router.delete("/district-locations/:id", verifyAdminToken, deleteDistrictLocation);
 
 export default router;

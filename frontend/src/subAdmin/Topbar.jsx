@@ -34,7 +34,7 @@ function Topbar({topbarData , data, title}) {
   return (
     <header className="w-full h-20 bg-white border-b shadow-sm flex items-center justify-between px-6 gap-4">
       
-       {data  &&( <div  onClick={() => {
+      {data  &&( <div className="cursor-pointer" onClick={() => {
         setSidebarOpen(!data)
         topbarData(!data)}
         }>

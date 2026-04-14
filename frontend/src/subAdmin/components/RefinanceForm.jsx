@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
-import { apDistricts, apMandals } from "../constants/apLocations";
+import { apDistricts, apMandals, fetchLocationLookup, normalizeKey } from "../constants/apLocations";
 import apiClient from "../../api/axios";
 import { useToast } from "../../components/ToastProvider";
 import InvoicePreviewModal from "./InvoicePreviewModal";
@@ -67,6 +67,9 @@ function RefinanceForm({ inputBase, labelClass }) {
   const [showGuarantor, setShowGuarantor] = useState(false);
   const [showInvoicePreview, setShowInvoicePreview] = useState(false);
   const [invoice, setInvoice] = useState(null);
+  const [districtOptions, setDistrictOptions] = useState(apDistricts);
+  const [allMandalOptions, setAllMandalOptions] = useState(apMandals);
+  const [mandalsByDistrict, setMandalsByDistrict] = useState({});
   const invoiceRef = useRef(null);
   const { showToast } = useToast();
   const printInvoice = useReactToPrint({
@@ -103,6 +106,32 @@ function RefinanceForm({ inputBase, labelClass }) {
 
   useEffect(() => {
     fetchNextAgreementNumber();
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadLocationOptions = async () => {
+      try {
+        const lookup = await fetchLocationLookup();
+        if (!isMounted) return;
+
+        setDistrictOptions(lookup.districtOptions.length > 0 ? lookup.districtOptions : apDistricts);
+        setAllMandalOptions(lookup.mandalOptions.length > 0 ? lookup.mandalOptions : apMandals);
+        setMandalsByDistrict(lookup.mandalsByDistrict || {});
+      } catch {
+        if (!isMounted) return;
+        setDistrictOptions(apDistricts);
+        setAllMandalOptions(apMandals);
+        setMandalsByDistrict({});
+      }
+    };
+
+    loadLocationOptions();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const buildRefinanceInvoice = (responseData) => {
@@ -185,6 +214,42 @@ function RefinanceForm({ inputBase, labelClass }) {
       customMandal: value === "Other" ? prev.customMandal : "",
     }));
   };
+
+  const onGuarantorDistrictChange = (e) => {
+    const value = e.target.value;
+    setForm((prev) => ({
+      ...prev,
+      guarantorDistrict: value,
+      guarantorMandal: "",
+      guarantorCustomMandal: "",
+      guarantorCustomDistrict: value === "Other" ? prev.guarantorCustomDistrict : "",
+    }));
+  };
+
+  const onGuarantorMandalChange = (e) => {
+    const value = e.target.value;
+    setForm((prev) => ({
+      ...prev,
+      guarantorMandal: value,
+      guarantorCustomMandal: value === "Other" ? prev.guarantorCustomMandal : "",
+    }));
+  };
+
+  const selectedDistrictMandals = form.district && form.district !== "Other"
+    ? (mandalsByDistrict[normalizeKey(form.district)] || [])
+    : [];
+
+  const selectedGuarantorDistrictMandals = form.guarantorDistrict && form.guarantorDistrict !== "Other"
+    ? (mandalsByDistrict[normalizeKey(form.guarantorDistrict)] || [])
+    : [];
+
+  const mandalOptions = selectedDistrictMandals.length > 0
+    ? [...selectedDistrictMandals, "Other"]
+    : allMandalOptions;
+
+  const guarantorMandalOptions = selectedGuarantorDistrictMandals.length > 0
+    ? [...selectedGuarantorDistrictMandals, "Other"]
+    : allMandalOptions;
 
   const onFileChange = (e, key) => {
     const file = e.target.files?.[0] || null;
@@ -538,7 +603,7 @@ function RefinanceForm({ inputBase, labelClass }) {
         </div>
       )}
       <datalist id="district-options-refi">
-        {apDistricts.map((d) => (
+        {districtOptions.map((d) => (
           <option key={d} value={d} />
         ))}
       </datalist>
@@ -572,7 +637,7 @@ function RefinanceForm({ inputBase, labelClass }) {
         </div>
       )}
       <datalist id="mandal-options-refi">
-        {apMandals.map((m) => (
+        {mandalOptions.map((m) => (
           <option key={m} value={m} />
         ))}
       </datalist>
@@ -938,7 +1003,7 @@ function RefinanceForm({ inputBase, labelClass }) {
             <input
               name="guarantorDistrict"
               value={form.guarantorDistrict}
-              onChange={onChange}
+              onChange={onGuarantorDistrictChange}
               list="guarantor-district-options-refi"
               placeholder="Select district"
               className={baseInput}
@@ -959,7 +1024,7 @@ function RefinanceForm({ inputBase, labelClass }) {
             </div>
           )}
           <datalist id="guarantor-district-options-refi">
-            {apDistricts.map((d) => (
+            {districtOptions.map((d) => (
               <option key={d} value={d} />
             ))}
           </datalist>
@@ -969,7 +1034,7 @@ function RefinanceForm({ inputBase, labelClass }) {
             <input
               name="guarantorMandal"
               value={form.guarantorMandal}
-              onChange={onChange}
+              onChange={onGuarantorMandalChange}
               list="guarantor-mandal-options-refi"
               placeholder="Select mandal"
               className={baseInput}
@@ -990,7 +1055,7 @@ function RefinanceForm({ inputBase, labelClass }) {
             </div>
           )}
           <datalist id="guarantor-mandal-options-refi">
-            {apMandals.map((m) => (
+            {guarantorMandalOptions.map((m) => (
               <option key={m} value={m} />
             ))}
           </datalist>

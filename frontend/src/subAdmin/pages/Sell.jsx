@@ -1,11 +1,11 @@
 import React from 'react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useReactToPrint } from 'react-to-print'
 import RefinanceForm from '../components/RefinanceForm'
 import InvoicePreviewModal from '../components/InvoicePreviewModal'
-import { apDistricts, apMandals } from '../constants/apLocations'
+import { apDistricts, apMandals, fetchLocationLookup, normalizeKey } from '../constants/apLocations'
 import apiClient from '../../api/axios'
 import { useToast } from '../../components/ToastProvider'
 
@@ -49,6 +49,9 @@ function Sell() {
   const [showRefinance, setShowRefinance] = useState(false)
   const [showInvoicePreview, setShowInvoicePreview] = useState(false)
   const [invoice, setInvoice] = useState(null)
+  const [districtOptions, setDistrictOptions] = useState(apDistricts)
+  const [allMandalOptions, setAllMandalOptions] = useState(apMandals)
+  const [mandalsByDistrict, setMandalsByDistrict] = useState({})
   const invoiceRef = useRef(null)
 
   const inputBase = 'w-full pl-10 px-3 py-2 rounded-xl border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a] pr-4 text-sm'
@@ -65,6 +68,40 @@ function Sell() {
   const handleInvoicePrint = () => {
     printInvoice?.()
   }
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadLocationOptions = async () => {
+      try {
+        const lookup = await fetchLocationLookup()
+        if (!isMounted) return
+
+        setDistrictOptions(lookup.districtOptions.length > 0 ? lookup.districtOptions : apDistricts)
+        setAllMandalOptions(lookup.mandalOptions.length > 0 ? lookup.mandalOptions : apMandals)
+        setMandalsByDistrict(lookup.mandalsByDistrict || {})
+      } catch {
+        if (!isMounted) return
+        setDistrictOptions(apDistricts)
+        setAllMandalOptions(apMandals)
+        setMandalsByDistrict({})
+      }
+    }
+
+    loadLocationOptions()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const selectedDistrictMandals = form.district && form.district !== 'Other'
+    ? (mandalsByDistrict[normalizeKey(form.district)] || [])
+    : []
+
+  const mandalOptions = selectedDistrictMandals.length > 0
+    ? [...selectedDistrictMandals, 'Other']
+    : allMandalOptions
 
   function buildSellerInvoice(responseData) {
     const saved = responseData?.data || {}
@@ -463,7 +500,7 @@ function Sell() {
               </div>
             )}
             <datalist id="district-options-sell">
-              {apDistricts.map((d) => (
+              {districtOptions.map((d) => (
                 <option key={d} value={d} />
               ))}
             </datalist>
@@ -497,7 +534,7 @@ function Sell() {
               </div>
             )}
             <datalist id="mandal-options-sell">
-              {apMandals.map((m) => (
+              {mandalOptions.map((m) => (
                 <option key={m} value={m} />
               ))}
             </datalist>

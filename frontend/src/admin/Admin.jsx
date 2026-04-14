@@ -6,6 +6,7 @@ import Footer from '../home/components/Footer'
 import ChangePasswordModal from './components/ChangePasswordModal'
 import LogoutConfirmModal from './components/LogoutConfirmModal'
 import EditSubAdminModal from './components/EditSubAdminModal'
+import DistrictManagement from './components/DistrictManagement'
 import SubAdminList from './components/SubAdminList'
 import SubAdminOtpModal from './components/SubAdminOtpModal'
 
@@ -16,7 +17,7 @@ function Admin() {
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false)
   const [otpToken, setOtpToken] = useState('')
   const [registrationEmail, setRegistrationEmail] = useState('')
-  const [activeView, setActiveView] = useState('create') // 'create' or 'manage'
+  const [activeView, setActiveView] = useState('create') // 'create', 'manage', or 'districts'
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -313,6 +314,16 @@ function Admin() {
               }`}
             >
               Manage SubAdmins
+            </button>
+            <button
+              onClick={() => setActiveView('districts')}
+              className={`px-6 py-3 font-semibold transition-all ${
+                activeView === 'districts'
+                  ? 'text-[#0e6b53] border-b-2 border-[#40FF00] -mb-[2px]'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Districts
             </button>
           </div>
 
@@ -627,6 +638,13 @@ function Admin() {
           {activeView === 'manage' && (
             <div className="bg-[#eafef2] rounded-3xl p-6 md:p-10 shadow-sm">
               <SubAdminList />
+            </div>
+          )}
+
+          {/* District Management View */}
+          {activeView === 'districts' && (
+            <div className="bg-[#eafef2] rounded-3xl p-6 md:p-10 shadow-sm">
+              <DistrictManagement />
             </div>
           )}
         </div>

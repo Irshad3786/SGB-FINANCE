@@ -1,3 +1,5 @@
+import apiClient from '../../api/axios'
+
 export const apDistricts = [
   "Alluri Sitharama Raju",
   "Anakapalli",
@@ -261,3 +263,80 @@ export const apMandals = [
   "Zarugumilli",
   "Other"
 ];
+
+const normalizeText = (value) => String(value || '').replace(/\s+/g, ' ').trim()
+
+const normalizeKey = (value) => normalizeText(value).toLowerCase()
+
+const dedupeStrings = (values = []) => {
+  const seen = new Set()
+  const result = []
+
+  values.forEach((value) => {
+    const text = normalizeText(value)
+    const key = normalizeKey(text)
+
+    if (!text || seen.has(key)) {
+      return
+    }
+
+    seen.add(key)
+    result.push(text)
+  })
+
+  return result
+}
+
+export const buildLocationLookup = (locations = []) => {
+  const districtOptions = []
+  const mandalOptions = []
+  const mandalsByDistrict = {}
+  const districtMap = {}
+
+  locations.forEach((location) => {
+    const district = normalizeText(location?.district)
+    if (!district) {
+      return
+    }
+
+    const districtKey = normalizeKey(district)
+    const mandals = dedupeStrings(location?.mandals || [])
+
+    districtOptions.push(district)
+    mandalOptions.push(...mandals)
+    mandalsByDistrict[districtKey] = mandals
+    districtMap[districtKey] = {
+      district,
+      mandals,
+    }
+  })
+
+  return {
+    districtOptions: [...dedupeStrings([...districtOptions, ...apDistricts.filter((item) => item !== 'Other')]), 'Other'],
+    mandalOptions: [...dedupeStrings([...mandalOptions, ...apMandals.filter((item) => item !== 'Other')]), 'Other'],
+    mandalsByDistrict,
+    districtMap,
+  }
+}
+
+export const fetchLocationLookup = async () => {
+  const response = await apiClient.get('/api/subadmin/management/district-locations')
+  const locations = Array.isArray(response?.data?.data) ? response.data.data : []
+  return buildLocationLookup(locations)
+}
+
+export const getMandalsForDistrict = async (district) => {
+  const districtName = normalizeText(district)
+
+  if (!districtName) {
+    return []
+  }
+
+  const response = await apiClient.get(
+    `/api/subadmin/management/district-locations/${encodeURIComponent(districtName)}/mandals`
+  )
+
+  return Array.isArray(response?.data?.data?.mandals) ? response.data.data.mandals : []
+}
+
+export { normalizeKey }

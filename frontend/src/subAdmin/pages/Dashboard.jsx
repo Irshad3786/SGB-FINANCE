@@ -3,12 +3,12 @@ import Chart from 'chart.js/auto'
 import apiClient from '../../api/axios'
 import { useToast } from '../../components/ToastProvider'
 
-function StatCard({ label, value, className, icon }) {
+function StatCard({ label, value, className, icon, valueClassName = '' }) {
   return (
     <div className={`flex w-full flex-col sm:flex-row sm:items-center items-start justify-between gap-3 border-[2px] border-[#f0f0f0] p-3 sm:p-4 shadow-[7px_9px_7px_-4px_rgba(0,_0,_0,_0.25)] rounded-xl ${className} min-h-[96px] sm:min-h-[72px] hover:shadow-2xl hover:-translate-y-1 transition-all`}>
       <div className="min-w-0 flex-1">
         <div className="text-[11px] sm:text-sm font-semibold text-gray-600 leading-tight">{label}</div>
-        <div className="mt-1 text-xl sm:text-3xl font-bold leading-tight break-words">{value}</div>
+        <div className={`mt-1 text-xl sm:text-3xl font-bold leading-tight break-words ${valueClassName}`}>{value}</div>
       </div>
       <div className="self-end sm:self-auto flex-shrink-0">
         {icon}
@@ -460,10 +460,11 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg sm:text-xl font-extrabold">Finance</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <StatCard
               label="Total Financed Amount"
               value={`₹ ${Number(stats.totalFinancedAmount || 0).toLocaleString('en-IN')}`}
+              valueClassName="text-lg sm:text-2xl whitespace-nowrap"
               className="bg-purple-50"
               icon={(
                 <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-purple-200 rounded-xl flex items-center justify-center">
@@ -475,21 +476,11 @@ export default function Dashboard() {
             <StatCard
               label="Total With HA"
               value={`₹ ${Number(stats.totalWithHA || 0).toLocaleString('en-IN')}`}
+              valueClassName="text-lg sm:text-2xl whitespace-nowrap"
               className="bg-orange-50"
               icon={(
                 <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-orange-200 rounded-xl flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><path fill="#ea580c" d="M2.75 2a.75.75 0 0 1 .75.75v12.5c0 .69.56 1.25 1.25 1.25h12.5a.75.75 0 0 1 0 1.5H4.75A2.75 2.75 0 0 1 2 15.25V2.75A.75.75 0 0 1 2.75 2M10 7.5a2.5 2.5 0 1 1-5 0a2.5 2.5 0 0 1 5 0m4.5.5a2.5 2.5 0 1 0 0-5a2.5 2.5 0 0 0 0 5m.5 4.5a2.5 2.5 0 1 1-5 0a2.5 2.5 0 0 1 5 0"/></svg>
-                </div>
-              )}
-            />
-
-            <StatCard
-              label="Total Without HA"
-              value={`₹ ${Number(stats.totalWithoutHA || 0).toLocaleString('en-IN')}`}
-              className="bg-green-50"
-              icon={(
-                <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-green-200 rounded-xl flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><path fill="#22c55e" d="M2.5 2a.5.5 0 0 1 .5.5v13A1.5 1.5 0 0 0 4.5 17h13a.5.5 0 0 1 0 1h-13A2.5 2.5 0 0 1 2 15.5v-13a.5.5 0 0 1 .5-.5M5 7.5a2.5 2.5 0 1 1 5 0a2.5 2.5 0 0 1-5 0M7.5 6a1.5 1.5 0 1 0 0 3a1.5 1.5 0 0 0 0-3m7-3a2.5 2.5 0 1 0 0 5a2.5 2.5 0 0 0 0-5M13 5.5a1.5 1.5 0 1 1 3 0a1.5 1.5 0 0 1-3 0m-3 7a2.5 2.5 0 1 1 5 0a2.5 2.5 0 0 1-5 0m2.5-1.5a1.5 1.5 0 1 0 0 3a1.5 1.5 0 0 0 0-3"/></svg>
                 </div>
               )}
             />

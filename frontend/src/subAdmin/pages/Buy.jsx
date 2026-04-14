@@ -1,4 +1,5 @@
 import React from 'react'
+import { useEffect } from 'react'
 import { useState } from 'react'
 import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -9,68 +10,70 @@ import { apDistricts, apMandals } from '../constants/apLocations'
 import apiClient from '../../api/axios'
 import { useToast } from '../../components/ToastProvider'
 
+const INITIAL_BUY_FORM = {
+  fullName: '',
+  soWoCo: '',
+  occupation: '',
+  phone: '',
+  alternatePhone: '',
+  aadhaar: '',
+  vehicleName: '',
+  model: '',
+  vehicleNo: '',
+  chassisNo: '',
+  saleAmount: '',
+  dob: '2000-01-01',
+  district: '',
+  customDistrict: '',
+  mandal: '',
+  customMandal: '',
+  street: '',
+  address: '',
+  pendingAmount: '',
+  pendingDate: '',
+  isFinanced: false,
+  agreementNo: '',
+  financeAmount: '',
+  emiDate: '',
+  emiMonths: '',
+  emiAmount: '',
+  guarantorName: '',
+  guarantorSoWoCo: '',
+  guarantorOccupation: '',
+  guarantorPhone: '',
+  guarantorAlternatePhone: '',
+  guarantorAadhaar: '',
+  guarantorDob: '2000-01-01',
+  guarantorDistrict: '',
+  guarantorCustomDistrict: '',
+  guarantorMandal: '',
+  guarantorCustomMandal: '',
+  guarantorAddress: '',
+  referralName: '',
+  referralPhone: '',
+}
+
+const INITIAL_BUY_FILES = {
+  aadhaarFront: null,
+  aadhaarBack: null,
+  profile: null,
+  guarantorPhoto: null,
+}
+
 function Buy() {
     const [role, setRole] = useState('buyer')
      
         const navigate = useNavigate()
-      const [form, setForm] = useState({
-        fullName: '',
-        soWoCo: '',
-        occupation: '',
-        phone: '',
-        alternatePhone: '',
-        aadhaar: '',
-        vehicleName: '',
-        model: '',
-        vehicleNo: '',
-        chassisNo: '',
-        saleAmount: '',
-        dob: '',
-        district: '',
-        customDistrict: '',
-        mandal: '',
-        customMandal: '',
-        street: '',
-        address: '',
-        // additional fields
-        pendingAmount: '',
-        pendingDate: '',
-        isFinanced: false,
-        agreementNo: '',
-        financeAmount: '',
-        emiDate: '',
-        emiMonths: '',
-        emiAmount: '',
-        // guarantor
-        guarantorName: '',
-        guarantorSoWoCo: '',
-        guarantorOccupation: '',
-        guarantorPhone: '',
-        guarantorAlternatePhone: '',
-        guarantorAadhaar: '',
-        guarantorDob: '',
-        guarantorDistrict: '',
-        guarantorCustomDistrict: '',
-        guarantorMandal: '',
-        guarantorCustomMandal: '',
-        guarantorAddress: '',
-        referralName: '',
-        referralPhone: '',
-        
-      })
+      const [form, setForm] = useState(INITIAL_BUY_FORM)
     
-      const [files, setFiles] = useState({
-        aadhaarFront: null,
-        aadhaarBack: null,
-        profile: null,
-        guarantorPhoto: null
-      })
+      const [files, setFiles] = useState(INITIAL_BUY_FILES)
 
       const [showPending, setShowPending] = useState(false)
       const [showGuarantor, setShowGuarantor] = useState(false)
       const [showRefinance, setShowRefinance] = useState(false)
       const [showInvoicePreview, setShowInvoicePreview] = useState(false)
       const [invoice, setInvoice] = useState(null)
+      const [suggestedAgreementNo, setSuggestedAgreementNo] = useState('')
       const invoiceRef = useRef(null)
     
       const inputBase = 'w-full pl-10 px-3 py-2 rounded-xl border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a] pr-4 text-sm'
@@ -87,6 +90,29 @@ function Buy() {
       const handleInvoicePrint = () => {
         printInvoice?.()
       }
+
+      const fetchNextAgreementNumber = async (forceReplace = false) => {
+        try {
+          const response = await apiClient.get('/api/subadmin/management/next-agreement-number')
+          const nextAgreementNo = response?.data?.data?.agreementNo || ''
+
+          if (nextAgreementNo) {
+            setSuggestedAgreementNo(nextAgreementNo)
+            setForm((prev) => {
+              if (forceReplace || !prev.agreementNo) {
+                return { ...prev, agreementNo: nextAgreementNo }
+              }
+              return prev
+            })
+          }
+        } catch {
+          // Keep manual entry available if auto-number API fails.
+        }
+      }
+
+      useEffect(() => {
+        fetchNextAgreementNumber()
+      }, [])
 
       function buildBuyerInvoice(responseData) {
         const saved = responseData?.data || {}
@@ -122,6 +148,26 @@ function Buy() {
     
       function onChange(e) {
         const { name, value } = e.target
+        const phoneFields = ['phone', 'alternatePhone', 'referralPhone', 'guarantorPhone', 'guarantorAlternatePhone']
+        const aadhaarFields = ['aadhaar', 'guarantorAadhaar']
+
+        if (phoneFields.includes(name)) {
+          const digitsOnly = value.replace(/\D/g, '').slice(0, 10)
+          setForm(prev => ({ ...prev, [name]: digitsOnly }))
+          return
+        }
+
+        if (aadhaarFields.includes(name)) {
+          const digitsOnly = value.replace(/\D/g, '').slice(0, 12)
+          setForm(prev => ({ ...prev, [name]: digitsOnly }))
+          return
+        }
+
+        if (name === 'vehicleNo') {
+          setForm(prev => ({ ...prev, [name]: value.slice(0, 10) }))
+          return
+        }
+
         setForm(prev => ({ ...prev, [name]: value }))
       }
 
@@ -153,6 +199,29 @@ function Buy() {
       async function onSubmit(e) {
         e.preventDefault()
         try {
+          const phoneFields = ['phone', 'alternatePhone', 'referralPhone', 'guarantorPhone', 'guarantorAlternatePhone']
+          const aadhaarFields = ['aadhaar', 'guarantorAadhaar']
+
+          const invalidPhoneField = phoneFields.find((field) => form[field] && form[field].length !== 10)
+          if (invalidPhoneField) {
+            showToast({
+              type: 'error',
+              title: 'Invalid Phone Number',
+              message: 'Phone numbers must be exactly 10 digits',
+            })
+            return
+          }
+
+          const invalidAadhaarField = aadhaarFields.find((field) => form[field] && form[field].length !== 12)
+          if (invalidAadhaarField) {
+            showToast({
+              type: 'error',
+              title: 'Invalid Aadhaar Number',
+              message: 'Aadhaar number must be exactly 12 digits',
+            })
+            return
+          }
+
           const payload = {
             role,
             mode: 'buy',
@@ -168,6 +237,11 @@ function Buy() {
           })
           setInvoice(buildBuyerInvoice(response.data))
           setShowInvoicePreview(true)
+          setForm(INITIAL_BUY_FORM)
+          setFiles(INITIAL_BUY_FILES)
+          setShowPending(false)
+          setShowGuarantor(false)
+          fetchNextAgreementNumber(true)
         } catch (error) {
           const errorData = error?.response?.data
           const requiresRewriteConfirm =
@@ -204,6 +278,11 @@ function Buy() {
               })
               setInvoice(buildBuyerInvoice(overwriteResponse.data))
               setShowInvoicePreview(true)
+              setForm(INITIAL_BUY_FORM)
+              setFiles(INITIAL_BUY_FILES)
+              setShowPending(false)
+              setShowGuarantor(false)
+              fetchNextAgreementNumber(true)
             } catch (overwriteError) {
               console.error('buyer rewrite error:', overwriteError?.response?.data || overwriteError.message)
               showToast({
@@ -744,7 +823,7 @@ function Buy() {
                   name="agreementNo"
                   value={form.agreementNo}
                   onChange={onChange}
-                  placeholder="Enter agreement no"
+                  placeholder={suggestedAgreementNo || 'Enter agreement no'}
                   className={inputBase}
                 />
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" viewBox="0 0 56 56"><path fill="#a6a6a6" d="M8.746 37.703h7.149l-2.133 10.594a4 4 0 0 0-.07.75c0 1.148.796 1.781 1.898 1.781c1.125 0 1.945-.61 2.18-1.758l2.296-11.367h11.086L29.02 48.297c-.07.234-.093.516-.093.75c0 1.148.797 1.781 1.922 1.781s1.945-.61 2.18-1.758L35.3 37.703h8.367c1.289 0 2.18-.937 2.18-2.203c0-1.031-.703-1.875-1.758-1.875h-7.946L38.63 21.25h8.203c1.29 0 2.18-.937 2.18-2.203c0-1.031-.703-1.875-1.758-1.875H39.45l1.922-9.445c.023-.141.07-.446.07-.75c0-1.149-.82-1.805-1.945-1.805c-1.312 0-1.898.726-2.133 1.828l-2.062 10.172H24.215l1.922-9.445c.023-.141.07-.446.07-.75c0-1.149-.844-1.805-1.945-1.805c-1.336 0-1.946.726-2.157 1.828l-2.062 10.172h-7.687c-1.29 0-2.18.984-2.18 2.273c0 1.055.703 1.805 1.758 1.805h7.289l-2.485 12.375h-7.57c-1.29 0-2.18.984-2.18 2.273c0 1.055.703 1.805 1.758 1.805m12.14-4.078l2.509-12.375H34.48l-2.508 12.375Z" style={{width: '16px', height: '16px'}}/></svg></div>

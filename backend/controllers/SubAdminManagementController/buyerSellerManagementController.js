@@ -17,6 +17,39 @@ const normalizeText = (value) => {
   return String(value).trim();
 };
 
+const extractAgreementSequence = (value) => {
+  const normalizedValue = normalizeText(value).toUpperCase();
+  if (!normalizedValue) return null;
+
+  const haMatch = normalizedValue.match(/^HA\s*0*([0-9]+)$/);
+  if (haMatch) {
+    const parsed = Number(haMatch[1]);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  const numericMatch = normalizedValue.match(/^0*([0-9]+)$/);
+  if (numericMatch) {
+    const parsed = Number(numericMatch[1]);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+};
+
+const getNextAgreementSequence = async () => {
+  const buyers = await Buyer.find({ agreementNo: { $exists: true, $ne: null, $ne: "" } })
+    .select("agreementNo")
+    .lean();
+
+  const maxSequence = buyers.reduce((max, row) => {
+    const sequence = extractAgreementSequence(row?.agreementNo);
+    if (!sequence) return max;
+    return sequence > max ? sequence : max;
+  }, 0);
+
+  return maxSequence + 1;
+};
+
 const buildEmiSchedule = ({ emiAmount, months, emiStartDate }) => {
   const monthlyAmount = toNumber(emiAmount);
   const totalMonths = toNumber(months);
@@ -218,12 +251,19 @@ const saveBuyerOrSeller = async (req, res) => {
         }
       }
     } else {
-      const normalizedAgreementNo = normalizeText(agreementNo);
+      let normalizedAgreementNo = normalizeText(agreementNo);
       const normalizedMode = normalizeText(mode).toLowerCase();
       const resolvedMode = ["refinance", "buy"].includes(normalizedMode)
         ? normalizedMode
         : "buy";
       const shouldOverwriteExisting = Boolean(overwriteExisting);
+      const resolvedIsFinanced = isFinanced === true || String(isFinanced).toLowerCase() === "true";
+
+      if (!normalizedAgreementNo && resolvedIsFinanced) {
+        const nextSequence = await getNextAgreementSequence();
+        normalizedAgreementNo = `HA${nextSequence}`;
+      }
+
       const resolvedEmiStartDate = emiStartDate || emiDate;
       const emiSchedule = buildEmiSchedule({
         emiAmount,
@@ -453,4 +493,25 @@ const saveSeller = async (req, res) => {
   return saveBuyerOrSeller(req, res);
 };
 
-export { saveBuyer, saveSeller };
+const getNextAgreementNumber = async (req, res) => {
+  try {
+    const nextNumber = await getNextAgreementSequence();
+
+    return res.status(200).json({
+      success: true,
+      message: "Next agreement number fetched successfully",
+      data: {
+        nextNumber,
+        agreementNo: `HA${nextNumber}`,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch next agreement number",
+      error: error.message,
+    });
+  }
+};
+
+export { saveBuyer, saveSeller, getNextAgreementNumber };

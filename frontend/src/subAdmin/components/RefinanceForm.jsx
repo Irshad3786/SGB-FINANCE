@@ -1,9 +1,57 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 import { apDistricts, apMandals } from "../constants/apLocations";
 import apiClient from "../../api/axios";
 import { useToast } from "../../components/ToastProvider";
 import InvoicePreviewModal from "./InvoicePreviewModal";
+
+const INITIAL_REFINANCE_FORM = {
+  fullName: "",
+  soWoCo: "",
+  occupation: "",
+  phone: "",
+  alternatePhone: "",
+  aadhaar: "",
+  vehicleName: "",
+  model: "",
+  vehicleNo: "",
+  chassisNo: "",
+  oldHaNumber: "",
+  dob: "2000-01-01",
+  district: "",
+  customDistrict: "",
+  mandal: "",
+  customMandal: "",
+  street: "",
+  address: "",
+  guarantorName: "",
+  guarantorSoWoCo: "",
+  guarantorOccupation: "",
+  guarantorPhone: "",
+  guarantorAlternatePhone: "",
+  guarantorAadhaar: "",
+  guarantorDob: "2000-01-01",
+  guarantorDistrict: "",
+  guarantorCustomDistrict: "",
+  guarantorMandal: "",
+  guarantorCustomMandal: "",
+  guarantorAddress: "",
+  referralName: "",
+  referralPhone: "",
+  isFinanced: true,
+  agreementNo: "",
+  financeAmount: "",
+  emiDate: "",
+  emiMonths: "",
+  emiAmount: "",
+};
+
+const INITIAL_REFINANCE_FILES = {
+  aadhaarFront: null,
+  aadhaarBack: null,
+  profile: null,
+  guarantorPhoto: null,
+};
 
 function RefinanceForm({ inputBase, labelClass }) {
   const baseInput =
@@ -11,53 +59,10 @@ function RefinanceForm({ inputBase, labelClass }) {
     "w-full pl-10 px-3 py-2 rounded-xl border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a] pr-4 text-sm";
   const baseLabel = labelClass || "text-sm text-[#27563C] font-semibold";
 
-  const [form, setForm] = useState({
-    fullName: "",
-    soWoCo: "",
-    occupation: "",
-    phone: "",
-    alternatePhone: "",
-    aadhaar: "",
-    vehicleName: "",
-    model: "",
-    vehicleNo: "",
-    chassisNo: "",
-    oldHaNumber: "",
-    dob: "",
-    district: "",
-    customDistrict: "",
-    mandal: "",
-    customMandal: "",
-    street: "",
-    address: "",
-    guarantorName: "",
-    guarantorSoWoCo: "",
-    guarantorOccupation: "",
-    guarantorPhone: "",
-    guarantorAlternatePhone: "",
-    guarantorAadhaar: "",
-    guarantorDob: "",
-    guarantorDistrict: "",
-    guarantorCustomDistrict: "",
-    guarantorMandal: "",
-    guarantorCustomMandal: "",
-    guarantorAddress: "",
-    referralName: "",
-    referralPhone: "",
-    isFinanced: false,
-    agreementNo: "",
-    financeAmount: "",
-    emiDate: "",
-    emiMonths: "",
-    emiAmount: "",
-  });
+  const [form, setForm] = useState(INITIAL_REFINANCE_FORM);
+  const [suggestedAgreementNo, setSuggestedAgreementNo] = useState("");
 
-  const [files, setFiles] = useState({
-    aadhaarFront: null,
-    aadhaarBack: null,
-    profile: null,
-    guarantorPhoto: null,
-  });
+  const [files, setFiles] = useState(INITIAL_REFINANCE_FILES);
 
   const [showGuarantor, setShowGuarantor] = useState(false);
   const [showInvoicePreview, setShowInvoicePreview] = useState(false);
@@ -76,6 +81,29 @@ function RefinanceForm({ inputBase, labelClass }) {
   const handleInvoicePrint = () => {
     printInvoice?.();
   };
+
+  const fetchNextAgreementNumber = async (forceReplace = false) => {
+    try {
+      const response = await apiClient.get("/api/subadmin/management/next-agreement-number");
+      const nextAgreementNo = response?.data?.data?.agreementNo || "";
+
+      if (nextAgreementNo) {
+        setSuggestedAgreementNo(nextAgreementNo);
+        setForm((prev) => {
+          if (forceReplace || !prev.agreementNo) {
+            return { ...prev, agreementNo: nextAgreementNo };
+          }
+          return prev;
+        });
+      }
+    } catch {
+      // Keep manual entry available if auto-number API fails.
+    }
+  };
+
+  useEffect(() => {
+    fetchNextAgreementNumber();
+  }, []);
 
   const buildRefinanceInvoice = (responseData) => {
     const saved = responseData?.data || {};
@@ -110,7 +138,32 @@ function RefinanceForm({ inputBase, labelClass }) {
 
   const onChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+    const phoneFields = ["phone", "alternatePhone", "referralPhone", "guarantorPhone", "guarantorAlternatePhone"];
+    const aadhaarFields = ["aadhaar", "guarantorAadhaar"];
+
+    if (type === "checkbox") {
+      setForm((prev) => ({ ...prev, [name]: checked }));
+      return;
+    }
+
+    if (phoneFields.includes(name)) {
+      const digitsOnly = value.replace(/\D/g, "").slice(0, 10);
+      setForm((prev) => ({ ...prev, [name]: digitsOnly }));
+      return;
+    }
+
+    if (aadhaarFields.includes(name)) {
+      const digitsOnly = value.replace(/\D/g, "").slice(0, 12);
+      setForm((prev) => ({ ...prev, [name]: digitsOnly }));
+      return;
+    }
+
+    if (name === "vehicleNo") {
+      setForm((prev) => ({ ...prev, [name]: value.slice(0, 10) }));
+      return;
+    }
+
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const onDistrictChange = (e) => {
@@ -140,6 +193,29 @@ function RefinanceForm({ inputBase, labelClass }) {
 
   const onSubmit = async () => {
     try {
+      const phoneFields = ["phone", "alternatePhone", "referralPhone", "guarantorPhone", "guarantorAlternatePhone"];
+      const aadhaarFields = ["aadhaar", "guarantorAadhaar"];
+
+      const invalidPhoneField = phoneFields.find((field) => form[field] && form[field].length !== 10);
+      if (invalidPhoneField) {
+        showToast({
+          type: "error",
+          title: "Invalid Phone Number",
+          message: "Phone numbers must be exactly 10 digits",
+        });
+        return;
+      }
+
+      const invalidAadhaarField = aadhaarFields.find((field) => form[field] && form[field].length !== 12);
+      if (invalidAadhaarField) {
+        showToast({
+          type: "error",
+          title: "Invalid Aadhaar Number",
+          message: "Aadhaar number must be exactly 12 digits",
+        });
+        return;
+      }
+
       const payload = {
         ...form,
         oldHaNumber: form.oldHaNumber,
@@ -156,6 +232,10 @@ function RefinanceForm({ inputBase, labelClass }) {
       });
       setInvoice(buildRefinanceInvoice(response.data));
       setShowInvoicePreview(true);
+      setForm(INITIAL_REFINANCE_FORM);
+      setFiles(INITIAL_REFINANCE_FILES);
+      setShowGuarantor(false);
+      fetchNextAgreementNumber(true);
     } catch (error) {
       console.error("refinance save error:", error?.response?.data || error.message);
       showToast({
@@ -707,7 +787,7 @@ function RefinanceForm({ inputBase, labelClass }) {
               name="agreementNo"
               value={form.agreementNo}
               onChange={onChange}
-              placeholder="Enter agreement no"
+              placeholder={suggestedAgreementNo || "Enter agreement no"}
               className={baseInput}
             />
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">

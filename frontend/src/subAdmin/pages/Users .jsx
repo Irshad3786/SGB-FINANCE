@@ -13,6 +13,15 @@ const getTodayInputDate = () => {
   return `${year}-${month}-${day}`
 }
 
+const formatDisplayDate = (value) => {
+  if (!value) return '-'
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+
+  return date.toLocaleDateString('en-IN')
+}
+
 function Users () {
   const PAGE_SIZE = 10
   const { showToast } = useToast()
@@ -286,7 +295,7 @@ function Users () {
       financeAmount: modalUser.financeAmount || null,
       emiAmount: modalUser.emiAmount || null,
       emiMonths: modalUser.emiMonths || null,
-      emiDate: modalUser.emiDate || '',
+      emiDate: formatDisplayDate(modalUser.emiDate),
       pendingAmount: modalUser.pendingAmount || null,
       pendingDate: modalUser.pendingDate || '',
     }
@@ -639,11 +648,11 @@ function Users () {
                         <div><strong>Name:</strong> {modalUser.seller || '-'}</div>
                         <div><strong>S/O C/O W/O:</strong> {modalUser.sowoco || modalUser.sellerSoWoCo || modalUser.soWoCo || '-'}</div>
                         <div><strong>Occupation:</strong> {modalUser.sellerOccupation || '-'}</div>
-                        <div><strong>DOB:</strong> {modalUser.sellerDob || '-'}</div>
+                        <div><strong>DOB:</strong> {formatDisplayDate(modalUser.sellerDob)}</div>
                         <div><strong>Phone:</strong> {modalUser.sellerPhone || '-'}</div>
                         <div className="flex items-center gap-2"><strong>Aadhar No:</strong> <span>{modalUser.sellerAadhaar || '-'}</span> <span className="ml-2 text-xs bg-yellow-100 px-2 py-0.5 rounded">view</span></div>
                         <div><strong>Address:</strong> <div className="text-xs text-gray-600">{modalUser.sellerAddress || '-'}</div></div>
-                        <div><strong>Sold Amount:</strong> {modalUser.soldAmount}</div>
+                        <div><strong>Buy Amount:</strong> {modalUser.soldAmount}</div>
                       </div>
                     </div>
                     <div className="w-full bg-white rounded-xl p-4 shadow">
@@ -675,11 +684,11 @@ function Users () {
                         <div><strong>Name:</strong> {modalUser.buyerName || '-'}</div>
                         <div><strong>S/O C/O W/O:</strong> {modalUser.buyerSoWoCo || modalUser.sowoco || modalUser.soWoCo || '-'}</div>
                         <div><strong>Occupation:</strong> {modalUser.buyerOccupation || '-'}</div>
-                        <div><strong>DOB:</strong> {modalUser.buyerDob || '-'}</div>
+                        <div><strong>DOB:</strong> {formatDisplayDate(modalUser.buyerDob)}</div>
                         <div><strong>Phone:</strong> {modalUser.buyerPhone || '-'}</div>
                         <div className="flex items-center gap-2"><strong>Aadhar No:</strong> <span>{modalUser.buyerAadhaar || '-'}</span> <span className="ml-2 text-xs bg-yellow-100 px-2 py-0.5 rounded">view</span></div>
                         <div><strong>Address:</strong> <div className="text-xs text-gray-600">{modalUser.buyerAddress || '-'}</div></div>
-                        <div><strong>Buy Amount:</strong> {modalUser.buyAmount || '-'}</div>
+                        <div><strong>Sold Amount:</strong> {modalUser.buyAmount || '-'}</div>
                         {/* vehicle details shown above in Vehicle Details */}
                       </div>
                     </div>
@@ -689,7 +698,7 @@ function Users () {
                         <div><strong>Finance Amount:</strong> {modalUser.financeAmount || '-'}</div>
                         <div><strong>EMI Amount:</strong> {modalUser.emiAmount || '-'}</div>
                         <div><strong>EMI Months:</strong> {modalUser.emiMonths ?? '-'}</div>
-                        <div><strong>EMI Date:</strong> {modalUser.emiDate || '-'}</div>
+                        <div><strong>EMI Date:</strong> {formatDisplayDate(modalUser.emiDate)}</div>
                       </div>
                     </div>
                     <div className="w-full bg-white rounded-xl p-4 shadow">

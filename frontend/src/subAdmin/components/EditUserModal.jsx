@@ -19,6 +19,7 @@ export default function EditUserModal({ user, onSave, onClose }) {
       sellerAddress: '',
       sellerReferenceName: '',
       sellerReferencePhone: '',
+      soldAmount: '',
       // buyer
       buyerName: '',
       buyerSoWoCo: '',
@@ -29,6 +30,7 @@ export default function EditUserModal({ user, onSave, onClose }) {
       buyerAddress: '',
       buyerReferenceName: '',
       buyerReferencePhone: '',
+      buyAmount: '',
       // buyer finance
       financeAmount: '',
       emiAmount: '',
@@ -77,6 +79,7 @@ export default function EditUserModal({ user, onSave, onClose }) {
         sellerAddress: user.address ?? prev.sellerAddress,
         sellerReferenceName: user.referenceName ?? prev.sellerReferenceName,
         sellerReferencePhone: user.referencePhone ?? prev.sellerReferencePhone,
+        soldAmount: user.soldAmount ?? prev.soldAmount,
         buyerName: user.buyerName ?? prev.buyerName,
         buyerSoWoCo: user.buyerSoWoCo ?? prev.buyerSoWoCo,
         buyerOccupation: user.buyerOccupation ?? prev.buyerOccupation,
@@ -86,6 +89,7 @@ export default function EditUserModal({ user, onSave, onClose }) {
         buyerAddress: user.buyerAddress ?? user.address ?? prev.buyerAddress,
         buyerReferenceName: user.buyerReferenceName ?? prev.buyerReferenceName,
         buyerReferencePhone: user.buyerReferencePhone ?? prev.buyerReferencePhone,
+        buyAmount: user.buyAmount ?? prev.buyAmount,
         financeAmount: user.financeAmount ?? prev.financeAmount,
         emiAmount: user.emiAmount ?? prev.emiAmount,
         emiMonths: user.emiMonths ?? prev.emiMonths,
@@ -362,6 +366,10 @@ export default function EditUserModal({ user, onSave, onClose }) {
                 <input name="sellerReferencePhone" value={form.sellerReferencePhone || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
               </div>
             </div>
+            <div>
+              <label className="text-xs text-gray-600">Sold Amount</label>
+              <input name="soldAmount" value={form.soldAmount || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
+            </div>
           </div>
         </div>
 
@@ -406,6 +414,10 @@ export default function EditUserModal({ user, onSave, onClose }) {
                 <label className="text-xs text-gray-600">Referral Phone</label>
                 <input name="buyerReferencePhone" value={form.buyerReferencePhone || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
               </div>
+            </div>
+            <div>
+              <label className="text-xs text-gray-600">Buy Amount</label>
+              <input name="buyAmount" value={form.buyAmount || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
             </div>
           </div>
         </div>

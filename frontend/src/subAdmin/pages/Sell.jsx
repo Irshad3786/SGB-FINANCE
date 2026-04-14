@@ -9,39 +9,42 @@ import { apDistricts, apMandals } from '../constants/apLocations'
 import apiClient from '../../api/axios'
 import { useToast } from '../../components/ToastProvider'
 
+const INITIAL_SELL_FORM = {
+  fullName: '',
+  soWoCo: '',
+  occupation: '',
+  phone: '',
+  alternatePhone: '',
+  aadhaar: '',
+  vehicleName: '',
+  model: '',
+  vehicleNo: '',
+  chassisNo: '',
+  saleAmount: '',
+  dob: '2000-01-01',
+  district: '',
+  customDistrict: '',
+  mandal: '',
+  customMandal: '',
+  street: '',
+  address: '',
+  referralName: '',
+  referralPhone: '',
+}
+
+const INITIAL_SELL_FILES = {
+  aadhaarFront: null,
+  aadhaarBack: null,
+  profile: null,
+}
+
 function Sell() {
   const [role, setRole] = useState('seller')
   const navigate = useNavigate()
 
-  const [form, setForm] = useState({
-    fullName: '',
-    soWoCo: '',
-    occupation: '',
-    phone: '',
-    alternatePhone: '',
-    aadhaar: '',
-    vehicleName: '',
-    model: '',
-    vehicleNo: '',
-    chassisNo: '',
-    saleAmount: '',
-    dob: '',
-    district: '',
-    customDistrict: '',
-    mandal: '',
-    customMandal: '',
-    street: '',
-    address: '',
-    referralName: '',
-    referralPhone: '',
-    
-  })
+  const [form, setForm] = useState(INITIAL_SELL_FORM)
 
-  const [files, setFiles] = useState({
-    aadhaarFront: null,
-    aadhaarBack: null,
-    profile: null
-  })
+  const [files, setFiles] = useState(INITIAL_SELL_FILES)
 
   const [showRefinance, setShowRefinance] = useState(false)
   const [showInvoicePreview, setShowInvoicePreview] = useState(false)
@@ -89,6 +92,26 @@ function Sell() {
 
   function onChange(e) {
     const { name, value } = e.target
+    const phoneFields = ['phone', 'alternatePhone', 'referralPhone']
+    const aadhaarFields = ['aadhaar']
+
+    if (phoneFields.includes(name)) {
+      const digitsOnly = value.replace(/\D/g, '').slice(0, 10)
+      setForm(prev => ({ ...prev, [name]: digitsOnly }))
+      return
+    }
+
+    if (aadhaarFields.includes(name)) {
+      const digitsOnly = value.replace(/\D/g, '').slice(0, 12)
+      setForm(prev => ({ ...prev, [name]: digitsOnly }))
+      return
+    }
+
+    if (name === 'vehicleNo') {
+      setForm(prev => ({ ...prev, [name]: value.slice(0, 10) }))
+      return
+    }
+
     setForm(prev => ({ ...prev, [name]: value }))
   }
 
@@ -120,6 +143,29 @@ function Sell() {
   async function onSubmit(e) {
     e.preventDefault()
     try {
+      const phoneFields = ['phone', 'alternatePhone', 'referralPhone']
+      const aadhaarFields = ['aadhaar']
+
+      const invalidPhoneField = phoneFields.find((field) => form[field] && form[field].length !== 10)
+      if (invalidPhoneField) {
+        showToast({
+          type: 'error',
+          title: 'Invalid Phone Number',
+          message: 'Phone numbers must be exactly 10 digits',
+        })
+        return
+      }
+
+      const invalidAadhaarField = aadhaarFields.find((field) => form[field] && form[field].length !== 12)
+      if (invalidAadhaarField) {
+        showToast({
+          type: 'error',
+          title: 'Invalid Aadhaar Number',
+          message: 'Aadhaar number must be exactly 12 digits',
+        })
+        return
+      }
+
       const payload = {
         role,
         ...form,
@@ -134,6 +180,8 @@ function Sell() {
       })
       setInvoice(buildSellerInvoice(response.data))
       setShowInvoicePreview(true)
+      setForm(INITIAL_SELL_FORM)
+      setFiles(INITIAL_SELL_FILES)
     } catch (error) {
       console.error('seller save error:', error?.response?.data || error.message)
       showToast({

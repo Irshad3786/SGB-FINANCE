@@ -97,6 +97,12 @@ const PrintInvoice = forwardRef(function PrintInvoice({ invoice }, ref) {
                 <td style={{ border: '1px solid #cbd5e1', padding: '10px', fontSize: '13px' }}>EMI Date</td>
                 <td style={{ border: '1px solid #cbd5e1', padding: '10px', fontSize: '13px' }}>{invoice.emiDate || '-'}</td>
               </tr>
+              {invoice.mode === 'refinance' && invoice.oldHaNumber && invoice.oldHaNumber !== '-' && (
+                <tr>
+                  <td style={{ border: '1px solid #cbd5e1', padding: '10px', fontSize: '13px' }}>Previous HA / Agreement No</td>
+                  <td style={{ border: '1px solid #cbd5e1', padding: '10px', fontSize: '13px' }}>{invoice.oldHaNumber}</td>
+                </tr>
+              )}
             </>
           )}
           {invoice.mode === 'buyer' && invoice.pendingAmount && invoice.pendingAmount !== '-' && (
@@ -149,19 +155,20 @@ const PrintInvoice = forwardRef(function PrintInvoice({ invoice }, ref) {
       {invoice.mode === 'refinance' && (
         <div style={{ marginTop: '18px', border: '1px solid #d1d5db', borderRadius: '10px', padding: '12px', background: '#f8fafc' }}>
           <div style={{ fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>REFINANCE AGREEMENT DESCRIPTION</div>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>English</div>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>Telugu</div>
           <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.8, color: '#0f172a' }}>
-            Today, I am taking refinance on my vehicle. I am accepting this refinance voluntarily, without any force or pressure, and I give my full consent for the same.
+            ఈరోజు నేను నా వాహనంపై రీఫైనాన్స్ స్వీకరిస్తున్నాను. గత కొనుగోలు ఒప్పందంలోని షరతులను తెలుసుకొని, ఈ కొత్త ఫైనాన్స్ ఒప్పందాన్ని నా స్వచ్ఛంద సమ్మతితో అంగీకరిస్తున్నాను.
           </p>
           <p style={{ margin: '8px 0 0', fontSize: '13px', lineHeight: 1.8, color: '#0f172a' }}>
-            I take full responsibility to pay the finance amount, EMIs, and all related payments on time without any delay.
+            ఫైనాన్స్ మొత్తం, EMIలు, జరిమానాలు మరియు సంబంధిత చెల్లింపులు సమయానికి చెల్లించుటకు నేను పూర్తి బాధ్యత వహించుచున్నాను.
           </p>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#334155', marginTop: '10px', marginBottom: '6px' }}>Telugu</div>
+
+          <div style={{ fontSize: '11px', fontWeight: 700, color: '#334155', marginTop: '10px', marginBottom: '6px' }}>English</div>
           <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.8, color: '#0f172a' }}>
-            ఈరోజు నేను నా వాహనముపై రీఫైనాన్స్ తీసుకుంటున్నాను. ఈ రీఫైనాన్స్‌ను నేను నా స్వచ్ఛందంగా, ఎలాంటి బలవంతం లేకుండా స్వీకరిస్తున్నాను మరియు దీనికి పూర్తి సమ్మతి తెలియజేస్తున్నాను.
+            Today, I am accepting refinance on my vehicle. After understanding the terms of my previous purchase agreement, I voluntarily agree to this new finance agreement.
           </p>
           <p style={{ margin: '8px 0 0', fontSize: '13px', lineHeight: 1.8, color: '#0f172a' }}>
-            ఈ వాహనమునకు సంబంధించిన ఫైనాన్స్ మొత్తం, EMIలు మరియు ఇతర చెల్లింపులను నేను సమయానికి ఎలాంటి ఆలస్యం లేకుండా చెల్లించుటకు పూర్తి బాధ్యత వహించుచున్నాను.
+            I take full responsibility to pay the finance amount, EMIs, penalties, and all related dues on time.
           </p>
         </div>
       )}

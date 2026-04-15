@@ -158,6 +158,7 @@ const saveBuyerOrSeller = async (req, res) => {
 
     let savedRecord;
     let wasUpdated = false;
+    let refinanceContext = null;
 
     if (String(role).toLowerCase() === "seller") {
       const normalizedChassisNo = normalizeText(chassisNo);
@@ -277,6 +278,8 @@ const saveBuyerOrSeller = async (req, res) => {
 
       let matchedBuyerForRefinance = null;
       let matchedBuyerForBuyOverwrite = null;
+      let previousBuyerSnapshot = null;
+      let relatedSellerSnapshot = null;
       if (resolvedMode === "refinance") {
         const refinanceFilters = [];
 
@@ -297,6 +300,34 @@ const saveBuyerOrSeller = async (req, res) => {
           matchedBuyerForRefinance = await Buyer.findOne({ $or: refinanceFilters })
             .select("_id")
             .lean();
+
+          if (matchedBuyerForRefinance?._id) {
+            previousBuyerSnapshot = await Buyer.findById(matchedBuyerForRefinance._id)
+              .select(
+                "name phoneNo agreementNo oldHAnumber fullAddress district mandal vehicle.vehicleName vehicle.vehicleNumber vehicle.model vehicle.chassisNo"
+              )
+              .lean();
+
+            const sellerFiltersForRefinance = [];
+            const snapshotVehicleNo = normalizeText(previousBuyerSnapshot?.vehicle?.vehicleNumber);
+            const snapshotChassisNo = normalizeText(previousBuyerSnapshot?.vehicle?.chassisNo);
+
+            if (snapshotVehicleNo) {
+              sellerFiltersForRefinance.push({ "vehicle.vehicleNumber": snapshotVehicleNo });
+            }
+
+            if (snapshotChassisNo) {
+              sellerFiltersForRefinance.push({ "vehicle.chassisNo": snapshotChassisNo });
+            }
+
+            if (sellerFiltersForRefinance.length > 0) {
+              relatedSellerSnapshot = await Seller.findOne({ $or: sellerFiltersForRefinance })
+                .select(
+                  "fullName phoneNo fullAddress district mandal vehicle.vehicleName vehicle.vehicleNumber vehicle.model vehicle.chassisNo"
+                )
+                .lean();
+            }
+          }
         }
       }
 
@@ -445,6 +476,13 @@ const saveBuyerOrSeller = async (req, res) => {
           { $set: { "vehicle.status": "sold" } }
         );
       }
+
+      if (resolvedMode === "refinance") {
+        refinanceContext = {
+          previousBuyer: previousBuyerSnapshot,
+          previousSeller: relatedSellerSnapshot,
+        };
+      }
     }
 
     const targetModel = String(role).toLowerCase() === "seller" ? Seller : Buyer;
@@ -456,6 +494,7 @@ const saveBuyerOrSeller = async (req, res) => {
       meta: {
         database: mongoose.connection?.name,
         collection: targetModel.collection?.name,
+        ...(refinanceContext ? { refinanceContext } : {}),
       },
     });
   } catch (error) {
@@ -514,4 +553,65 @@ const getNextAgreementNumber = async (req, res) => {
   }
 };
 
-export { saveBuyer, saveSeller, getNextAgreementNumber };
+const getRefinancePrefillData = async (req, res) => {
+  try {
+    const rawHaNumber = req.query?.haNumber;
+    const normalizedHaNumber = normalizeText(rawHaNumber);
+
+    if (!normalizedHaNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "haNumber is required",
+      });
+    }
+
+    const buyer = await Buyer.findOne({
+      $or: [
+        { agreementNo: { $regex: `^${normalizedHaNumber}$`, $options: "i" } },
+        { oldHAnumber: { $regex: `^${normalizedHaNumber}$`, $options: "i" } },
+      ],
+    })
+      .select(
+        "name sowoco occupation phoneNo alternatePhoneNo aadharNo dateOfBirth district mandal street fullAddress referralName referralPhoneNo agreementNo oldHAnumber vehicle guarantor finance soldamount"
+      )
+      .lean();
+
+    if (!buyer) {
+      return res.status(404).json({
+        success: false,
+        message: "No refinance data found for the entered HA / Agreement number",
+      });
+    }
+
+    const vehicleNo = normalizeText(buyer?.vehicle?.vehicleNumber);
+    const chassisNo = normalizeText(buyer?.vehicle?.chassisNo);
+    const sellerFilters = [];
+
+    if (vehicleNo) sellerFilters.push({ "vehicle.vehicleNumber": vehicleNo });
+    if (chassisNo) sellerFilters.push({ "vehicle.chassisNo": chassisNo });
+
+    const linkedSeller =
+      sellerFilters.length > 0
+        ? await Seller.findOne({ $or: sellerFilters })
+            .select("fullName phoneNo district mandal fullAddress vehicle")
+            .lean()
+        : null;
+
+    return res.status(200).json({
+      success: true,
+      message: "Refinance prefill data fetched successfully",
+      data: {
+        buyer,
+        seller: linkedSeller,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch refinance prefill data",
+      error: error.message,
+    });
+  }
+};
+
+export { saveBuyer, saveSeller, getNextAgreementNumber, getRefinancePrefillData };

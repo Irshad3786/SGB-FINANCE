@@ -1,10 +1,11 @@
 import express from "express";
-import { getNextAgreementNumber, saveBuyer, saveSeller } from "../../controllers/SubAdminManagementController/buyerSellerManagementController.js";
+import { getNextAgreementNumber, getRefinancePrefillData, saveBuyer, saveSeller } from "../../controllers/SubAdminManagementController/buyerSellerManagementController.js";
 import { verifySubAdminToken } from "../../middlewares/subAdminMiddleware.js";
 
 const router = express.Router();
 
 router.get("/next-agreement-number", verifySubAdminToken, getNextAgreementNumber);
+router.get("/refinance-prefill", verifySubAdminToken, getRefinancePrefillData);
 router.post("/save-buyer", verifySubAdminToken, saveBuyer);
 router.post("/save-seller", verifySubAdminToken, saveSeller);
 

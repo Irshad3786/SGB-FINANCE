@@ -5,6 +5,38 @@ import apiClient from "../../api/axios";
 import { useToast } from "../../components/ToastProvider";
 import InvoicePreviewModal from "./InvoicePreviewModal";
 
+const formatDateInput = (dateValue) => {
+  if (!dateValue) return "";
+  const dateObj = new Date(dateValue);
+  if (Number.isNaN(dateObj.getTime())) return "";
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const day = String(dateObj.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const pickDistrictValues = (value, districtOptions) => {
+  const safeValue = String(value || "").trim();
+  if (!safeValue) return { district: "", customDistrict: "" };
+  const exists = districtOptions.some((entry) => entry.toLowerCase() === safeValue.toLowerCase());
+  if (exists) return { district: safeValue, customDistrict: "" };
+  return { district: "Other", customDistrict: safeValue };
+};
+
+const pickMandalValues = (value, districtValue, mandalsByDistrict, allMandals) => {
+  const safeValue = String(value || "").trim();
+  if (!safeValue) return { mandal: "", customMandal: "" };
+
+  const districtMandals = districtValue && districtValue !== "Other"
+    ? (mandalsByDistrict[normalizeKey(districtValue)] || [])
+    : [];
+  const sourceList = districtMandals.length > 0 ? districtMandals : allMandals;
+  const exists = sourceList.some((entry) => entry.toLowerCase() === safeValue.toLowerCase());
+
+  if (exists) return { mandal: safeValue, customMandal: "" };
+  return { mandal: "Other", customMandal: safeValue };
+};
+
 const INITIAL_REFINANCE_FORM = {
   fullName: "",
   soWoCo: "",
@@ -70,6 +102,8 @@ function RefinanceForm({ inputBase, labelClass }) {
   const [districtOptions, setDistrictOptions] = useState(apDistricts);
   const [allMandalOptions, setAllMandalOptions] = useState(apMandals);
   const [mandalsByDistrict, setMandalsByDistrict] = useState({});
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
+  const lastPrefillHaRef = useRef("");
   const invoiceRef = useRef(null);
   const { showToast } = useToast();
   const printInvoice = useReactToPrint({
@@ -134,10 +168,119 @@ function RefinanceForm({ inputBase, labelClass }) {
     };
   }, []);
 
+  useEffect(() => {
+    const enteredHaNumber = String(form.oldHaNumber || "").trim();
+
+    if (!enteredHaNumber || enteredHaNumber.length < 2) {
+      return;
+    }
+
+    if (lastPrefillHaRef.current.toLowerCase() === enteredHaNumber.toLowerCase()) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        setIsAutoFilling(true);
+        const response = await apiClient.get("/api/subadmin/management/refinance-prefill", {
+          params: { haNumber: enteredHaNumber },
+        });
+
+        const buyer = response?.data?.data?.buyer || {};
+        const vehicle = buyer?.vehicle || {};
+        const guarantor = buyer?.guarantor || {};
+        const finance = buyer?.finance || {};
+
+        const resolvedDistrict = pickDistrictValues(buyer?.district, districtOptions);
+        const resolvedMandal = pickMandalValues(
+          buyer?.mandal,
+          resolvedDistrict.district,
+          mandalsByDistrict,
+          allMandalOptions
+        );
+
+        const resolvedGuarantorDistrict = pickDistrictValues(guarantor?.district, districtOptions);
+        const resolvedGuarantorMandal = pickMandalValues(
+          guarantor?.mandal,
+          resolvedGuarantorDistrict.district,
+          mandalsByDistrict,
+          allMandalOptions
+        );
+
+        const hasGuarantorData = Boolean(
+          guarantor?.fullName || guarantor?.phoneNo || guarantor?.aadharNo || guarantor?.address
+        );
+
+        setForm((prev) => ({
+          ...prev,
+          fullName: buyer?.name || "",
+          soWoCo: buyer?.sowoco || "",
+          occupation: buyer?.occupation || "",
+          phone: buyer?.phoneNo || "",
+          alternatePhone: buyer?.alternatePhoneNo || "",
+          aadhaar: buyer?.aadharNo || "",
+          vehicleName: vehicle?.vehicleName || "",
+          model: vehicle?.model || "",
+          vehicleNo: vehicle?.vehicleNumber || "",
+          chassisNo: vehicle?.chassisNo || "",
+          oldHaNumber: enteredHaNumber,
+          dob: formatDateInput(buyer?.dateOfBirth) || "2000-01-01",
+          district: resolvedDistrict.district,
+          customDistrict: resolvedDistrict.customDistrict,
+          mandal: resolvedMandal.mandal,
+          customMandal: resolvedMandal.customMandal,
+          street: buyer?.street || "",
+          address: buyer?.fullAddress || "",
+          guarantorName: guarantor?.fullName || "",
+          guarantorSoWoCo: guarantor?.sowoco || "",
+          guarantorOccupation: guarantor?.occupation || "",
+          guarantorPhone: guarantor?.phoneNo || "",
+          guarantorAlternatePhone: guarantor?.alternatePhoneNo || "",
+          guarantorAadhaar: guarantor?.aadharNo || "",
+          guarantorDob: formatDateInput(guarantor?.dateOfBirth) || "2000-01-01",
+          guarantorDistrict: resolvedGuarantorDistrict.district,
+          guarantorCustomDistrict: resolvedGuarantorDistrict.customDistrict,
+          guarantorMandal: resolvedGuarantorMandal.mandal,
+          guarantorCustomMandal: resolvedGuarantorMandal.customMandal,
+          guarantorAddress: guarantor?.address || "",
+          referralName: buyer?.referralName || "",
+          referralPhone: buyer?.referralPhoneNo || "",
+          financeAmount: finance?.financeAmount ? String(finance.financeAmount) : "",
+          emiDate: formatDateInput(finance?.emiStartDate),
+          emiMonths: finance?.months ? String(finance.months) : "",
+          emiAmount: finance?.emiAmount ? String(finance.emiAmount) : "",
+        }));
+
+        setShowGuarantor(hasGuarantorData);
+        lastPrefillHaRef.current = enteredHaNumber;
+        showToast({
+          type: "success",
+          title: "Auto Filled",
+          message: "Refinance details loaded from HA / Agreement number",
+        });
+      } catch (error) {
+        if (error?.response?.status === 404) {
+          showToast({
+            type: "error",
+            title: "Not Found",
+            message: "No existing data found for this HA / Agreement number",
+          });
+        }
+      } finally {
+        setIsAutoFilling(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [form.oldHaNumber, districtOptions, allMandalOptions, mandalsByDistrict, showToast]);
+
   const buildRefinanceInvoice = (responseData) => {
     const saved = responseData?.data || {};
     const vehicle = saved?.vehicle || {};
     const finance = saved?.finance || {};
+    const refinanceContext = responseData?.meta?.refinanceContext || {};
+    const previousBuyer = refinanceContext?.previousBuyer || {};
+    const previousSeller = refinanceContext?.previousSeller || {};
 
     return {
       mode: "refinance",
@@ -162,6 +305,18 @@ function RefinanceForm({ inputBase, labelClass }) {
       emiAmount: form.emiAmount || finance.emiAmount || "-",
       emiMonths: form.emiMonths || finance.months || "-",
       emiDate: form.emiDate || "-",
+      oldHaNumber: form.oldHaNumber || saved?.oldHAnumber || previousBuyer?.agreementNo || "-",
+      previousBuyer: {
+        name: previousBuyer?.name || "-",
+        phone: previousBuyer?.phoneNo || "-",
+        agreementNo: previousBuyer?.agreementNo || previousBuyer?.oldHAnumber || "-",
+        vehicleNo: previousBuyer?.vehicle?.vehicleNumber || "-",
+      },
+      previousSeller: {
+        name: previousSeller?.fullName || "-",
+        phone: previousSeller?.phoneNo || "-",
+        vehicleNo: previousSeller?.vehicle?.vehicleNumber || "-",
+      },
     };
   };
 
@@ -346,6 +501,9 @@ function RefinanceForm({ inputBase, labelClass }) {
           </svg>
         </div>
       </div>
+      {isAutoFilling && (
+        <p className="text-xs text-[#27563C] -mt-1">Loading details from previous agreement...</p>
+      )}
 
       <label className={baseLabel}>full name</label>
       <div className="relative">

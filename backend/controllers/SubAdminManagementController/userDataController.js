@@ -65,11 +65,11 @@ const getUserData = async (req, res) => {
     const shouldApplyDateRange = Boolean(fromDate && toDate);
 
     const sellers = await Seller.find({})
-      .select("fullName sowoco occupation phoneNo aadharNo dateOfBirth district mandal fullAddress vehicle referralName referralPhoneNo")
+      .select("fullName sowoco occupation phoneNo alternatePhoneNo aadharNo dateOfBirth district mandal fullAddress vehicle referralName referralPhoneNo")
       .lean();
 
     const buyers = await Buyer.find({})
-      .select("name sowoco occupation phoneNo aadharNo dateOfBirth district mandal fullAddress soldamount oldHAnumber vehicle finance guarantor referralName referralPhoneNo")
+      .select("name sowoco occupation agreementNo phoneNo alternatePhoneNo aadharNo dateOfBirth district mandal fullAddress soldamount oldHAnumber vehicle finance guarantor referralName referralPhoneNo")
       .lean();
 
     const buyerByVehicleOrChassis = new Map();
@@ -121,7 +121,9 @@ const getUserData = async (req, res) => {
           sellerDob: seller?.dateOfBirth || null,
           buyerDob: matchedBuyer?.dateOfBirth || null,
           sellerPhone: seller?.phoneNo || "",
+          sellerAlternatePhone: seller?.alternatePhoneNo || "",
           buyerPhone: matchedBuyer?.phoneNo || "",
+          buyerAlternatePhone: matchedBuyer?.alternatePhoneNo || "",
           sellerSoWoCo: seller?.sowoco || "",
           buyerSoWoCo: matchedBuyer?.sowoco || "",
           sowoco: matchedBuyer?.sowoco || seller?.sowoco || "",
@@ -143,6 +145,7 @@ const getUserData = async (req, res) => {
           buyerReferencePhone: matchedBuyer?.referralPhoneNo || "",
           dob: seller?.dateOfBirth || matchedBuyer?.dateOfBirth || null,
           phone: seller?.phoneNo || matchedBuyer?.phoneNo || "",
+          alternatePhone: seller?.alternatePhoneNo || matchedBuyer?.alternatePhoneNo || "",
           aadhaar: seller?.aadharNo || matchedBuyer?.aadharNo || "",
           address: seller?.fullAddress || matchedBuyer?.fullAddress || "",
           financeAmount: matchedBuyer?.finance?.financeAmount ?? null,
@@ -153,6 +156,7 @@ const getUserData = async (req, res) => {
             matchedBuyer?.finance?.emiStartDate ??
             matchedBuyer?.finance?.emiDates?.[0]?.emiDate ??
             null,
+          agreementNo: matchedBuyer?.agreementNo || "",
           guarantorName: matchedBuyer?.guarantor?.fullName || "",
           guarantorPhone: matchedBuyer?.guarantor?.phoneNo || "",
           guarantorAadhaar: matchedBuyer?.guarantor?.aadharNo || "",
@@ -185,7 +189,9 @@ const getUserData = async (req, res) => {
           sellerDob: null,
           buyerDob: buyer?.dateOfBirth || null,
           sellerPhone: "",
+          sellerAlternatePhone: "",
           buyerPhone: buyer?.phoneNo || "",
+          buyerAlternatePhone: buyer?.alternatePhoneNo || "",
           sellerSoWoCo: "",
           buyerSoWoCo: buyer?.sowoco || "",
           sowoco: buyer?.sowoco || "",
@@ -207,6 +213,7 @@ const getUserData = async (req, res) => {
           buyerReferencePhone: buyer?.referralPhoneNo || "",
           dob: buyer?.dateOfBirth || null,
           phone: buyer?.phoneNo || "",
+          alternatePhone: buyer?.alternatePhoneNo || "",
           aadhaar: buyer?.aadharNo || "",
           address: buyer?.fullAddress || "",
           financeAmount: buyer?.finance?.financeAmount ?? null,
@@ -217,6 +224,7 @@ const getUserData = async (req, res) => {
             buyer?.finance?.emiStartDate ??
             buyer?.finance?.emiDates?.[0]?.emiDate ??
             null,
+          agreementNo: buyer?.agreementNo || "",
           guarantorName: buyer?.guarantor?.fullName || "",
           guarantorPhone: buyer?.guarantor?.phoneNo || "",
           guarantorAadhaar: buyer?.guarantor?.aadharNo || "",
@@ -392,6 +400,7 @@ const updateUserData = async (req, res) => {
       seller,
       sellerOccupation,
       sellerPhone,
+      sellerAlternatePhone,
       sellerAadhaar,
       sellerDob,
       sellerAddress,
@@ -401,6 +410,7 @@ const updateUserData = async (req, res) => {
       buyerName,
       buyerOccupation,
       buyerPhone,
+      buyerAlternatePhone,
       buyerAadhaar,
       buyerDob,
       buyerAddress,
@@ -411,6 +421,7 @@ const updateUserData = async (req, res) => {
       emiAmount,
       emiMonths,
       emiDate,
+      agreementNo,
       guarantorName,
       guarantorPhone,
       guarantorAadhaar,
@@ -425,6 +436,24 @@ const updateUserData = async (req, res) => {
     }
 
     const normalizedVehicleNumber = vehicleNumber ?? vehicle;
+    const normalizedAgreementNo =
+      typeof agreementNo === "string" ? agreementNo.trim() : agreementNo;
+
+    if (buyerId && normalizedAgreementNo) {
+      const existingAgreementBuyer = await Buyer.findOne({
+        _id: { $ne: buyerId },
+        agreementNo: normalizedAgreementNo,
+      })
+        .select("name agreementNo")
+        .lean();
+
+      if (existingAgreementBuyer) {
+        return res.status(409).json({
+          success: false,
+          message: `Agreement Already Selected. Agreement No. ${existingAgreementBuyer.agreementNo} is already linked to ${existingAgreementBuyer.name || "another buyer"}.`,
+        });
+      }
+    }
 
     const sellerSet = {};
     const buyerSet = {};
@@ -434,6 +463,7 @@ const updateUserData = async (req, res) => {
     setIfProvided(sellerSet, "fullName", seller);
     setIfProvided(sellerSet, "occupation", sellerOccupation);
     setIfProvided(sellerSet, "phoneNo", sellerPhone);
+    setIfProvided(sellerSet, "alternatePhoneNo", sellerAlternatePhone);
     setIfProvided(sellerSet, "aadharNo", sellerAadhaar);
     setIfProvided(sellerSet, "dateOfBirth", sellerDob, toNullableDate);
     setIfProvided(sellerSet, "fullAddress", sellerAddress);
@@ -448,6 +478,7 @@ const updateUserData = async (req, res) => {
     setIfProvided(buyerSet, "name", buyerName);
     setIfProvided(buyerSet, "occupation", buyerOccupation);
     setIfProvided(buyerSet, "phoneNo", buyerPhone);
+    setIfProvided(buyerSet, "alternatePhoneNo", buyerAlternatePhone);
     setIfProvided(buyerSet, "aadharNo", buyerAadhaar);
     setIfProvided(buyerSet, "dateOfBirth", buyerDob, toNullableDate);
     setIfProvided(buyerSet, "fullAddress", buyerAddress);
@@ -463,6 +494,7 @@ const updateUserData = async (req, res) => {
     setIfProvided(buyerSet, "finance.months", emiMonths, toNullableNumber);
     setIfProvided(buyerSet, "finance.emiDate", emiDate, toNullableDate);
     setIfProvided(buyerSet, "finance.emiStartDate", emiDate, toNullableDate);
+    setIfProvided(buyerSet, "agreementNo", normalizedAgreementNo);
     setIfProvided(buyerSet, "guarantor.fullName", guarantorName);
     setIfProvided(buyerSet, "guarantor.phoneNo", guarantorPhone);
     setIfProvided(buyerSet, "guarantor.aadharNo", guarantorAadhaar);
@@ -534,6 +566,18 @@ const updateUserData = async (req, res) => {
       },
     });
   } catch (error) {
+    const isAgreementDuplicate =
+      error?.code === 11000 &&
+      (error?.keyPattern?.agreementNo || String(error?.message || "").includes("agreementNo_1"));
+
+    if (isAgreementDuplicate) {
+      const duplicateAgreementNo = error?.keyValue?.agreementNo || "";
+      return res.status(409).json({
+        success: false,
+        message: `Agreement Already Selected. Agreement No. ${duplicateAgreementNo} is already linked to another buyer record.`,
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: "Failed to update user data",

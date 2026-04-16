@@ -614,4 +614,60 @@ const getRefinancePrefillData = async (req, res) => {
   }
 };
 
-export { saveBuyer, saveSeller, getNextAgreementNumber, getRefinancePrefillData };
+const getVehiclePrefillData = async (req, res) => {
+  try {
+    const normalizedVehicleNo = normalizeText(req.query?.vehicleNo);
+
+    if (!normalizedVehicleNo) {
+      return res.status(400).json({
+        success: false,
+        message: "vehicleNo is required",
+      });
+    }
+
+    const seller = await Seller.findOne({
+      "vehicle.vehicleNumber": { $regex: `^${normalizedVehicleNo}$`, $options: "i" },
+    })
+      .select("fullName phoneNo vehicle")
+      .lean();
+
+    if (!seller) {
+      return res.status(200).json({
+        success: true,
+        message: "Vehicle not found",
+        data: {
+          found: false,
+        },
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Vehicle prefill data fetched successfully",
+      data: {
+        found: true,
+        vehicleNo: seller?.vehicle?.vehicleNumber || normalizedVehicleNo,
+        vehicleName: seller?.vehicle?.vehicleName || "",
+        model: seller?.vehicle?.model || "",
+        chassisNo: seller?.vehicle?.chassisNo || "",
+        saleAmount: seller?.vehicle?.bikePrice ?? "",
+        sellerName: seller?.fullName || "",
+        sellerPhone: seller?.phoneNo || "",
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch vehicle prefill data",
+      error: error.message,
+    });
+  }
+};
+
+export {
+  saveBuyer,
+  saveSeller,
+  getNextAgreementNumber,
+  getRefinancePrefillData,
+  getVehiclePrefillData,
+};

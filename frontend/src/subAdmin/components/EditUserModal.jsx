@@ -1,5 +1,33 @@
 import React, { useEffect, useState } from 'react'
 
+const toDateInputValue = (value) => {
+  if (!value) return ''
+
+  // Already in input-friendly format.
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value.trim())) {
+    return value.trim()
+  }
+
+  // Supports dd-mm-yyyy and dd/mm/yyyy.
+  if (typeof value === 'string') {
+    const match = value.trim().match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/)
+    if (match) {
+      const day = String(Number(match[1])).padStart(2, '0')
+      const month = String(Number(match[2])).padStart(2, '0')
+      const year = match[3]
+      return `${year}-${month}-${day}`
+    }
+  }
+
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return ''
+
+  const year = parsed.getFullYear()
+  const month = String(parsed.getMonth() + 1).padStart(2, '0')
+  const day = String(parsed.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export default function EditUserModal({ user, onSave, onClose }) {
   const [form, setForm] = useState(
     user || {
@@ -14,6 +42,7 @@ export default function EditUserModal({ user, onSave, onClose }) {
       sellerSoWoCo: '',
       sellerOccupation: '',
       sellerPhone: '',
+      sellerAlternatePhone: '',
       sellerAadhaar: '',
       sellerDob: '',
       sellerAddress: '',
@@ -25,6 +54,7 @@ export default function EditUserModal({ user, onSave, onClose }) {
       buyerSoWoCo: '',
       buyerOccupation: '',
       buyerPhone: '',
+      buyerAlternatePhone: '',
       buyerAadhaar: '',
       buyerDob: '',
       buyerAddress: '',
@@ -36,6 +66,7 @@ export default function EditUserModal({ user, onSave, onClose }) {
       emiAmount: '',
       emiMonths: '',
       emiDate: '',
+      agreementNo: '',
       // guarantor
       guarantorName: '',
       guarantorPhone: '',
@@ -74,8 +105,9 @@ export default function EditUserModal({ user, onSave, onClose }) {
         sellerSoWoCo: user.sellerSoWoCo ?? prev.sellerSoWoCo,
         sellerOccupation: user.sellerOccupation ?? prev.sellerOccupation,
         sellerPhone: user.phone ?? prev.sellerPhone,
+        sellerAlternatePhone: user.sellerAlternatePhone ?? user.alternatePhone ?? prev.sellerAlternatePhone,
         sellerAadhaar: user.aadhaar ?? prev.sellerAadhaar,
-        sellerDob: user.dob ?? prev.sellerDob,
+        sellerDob: toDateInputValue(user.sellerDob ?? user.dob ?? prev.sellerDob),
         sellerAddress: user.address ?? prev.sellerAddress,
         sellerReferenceName: user.referenceName ?? prev.sellerReferenceName,
         sellerReferencePhone: user.referencePhone ?? prev.sellerReferencePhone,
@@ -84,8 +116,9 @@ export default function EditUserModal({ user, onSave, onClose }) {
         buyerSoWoCo: user.buyerSoWoCo ?? prev.buyerSoWoCo,
         buyerOccupation: user.buyerOccupation ?? prev.buyerOccupation,
         buyerPhone: user.buyerPhone ?? user.phone ?? prev.buyerPhone,
+        buyerAlternatePhone: user.buyerAlternatePhone ?? user.alternatePhone ?? prev.buyerAlternatePhone,
         buyerAadhaar: user.buyerAadhaar ?? user.aadhaar ?? prev.buyerAadhaar,
-        buyerDob: user.buyerDob ?? user.dob ?? prev.buyerDob,
+        buyerDob: toDateInputValue(user.buyerDob ?? user.dob ?? prev.buyerDob),
         buyerAddress: user.buyerAddress ?? user.address ?? prev.buyerAddress,
         buyerReferenceName: user.buyerReferenceName ?? prev.buyerReferenceName,
         buyerReferencePhone: user.buyerReferencePhone ?? prev.buyerReferencePhone,
@@ -93,7 +126,8 @@ export default function EditUserModal({ user, onSave, onClose }) {
         financeAmount: user.financeAmount ?? prev.financeAmount,
         emiAmount: user.emiAmount ?? prev.emiAmount,
         emiMonths: user.emiMonths ?? prev.emiMonths,
-        emiDate: user.emiDate ?? prev.emiDate,
+        emiDate: toDateInputValue(user.emiDate ?? prev.emiDate),
+        agreementNo: user.agreementNo ?? prev.agreementNo,
         guarantorName: user.guarantorName ?? prev.guarantorName,
         guarantorPhone: user.guarantorPhone ?? prev.guarantorPhone,
         guarantorAadhaar: user.guarantorAadhaar ?? prev.guarantorAadhaar,
@@ -341,6 +375,10 @@ export default function EditUserModal({ user, onSave, onClose }) {
               <input name="sellerPhone" value={form.sellerPhone || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
             </div>
             <div>
+              <label className="text-xs text-gray-600">Alternative Phone</label>
+              <input name="sellerAlternatePhone" value={form.sellerAlternatePhone || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
+            </div>
+            <div>
               <label className="text-xs text-gray-600">Occupation</label>
               <input name="sellerOccupation" value={form.sellerOccupation || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
             </div>
@@ -390,6 +428,10 @@ export default function EditUserModal({ user, onSave, onClose }) {
               <input name="buyerPhone" value={form.buyerPhone || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
             </div>
             <div>
+              <label className="text-xs text-gray-600">Alternative Phone</label>
+              <input name="buyerAlternatePhone" value={form.buyerAlternatePhone || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
+            </div>
+            <div>
               <label className="text-xs text-gray-600">Occupation</label>
               <input name="buyerOccupation" value={form.buyerOccupation || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
             </div>
@@ -426,7 +468,12 @@ export default function EditUserModal({ user, onSave, onClose }) {
       {/* Buyer Finance (separate) */}
       <div className="mt-4 bg-white rounded-xl p-4 shadow">
         <h5 className="text-sm font-semibold mb-2">Buyer Finance Details</h5>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+          <div>
+            <label className="text-xs text-gray-600">Agreement No</label>
+            <input name="agreementNo" value={form.agreementNo || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" placeholder="e.g., AG-001" />
+          </div>
           <div>
             <label className="text-xs text-gray-600">Finance Amount</label>
             <input name="financeAmount" value={form.financeAmount || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />

@@ -189,7 +189,13 @@ function Users () {
       })
     } catch (err) {
       console.error('Error updating user:', err)
-      setError(err.response?.data?.message || 'Failed to update user data')
+      const message = err.response?.data?.message || 'Failed to update user data'
+      setError(message)
+      showToast({
+        type: 'error',
+        title: 'Update Failed',
+        message,
+      })
     }
   }
 
@@ -268,8 +274,8 @@ function Users () {
   }
 
   const buildBuyerInvoice = () => {
-    // Map from different possible field names (sowoco from model, buyerSoWoCo from form, etc.)
-    const soWoCo = modalUser.buyerSoWoCo || modalUser.sowoco || modalUser.soWoCo || ''
+    // Use buyer-specific S/O C/O W/O field
+    const soWoCo = modalUser.buyerSoWoCo || ''
     const district = modalUser.buyerDistrict || modalUser.buyerData?.district || modalUser.district || ''
     const mandal = modalUser.buyerMandal || modalUser.buyerData?.mandal || modalUser.mandal || ''
     
@@ -443,8 +449,8 @@ function Users () {
                   <td className="py-3 px-3 text-xs">{u.seller}</td>
                   <td className="py-3 px-3 text-xs">{u.buyerName || '-'}</td>
                   <td className="py-3 px-3 text-xs">{u.vehicle}</td>
-                  <td className="py-3 px-3 text-xs">{u.soldAmount}</td>
                   <td className="py-3 px-3 text-xs">{u.buyAmount || '-'}</td>
+                  <td className="py-3 px-3 text-xs">{u.soldAmount}</td>
                   <td className="py-3 px-3 text-xs">{u.date}</td>
                   <td className="py-3 px-3">
                     {u.status === 'completed' ? (
@@ -512,8 +518,8 @@ function Users () {
               <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-700">
                 <div><span className="text-[10px] text-gray-400">Buyer</span><div className="font-medium">{u.buyerName || '-'}</div></div>
                 <div><span className="text-[10px] text-gray-400">Vehicle</span><div className="font-medium">{u.vehicle}</div></div>
-                <div><span className="text-[10px] text-gray-400">Sold Amount</span><div className="font-medium">{u.soldAmount}</div></div>
-                <div><span className="text-[10px] text-gray-400">Buy Amount</span><div className="font-medium">{u.buyAmount || '-'}</div></div>
+                <div><span className="text-[10px] text-gray-400">Sold Amount</span><div className="font-medium">{u.buyAmount || '-'}</div></div>
+                <div><span className="text-[10px] text-gray-400">Buy Amount</span><div className="font-medium">{u.soldAmount}</div></div>
                 <div className="col-span-2"><span className="text-[10px] text-gray-400">Date</span><div className="font-medium">{u.date}</div></div>
               </div>
 
@@ -650,6 +656,7 @@ function Users () {
                         <div><strong>Occupation:</strong> {modalUser.sellerOccupation || '-'}</div>
                         <div><strong>DOB:</strong> {formatDisplayDate(modalUser.sellerDob)}</div>
                         <div><strong>Phone:</strong> {modalUser.sellerPhone || '-'}</div>
+                        <div><strong>Alternative Phone:</strong> {modalUser.sellerAlternatePhone || '-'}</div>
                         <div className="flex items-center gap-2"><strong>Aadhar No:</strong> <span>{modalUser.sellerAadhaar || '-'}</span> <span className="ml-2 text-xs bg-yellow-100 px-2 py-0.5 rounded">view</span></div>
                         <div><strong>Address:</strong> <div className="text-xs text-gray-600">{modalUser.sellerAddress || '-'}</div></div>
                         <div><strong>Buy Amount:</strong> {modalUser.soldAmount}</div>
@@ -682,10 +689,11 @@ function Users () {
                       <h5 className="text-sm font-semibold mb-2">Customer Details</h5>
                       <div className="text-sm text-gray-700 space-y-1">
                         <div><strong>Name:</strong> {modalUser.buyerName || '-'}</div>
-                        <div><strong>S/O C/O W/O:</strong> {modalUser.buyerSoWoCo || modalUser.sowoco || modalUser.soWoCo || '-'}</div>
+                        <div><strong>S/O C/O W/O:</strong> {modalUser.buyerSoWoCo || '-'}</div>
                         <div><strong>Occupation:</strong> {modalUser.buyerOccupation || '-'}</div>
                         <div><strong>DOB:</strong> {formatDisplayDate(modalUser.buyerDob)}</div>
                         <div><strong>Phone:</strong> {modalUser.buyerPhone || '-'}</div>
+                        <div><strong>Alternative Phone:</strong> {modalUser.buyerAlternatePhone || '-'}</div>
                         <div className="flex items-center gap-2"><strong>Aadhar No:</strong> <span>{modalUser.buyerAadhaar || '-'}</span> <span className="ml-2 text-xs bg-yellow-100 px-2 py-0.5 rounded">view</span></div>
                         <div><strong>Address:</strong> <div className="text-xs text-gray-600">{modalUser.buyerAddress || '-'}</div></div>
                         <div><strong>Sold Amount:</strong> {modalUser.buyAmount || '-'}</div>
@@ -695,6 +703,7 @@ function Users () {
                     <div className="w-full bg-white rounded-xl p-4 shadow">
                       <h5 className="text-sm font-semibold mb-2">Finance Details</h5>
                       <div className="text-sm text-gray-700 space-y-1">
+                        <div><strong>Agreement No:</strong> {modalUser.agreementNo || '-'}</div>
                         <div><strong>Finance Amount:</strong> {modalUser.financeAmount || '-'}</div>
                         <div><strong>EMI Amount:</strong> {modalUser.emiAmount || '-'}</div>
                         <div><strong>EMI Months:</strong> {modalUser.emiMonths ?? '-'}</div>

@@ -73,6 +73,7 @@ function Buy() {
       const [showRefinance, setShowRefinance] = useState(false)
       const [showInvoicePreview, setShowInvoicePreview] = useState(false)
       const [invoice, setInvoice] = useState(null)
+      const [isVehiclePrefillLoading, setIsVehiclePrefillLoading] = useState(false)
       const [districtOptions, setDistrictOptions] = useState(apDistricts)
       const [allMandalOptions, setAllMandalOptions] = useState(apMandals)
       const [mandalsByDistrict, setMandalsByDistrict] = useState({})
@@ -116,6 +117,58 @@ function Buy() {
       useEffect(() => {
         fetchNextAgreementNumber()
       }, [])
+
+      useEffect(() => {
+        const normalizedVehicleNo = String(form.vehicleNo || '').trim()
+
+        if (normalizedVehicleNo.length < 6) {
+          setIsVehiclePrefillLoading(false)
+          return
+        }
+
+        let isCancelled = false
+        const timeoutId = setTimeout(async () => {
+          try {
+            setIsVehiclePrefillLoading(true)
+            const response = await apiClient.get('/api/subadmin/management/vehicle-prefill', {
+              params: { vehicleNo: normalizedVehicleNo }
+            })
+
+            if (isCancelled) return
+
+            const prefillData = response?.data?.data
+            if (!prefillData?.found) return
+
+            setForm((prev) => {
+              if (String(prev.vehicleNo || '').trim() !== normalizedVehicleNo) {
+                return prev
+              }
+
+              return {
+                ...prev,
+                vehicleName: prefillData.vehicleName || prev.vehicleName,
+                model: prefillData.model || prev.model,
+                chassisNo: prefillData.chassisNo || prev.chassisNo,
+                saleAmount:
+                  prefillData.saleAmount !== '' && prefillData.saleAmount !== null && prefillData.saleAmount !== undefined
+                    ? String(prefillData.saleAmount)
+                    : prev.saleAmount,
+              }
+            })
+          } catch {
+            // Keep manual entry available if vehicle lookup API fails.
+          } finally {
+            if (!isCancelled) {
+              setIsVehiclePrefillLoading(false)
+            }
+          }
+        }, 350)
+
+        return () => {
+          isCancelled = true
+          clearTimeout(timeoutId)
+        }
+      }, [form.vehicleNo])
 
       useEffect(() => {
         let isMounted = true
@@ -538,6 +591,9 @@ function Buy() {
             <div className="absolute left-3 top-11 -translate-y-1/2 text-gray-400">
               <svg xmlns="http://www.w3.org/2000/svg" width="15" height="22" viewBox="0 0 17 24"><path fill="#a6a6a6" d="M8.632 15.526a2.11 2.11 0 0 0-2.106 2.105v4.305a2.106 2.106 0 0 0 4.212 0v-.043v.002v-4.263a2.11 2.11 0 0 0-2.104-2.106z"/><path fill="#a6a6a6" d="M16.263 2.631H12.21C11.719 1.094 10.303 0 8.631 0S5.544 1.094 5.06 2.604l-.007.027h-4a1.053 1.053 0 0 0 0 2.106h4.053c.268.899.85 1.635 1.615 2.096l.016.009c-2.871.867-4.929 3.48-4.947 6.577v5.528a1.753 1.753 0 0 0 1.736 1.737h1.422v-3a3.737 3.737 0 1 1 7.474 0v3h1.421a1.75 1.75 0 0 0 1.738-1.737v-5.474a6.855 6.855 0 0 0-4.899-6.567l-.048-.012a3.65 3.65 0 0 0 1.625-2.08l.007-.026h4.053a1.056 1.056 0 0 0 1.053-1.053a1.15 1.15 0 0 0-1.104-1.105h-.002zM8.631 5.84a2.106 2.106 0 1 1 2.106-2.106l.001.06c0 1.13-.916 2.046-2.046 2.046l-.063-.001h.003z"/></svg>
             </div>
+            {isVehiclePrefillLoading && (
+              <p className="mt-1 text-xs text-gray-500">Fetching vehicle details...</p>
+            )}
           </div>
           <div className='relative'>
             <label className={labelClass}>vehicle name</label>

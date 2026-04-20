@@ -3,6 +3,14 @@ import apiClient from '../../api/axios';
 import { useToast } from '../../components/ToastProvider';
 
 function VehicleStock() {
+  const getTodayDate = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const [query, setQuery] = useState("");
   const [modalItem, setModalItem] = useState(null);
   const [addingWorkTo, setAddingWorkTo] = useState(null);
@@ -184,81 +192,86 @@ function VehicleStock() {
       {loading ? (
         <div className="text-sm text-gray-500">Loading vehicle stock...</div>
       ) : (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {stock.map((item) => {
-          const total = item.bikePrice + item.workCost;
-          return (
-            <div
-              key={item.id}
-              className="bg-white border rounded-2xl p-4 shadow-sm"
-            >
-              <div className="bg-indigo-50 rounded-xl p-3 text-center">
-                <div className="text-xs md:text-sm font-semibold text-gray-800 tracking-wide">
-                  {item.modelName}
-                </div>
-                <div className="text-[11px] md:text-xs font-semibold text-gray-800 mt-0.5">
-                  {item.regNo}
-                </div>
-                <div className="text-[10px] text-gray-500 leading-tight">
-                  {item.chassisNo}
-                </div>
-                <div className="text-[10px] text-gray-500">Model: {item.modelYear || '-'}</div>
-              </div>
-
-              <div className="mt-3 text-[12px] md:text-sm">
-                <div className="flex items-center justify-between py-1">
-                  <div className="text-gray-700">
-                    <span className="font-semibold">Bike Price</span> : {inr(item.bikePrice)}
+        stock.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-gray-300 bg-white py-14 text-center text-sm text-gray-500">
+            No vehicle in stock.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {stock.map((item) => {
+              const total = item.bikePrice + item.workCost;
+              return (
+                <div
+                  key={item.id}
+                  className="bg-white border rounded-2xl p-4 shadow-sm"
+                >
+                  <div className="bg-indigo-50 rounded-xl p-3 text-center">
+                    <div className="text-xs md:text-sm font-semibold text-gray-800 tracking-wide">
+                      {item.modelName}
+                    </div>
+                    <div className="text-[11px] md:text-xs font-semibold text-gray-800 mt-0.5">
+                      {item.regNo}
+                    </div>
+                    <div className="text-[10px] text-gray-500 leading-tight">
+                      {item.chassisNo}
+                    </div>
+                    <div className="text-[10px] text-gray-500">Model: {item.modelYear || '-'}</div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setModalItem(item)}
-                    className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-600"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="14"
-                      height="14"
-                      viewBox="0 0 1024 1024"
-                    >
-                      <path
-                        fill="currentColor"
-                        d="M104.704 338.752a64 64 0 0 1 90.496 0l316.8 316.8l316.8-316.8a64 64 0 0 1 90.496 90.496L557.248 791.296a64 64 0 0 1-90.496 0L104.704 429.248a64 64 0 0 1 0-90.496"
-                      />
-                    </svg>
-                    <span>open list</span>
-                  </button>
-                </div>
 
-                <div className="flex items-center justify-between py-1">
-                  <div className="text-gray-700">
-                    <span className="font-semibold">Work</span> : {inr(item.workCost)}
-                  </div>
-                  <div className="invisible">.</div>
-                </div>
+                  <div className="mt-3 text-[12px] md:text-sm">
+                    <div className="flex items-center justify-between py-1">
+                      <div className="text-gray-700">
+                        <span className="font-semibold">Bike Price</span> : {inr(item.bikePrice)}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setModalItem(item)}
+                        className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-600"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 1024 1024"
+                        >
+                          <path
+                            fill="currentColor"
+                            d="M104.704 338.752a64 64 0 0 1 90.496 0l316.8 316.8l316.8-316.8a64 64 0 0 1 90.496 90.496L557.248 791.296a64 64 0 0 1-90.496 0L104.704 429.248a64 64 0 0 1 0-90.496"
+                          />
+                        </svg>
+                        <span>open list</span>
+                      </button>
+                    </div>
 
-                <div className="flex items-center justify-between pt-2">
-                  <div className="text-gray-700">
-                    <span className="font-semibold">Total</span> :
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => openSoldConfirm(item)}
-                      className="px-2 py-0.5 rounded-full bg-gray-900 text-white text-[11px] font-semibold hover:bg-black"
-                    >
-                      Sold
-                    </button>
-                    <div className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[11px] font-semibold">
-                      {inr(total)}
+                    <div className="flex items-center justify-between py-1">
+                      <div className="text-gray-700">
+                        <span className="font-semibold">Work</span> : {inr(item.workCost)}
+                      </div>
+                      <div className="invisible">.</div>
+                    </div>
+
+                    <div className="flex items-start justify-between pt-2 gap-3">
+                      <div className="text-gray-700 flex items-center gap-2">
+                        <span className="font-semibold">Total</span>
+                        <span>:</span>
+                        <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[11px] font-semibold">
+                          {inr(total)}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => openSoldConfirm(item)}
+                        className="px-2 py-0.5 rounded-full bg-gray-900 text-white text-[11px] font-semibold hover:bg-black"
+                      >
+                        Sold
+                      </button>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
+        )
       )}
 
       <div className="mt-5 flex items-center justify-end gap-3">
@@ -299,11 +312,24 @@ function VehicleStock() {
               </div>
               <button
                 type="button"
-                className="h-8 w-8 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
+                className="h-8 w-8 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 inline-flex items-center justify-center"
                 onClick={() => setModalItem(null)}
                 aria-label="Close"
               >
-                ×
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4"
+                  aria-hidden="true"
+                >
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
               </button>
             </div>
 
@@ -458,7 +484,10 @@ function VehicleStock() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => setAddingWorkTo(modalItem.id)}
+                      onClick={() => {
+                        setAddingWorkTo(modalItem.id);
+                        setNewWork({ title: "", amount: "", date: getTodayDate(), lastModified: "" });
+                      }}
                       className="h-8 w-8 rounded bg-lime-400 text-gray-800 font-semibold hover:bg-lime-500 flex items-center justify-center"
                     >
                       +

@@ -53,6 +53,14 @@ function PendingDownpayment() {
   const inr = (n) =>
     Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 
+  const formatDisplayDate = (dateValue) => {
+    if (!dateValue) return "-";
+    const match = String(dateValue).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return String(dateValue);
+    const [, year, month, day] = match;
+    return `${day}-${month}-${year}`;
+  };
+
   const handleAmountUpdate = async (id) => {
     const parsedAmount = Number(amountValue);
     if (Number.isNaN(parsedAmount) || parsedAmount <= 0) {
@@ -141,12 +149,33 @@ function PendingDownpayment() {
     setSelectedPaymentId(null);
   };
 
-  const getDaysRemaining = (dueDate) => {
+  const getStatusReferenceDate = (payment) =>
+    payment?.commitmentDate || payment?.paymentDueDate;
+
+  const getDaysRemaining = (dateValue) => {
+    if (!dateValue) return null;
     const today = new Date();
-    const due = new Date(dueDate);
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(dateValue);
+    if (Number.isNaN(due.getTime())) return null;
+    due.setHours(0, 0, 0, 0);
     const diffTime = due - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
+  };
+
+  const getStatusClass = (daysRemaining) => {
+    if (daysRemaining === null) return "bg-gray-50 text-gray-700 border-gray-200";
+    if (daysRemaining < 0) return "bg-red-50 text-red-700 border-red-200";
+    if (daysRemaining <= 3) return "bg-orange-50 text-orange-700 border-orange-200";
+    return "bg-green-50 text-green-700 border-green-200";
+  };
+
+  const getStatusLabel = (daysRemaining) => {
+    if (daysRemaining === null) return "Pending";
+    if (daysRemaining < 0) return "Overdue";
+    if (daysRemaining === 0) return "Due Today";
+    return `${daysRemaining}d remaining`;
   };
 
   return (
@@ -264,7 +293,7 @@ function PendingDownpayment() {
                 </tr>
               ) : (
                 pendingPayments.map((payment) => {
-                  const daysRemaining = getDaysRemaining(payment.paymentDueDate);
+                  const daysRemaining = getDaysRemaining(getStatusReferenceDate(payment));
                   return (
                     <tr key={payment.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">
@@ -330,7 +359,7 @@ function PendingDownpayment() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
-                        {payment.paymentDueDate}
+                        {formatDisplayDate(payment.paymentDueDate)}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         {editingCommitment === payment.id ? (
@@ -360,7 +389,7 @@ function PendingDownpayment() {
                         ) : (
                           <div className="flex items-center gap-2">
                             <span className="text-gray-700">
-                              {payment.commitmentDate}
+                              {formatDisplayDate(payment.commitmentDate)}
                             </span>
                             <button
                               onClick={() => {
@@ -390,20 +419,10 @@ function PendingDownpayment() {
                         <select
                           onChange={(e) => handleStatusChange(payment.id, e.target.value)}
                           value="Pending"
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border-2 focus:outline-none focus:ring-2 focus:ring-lime-400 ${
-                            daysRemaining < 0
-                              ? "bg-red-50 text-red-700 border-red-200"
-                              : daysRemaining <= 3
-                              ? "bg-orange-50 text-orange-700 border-orange-200"
-                              : "bg-green-50 text-green-700 border-green-200"
-                          }`}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border-2 focus:outline-none focus:ring-2 focus:ring-lime-400 ${getStatusClass(daysRemaining)}`}
                         >
                           <option value="Pending">
-                            {daysRemaining < 0
-                              ? "Overdue"
-                              : daysRemaining === 0
-                              ? "Due Today"
-                              : `${daysRemaining}d remaining`}
+                            {getStatusLabel(daysRemaining)}
                           </option>
                           <option value="Paid">Paid</option>
                         </select>
@@ -425,13 +444,8 @@ function PendingDownpayment() {
           </div>
         ) : (
           pendingPayments.map((payment) => {
-            const daysRemaining = getDaysRemaining(payment.paymentDueDate);
-            const statusClass =
-              daysRemaining < 0
-                ? "bg-red-50 text-red-700 border-red-200"
-                : daysRemaining <= 3
-                ? "bg-orange-50 text-orange-700 border-orange-200"
-                : "bg-green-50 text-green-700 border-green-200";
+            const daysRemaining = getDaysRemaining(getStatusReferenceDate(payment));
+            const statusClass = getStatusClass(daysRemaining);
             return (
               <div key={payment.id} className="bg-white border rounded-xl shadow-sm p-4 space-y-3">
                 <div className="flex items-start justify-between gap-3">
@@ -440,7 +454,9 @@ function PendingDownpayment() {
                     <div className="text-sm text-gray-600">{payment.phoneNumber}</div>
                   </div>
                   <span className={`text-xs font-semibold px-2 py-1 rounded-full border ${statusClass}`}>
-                    {daysRemaining < 0
+                    {daysRemaining === null
+                      ? "Pending"
+                      : daysRemaining < 0
                       ? "Overdue"
                       : daysRemaining === 0
                       ? "Due Today"
@@ -509,7 +525,7 @@ function PendingDownpayment() {
                   </div>
                   <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg flex-1 min-w-[140px]">
                     <span className="text-xs text-gray-500">Due</span>
-                    <span className="text-sm font-semibold text-gray-900">{payment.paymentDueDate}</span>
+                    <span className="text-sm font-semibold text-gray-900">{formatDisplayDate(payment.paymentDueDate)}</span>
                   </div>
                 </div>
 
@@ -543,7 +559,7 @@ function PendingDownpayment() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-800">{payment.commitmentDate}</span>
+                      <span className="text-sm text-gray-800">{formatDisplayDate(payment.commitmentDate)}</span>
                       <button
                         onClick={() => {
                           setEditingCommitment(payment.id);
@@ -577,11 +593,7 @@ function PendingDownpayment() {
                     className={`w-full px-3 py-2 rounded-lg text-sm font-semibold border-2 focus:outline-none focus:ring-2 focus:ring-lime-400 ${statusClass}`}
                   >
                     <option value="Pending">
-                      {daysRemaining < 0
-                        ? "Overdue"
-                        : daysRemaining === 0
-                        ? "Due Today"
-                        : `${daysRemaining}d remaining`}
+                      {getStatusLabel(daysRemaining)}
                     </option>
                     <option value="Paid">Paid</option>
                   </select>

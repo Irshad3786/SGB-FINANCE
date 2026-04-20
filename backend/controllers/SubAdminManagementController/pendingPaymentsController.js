@@ -13,11 +13,12 @@ const resolvePaymentStatus = (dpPayment = {}) => {
 	const status = String(dpPayment?.status || "").toLowerCase();
 	if (status === "paid") return "paid";
 
-	const dueDate = dpPayment?.dueDate ? new Date(dpPayment.dueDate) : null;
-	if (dueDate && !Number.isNaN(dueDate.getTime())) {
+	const statusDateValue = dpPayment?.commitmentDate || dpPayment?.dueDate;
+	const statusDate = statusDateValue ? new Date(statusDateValue) : null;
+	if (statusDate && !Number.isNaN(statusDate.getTime())) {
 		const now = new Date();
 		now.setHours(0, 0, 0, 0);
-		const due = new Date(dueDate);
+		const due = new Date(statusDate);
 		due.setHours(0, 0, 0, 0);
 		if (due < now) return "overdue";
 	}

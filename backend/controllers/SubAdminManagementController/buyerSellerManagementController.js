@@ -134,7 +134,6 @@ const saveBuyerOrSeller = async (req, res) => {
       guarantorPhoto,
       isFinanced,
       mode,
-      overwriteExisting,
     } = req.body;
 
     if (!role || !["buyer", "seller"].includes(String(role).toLowerCase())) {
@@ -231,33 +230,12 @@ const saveBuyerOrSeller = async (req, res) => {
         savedRecord = await Seller.create(sellerPayload);
       }
 
-      const buyerFilters = [];
-      if (normalizedChassisNo) {
-        buyerFilters.push({ "vehicle.chassisNo": normalizedChassisNo });
-        buyerFilters.push({ oldHAnumber: normalizedChassisNo });
-      }
-      if (normalizedVehicleNo) {
-        buyerFilters.push({ "vehicle.vehicleNumber": normalizedVehicleNo });
-        buyerFilters.push({ oldHAnumber: normalizedVehicleNo });
-      }
-
-      if (buyerFilters.length > 0) {
-        const matchedBuyer = await Buyer.findOne({ $or: buyerFilters })
-          .select("_id")
-          .lean();
-
-        if (matchedBuyer) {
-          savedRecord.vehicle.status = "sold";
-          await savedRecord.save();
-        }
-      }
     } else {
       let normalizedAgreementNo = normalizeText(agreementNo);
       const normalizedMode = normalizeText(mode).toLowerCase();
       const resolvedMode = ["refinance", "buy"].includes(normalizedMode)
         ? normalizedMode
         : "buy";
-      const shouldOverwriteExisting = Boolean(overwriteExisting);
       const resolvedIsFinanced = isFinanced === true || String(isFinanced).toLowerCase() === "true";
 
       if (!normalizedAgreementNo && resolvedIsFinanced) {
@@ -277,7 +255,6 @@ const saveBuyerOrSeller = async (req, res) => {
       const normalizedOldHaNumber = normalizeText(oldHaNumber || haNumber);
 
       let matchedBuyerForRefinance = null;
-      let matchedBuyerForBuyOverwrite = null;
       let previousBuyerSnapshot = null;
       let relatedSellerSnapshot = null;
       if (resolvedMode === "refinance") {
@@ -343,21 +320,20 @@ const saveBuyerOrSeller = async (req, res) => {
         }
 
         if (buyFilters.length > 0) {
-          matchedBuyerForBuyOverwrite = await Buyer.findOne({ $or: buyFilters })
+          const matchedBuyerForBuy = await Buyer.findOne({ $or: buyFilters })
             .select("_id name vehicle.vehicleNumber vehicle.chassisNo")
             .lean();
 
-          if (matchedBuyerForBuyOverwrite && !shouldOverwriteExisting) {
+          if (matchedBuyerForBuy) {
             return res.status(409).json({
               success: false,
               code: "VEHICLE_DATA_EXISTS",
-              requiresConfirmation: true,
-              message: "This vehicle data already exists. Do you want to rewrite it?",
+              message: "This vehicle data already exists. Please use a different vehicle number or chassis number.",
               data: {
-                id: matchedBuyerForBuyOverwrite._id,
-                name: matchedBuyerForBuyOverwrite.name,
-                vehicleNumber: matchedBuyerForBuyOverwrite?.vehicle?.vehicleNumber,
-                chassisNo: matchedBuyerForBuyOverwrite?.vehicle?.chassisNo,
+                id: matchedBuyerForBuy._id,
+                name: matchedBuyerForBuy.name,
+                vehicleNumber: matchedBuyerForBuy?.vehicle?.vehicleNumber,
+                chassisNo: matchedBuyerForBuy?.vehicle?.chassisNo,
               },
             });
           }
@@ -371,8 +347,7 @@ const saveBuyerOrSeller = async (req, res) => {
         });
       }
 
-      const targetBuyerIdForUpdate =
-        matchedBuyerForRefinance?._id || matchedBuyerForBuyOverwrite?._id || null;
+      const targetBuyerIdForUpdate = matchedBuyerForRefinance?._id || null;
 
       if (normalizedAgreementNo) {
         const agreementQuery = { agreementNo: normalizedAgreementNo };
@@ -460,21 +435,6 @@ const saveBuyerOrSeller = async (req, res) => {
         wasUpdated = true;
       } else {
         savedRecord = await Buyer.create(buyerPayload);
-      }
-
-      const sellerFilters = [];
-      if (normalizedChassisNo) {
-        sellerFilters.push({ "vehicle.chassisNo": normalizedChassisNo });
-      }
-      if (normalizedVehicleNo) {
-        sellerFilters.push({ "vehicle.vehicleNumber": normalizedVehicleNo });
-      }
-
-      if (sellerFilters.length > 0) {
-        await Seller.findOneAndUpdate(
-          { $or: sellerFilters },
-          { $set: { "vehicle.status": "sold" } }
-        );
       }
 
       if (resolvedMode === "refinance") {

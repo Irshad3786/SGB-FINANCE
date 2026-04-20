@@ -362,56 +362,6 @@ function Buy() {
           fetchNextAgreementNumber(true)
         } catch (error) {
           const errorData = error?.response?.data
-          const requiresRewriteConfirm =
-            errorData?.requiresConfirmation && errorData?.code === 'VEHICLE_DATA_EXISTS'
-
-          if (requiresRewriteConfirm) {
-            const overwritePayload = {
-              role,
-              mode: 'buy',
-              ...form,
-              overwriteExisting: true,
-            }
-
-            const shouldRewrite = window.confirm(
-              errorData?.message || 'This vehicle data already exists. Do you want to rewrite it?'
-            )
-
-            if (!shouldRewrite) {
-              showToast({
-                type: 'info',
-                title: 'Cancelled',
-                message: 'Rewrite request cancelled'
-              })
-              return
-            }
-
-            try {
-              const overwriteResponse = await apiClient.post('/api/subadmin/management/save-buyer', overwritePayload)
-              console.log('buyer rewritten:', overwriteResponse.data)
-              showToast({
-                type: 'success',
-                title: 'Success',
-                message: overwriteResponse.data?.message || 'Buyer details rewritten successfully'
-              })
-              setInvoice(buildBuyerInvoice(overwriteResponse.data))
-              setShowInvoicePreview(true)
-              setForm(INITIAL_BUY_FORM)
-              setFiles(INITIAL_BUY_FILES)
-              setShowPending(false)
-              setShowGuarantor(false)
-              fetchNextAgreementNumber(true)
-            } catch (overwriteError) {
-              console.error('buyer rewrite error:', overwriteError?.response?.data || overwriteError.message)
-              showToast({
-                type: 'error',
-                title: 'Error',
-                message: overwriteError?.response?.data?.message || 'Failed to rewrite buyer details'
-              })
-            }
-            return
-          }
-
           console.error('buyer save error:', errorData || error.message)
           showToast({
             type: 'error',

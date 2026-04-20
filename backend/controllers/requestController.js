@@ -8,8 +8,19 @@ const toPositiveInt = (value, fallback) => {
   return parsed;
 };
 
+const buildApplicationNo = (item) => {
+  if (item?.applicationNo) return item.applicationNo;
+  const createdAt = item?.createdAt ? new Date(item.createdAt) : new Date();
+  const year = String(createdAt.getFullYear()).slice(-2);
+  const month = String(createdAt.getMonth() + 1).padStart(2, "0");
+  const day = String(createdAt.getDate()).padStart(2, "0");
+  const suffix = String(item?._id || "").slice(-6).toUpperCase();
+  return `APP-${year}${month}${day}-${suffix}`;
+};
+
 const toRequestDTO = (item) => ({
   id: String(item?._id),
+  applicationNo: buildApplicationNo(item),
   type: item?.requestType || "other",
   status: item?.status || "pending",
   createdAt: item?.createdAt,
@@ -145,7 +156,7 @@ export const createContactRequest = async (req, res) => {
       extraData = {},
     } = req.body || {};
 
-    const allowedRequestTypes = ["contact", "support", "application", "documentation", "ticket", "other"];
+    const allowedRequestTypes = ["contact", "support", "application", "ticket", "other"];
     const normalizedType = normalizeText(requestType).toLowerCase();
 
     if (!allowedRequestTypes.includes(normalizedType)) {
@@ -338,7 +349,6 @@ export const getAllRequestsForManagement = async (req, res) => {
       contact: 0,
       support: 0,
       application: 0,
-      documentation: 0,
       ticket: 0,
       other: 0,
     };

@@ -17,7 +17,6 @@ const typePillClass = {
   contact: 'bg-sky-100 text-sky-800',
   support: 'bg-indigo-100 text-indigo-800',
   application: 'bg-orange-100 text-orange-800',
-  documentation: 'bg-cyan-100 text-cyan-800',
   ticket: 'bg-fuchsia-100 text-fuchsia-800',
   other: 'bg-gray-200 text-gray-800',
 }
@@ -59,7 +58,6 @@ function RequestsManagement() {
       contact: 0,
       support: 0,
       application: 0,
-      documentation: 0,
       ticket: 0,
       other: 0,
     },
@@ -104,7 +102,6 @@ function RequestsManagement() {
             contact: 0,
             support: 0,
             application: 0,
-            documentation: 0,
             ticket: 0,
             other: 0,
           },
@@ -324,7 +321,6 @@ function RequestsManagement() {
             { key: 'contact', label: 'Contact' },
             { key: 'support', label: 'Support' },
             { key: 'application', label: 'Application' },
-            { key: 'documentation', label: 'Documentation' },
             { key: 'ticket', label: 'Ticket' },
           ].map((tab) => (
             <button
@@ -399,8 +395,13 @@ function RequestsManagement() {
             </div>
 
             <div className="divide-y divide-gray-200 bg-white">
-              {requests.map((item, index) => (
-                <div key={item.id} className="px-4 md:px-5 py-4 bg-white hover:bg-gray-50 transition-colors">
+              {requests.map((item, index) => {
+                const isEvenRow = index % 2 === 0
+                const rowClass = isEvenRow ? 'bg-slate-100/90 hover:bg-slate-200/80' : 'bg-[#fbf8f0] hover:bg-[#f1ead9]'
+                const detailClass = isEvenRow ? 'border-slate-200 bg-slate-50' : 'border-amber-100 bg-amber-50/60'
+
+                return (
+                <div key={item.id} className={`px-4 md:px-5 py-4 transition-colors ${rowClass}`}>
                   <div className="hidden lg:grid grid-cols-12 gap-3 items-start text-sm">
                     <div className="col-span-2 text-gray-700">
                       <p>{formatDateTime(item.createdAt)}</p>
@@ -461,11 +462,11 @@ function RequestsManagement() {
                   </div>
 
                   {getDetailItems(item).length > 0 && (
-                    <div className="hidden lg:block mt-3 rounded-2xl border border-gray-200 bg-gray-50 p-3">
-                      <p className="text-xs font-semibold text-gray-700 mb-2">Request Details</p>
+                    <div className={`hidden lg:block mt-3 rounded-2xl border p-3 ${detailClass}`}>
+                      <p className="mb-2 text-xs font-semibold text-gray-700">Request Details</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
                         {getDetailItems(item).map((detail, idx) => (
-                          <div key={`${item.id}-detail-${idx}`} className="text-xs text-gray-700 break-words whitespace-pre-wrap overflow-hidden rounded-xl border border-gray-200 bg-white p-2">
+                          <div key={`${item.id}-detail-${idx}`} className="overflow-hidden rounded-xl border border-gray-200 bg-white p-2 text-xs text-gray-700 break-words whitespace-pre-wrap">
                             <span className="font-semibold text-gray-900">{detail.label}:</span>{' '}
                             <span className="break-all">{detail.value}</span>
                           </div>
@@ -475,6 +476,7 @@ function RequestsManagement() {
                   )}
 
                   <div className="lg:hidden space-y-3 text-sm">
+                    <div className={`rounded-2xl border p-4 shadow-sm ${isEvenRow ? 'border-slate-200 bg-slate-50' : 'border-amber-100 bg-amber-50/60'}`}>
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-semibold text-gray-900">{item.name}</p>
                       <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${statusPillClass[item.status] || 'bg-gray-200 text-gray-800'}`}>
@@ -490,7 +492,7 @@ function RequestsManagement() {
                     <p className="text-gray-700 break-all">{item.phoneNumber} | {item.email}</p>
                     <p className="text-gray-700">Purpose: <span className="font-medium">{item.purpose || '-'}</span></p>
                     {item.requestedAmount > 0 && <p className="text-gray-900 font-semibold">Amount: Rs {item.requestedAmount.toLocaleString('en-IN')}</p>}
-                    <div className="space-y-2 pt-1 rounded-2xl border border-gray-200 bg-gray-50 p-3">
+                    <div className="space-y-2 pt-1 rounded-2xl border border-gray-200 bg-white/70 p-3">
                       <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Change Status</p>
                       <select
                         value={statusDrafts[item.id] || item.status || 'pending'}
@@ -524,7 +526,7 @@ function RequestsManagement() {
                       </button>
                     </div>
                     {getDetailItems(item).length > 0 && (
-                      <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3 space-y-1">
+                      <div className={`mt-3 rounded-2xl border p-3 space-y-1 ${detailClass}`}>
                         <p className="text-xs font-semibold text-gray-700">Request Details</p>
                         {getDetailItems(item).map((detail, idx) => (
                           <p key={`${item.id}-mobile-detail-${idx}`} className="text-xs text-gray-700 break-words whitespace-pre-wrap overflow-hidden rounded-lg border border-gray-200 bg-white p-2">
@@ -534,9 +536,11 @@ function RequestsManagement() {
                         ))}
                       </div>
                     )}
+                    </div>
                   </div>
                 </div>
-              ))}
+                )
+              })}
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 md:px-5 py-4 border-t border-gray-200 bg-gray-50">

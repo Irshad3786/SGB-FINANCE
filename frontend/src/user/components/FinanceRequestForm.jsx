@@ -145,17 +145,22 @@ function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
   }
 
   const formatRequestDate = (value) => {
-    if (!value) return '-'
+    if (!value) return { date: '-', time: '' }
     const parsedDate = new Date(value)
-    if (Number.isNaN(parsedDate.getTime())) return '-'
+    if (Number.isNaN(parsedDate.getTime())) return { date: '-', time: '' }
 
-    return parsedDate.toLocaleString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
+    return {
+      date: parsedDate.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }),
+      time: parsedDate.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      }),
+    }
   }
 
   const renderMyRequestsSection = () => (
@@ -170,31 +175,52 @@ function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
       {myRequests.length === 0 ? (
         <p className="text-gray-600">No finance requests submitted yet.</p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-2xl border border-slate-200">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-100">
-                <th className="px-4 py-3 text-left font-semibold">Date</th>
-                <th className="px-4 py-3 text-left font-semibold">Vehicle No</th>
-                <th className="px-4 py-3 text-left font-semibold">Requested Amount</th>
-                <th className="px-4 py-3 text-left font-semibold">Purpose</th>
-                <th className="px-4 py-3 text-left font-semibold">Status</th>
+              <tr className="bg-slate-100 text-slate-700">
+                <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide">Application No</th>
+                <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide">Date</th>
+                <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide">Vehicle No</th>
+                <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide">Requested Amount</th>
+                <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide">Purpose</th>
+                <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide">Status</th>
               </tr>
             </thead>
-            <tbody>
-              {myRequests.map((request) => (
-                <tr key={request?.id} className="border-b last:border-b-0">
-                  <td className="px-4 py-3 text-gray-700">{formatRequestDate(request?.createdAt)}</td>
-                  <td className="px-4 py-3 text-gray-900 font-semibold">{request?.vehicleNumber || '-'}</td>
-                  <td className="px-4 py-3 text-gray-700">₹ {Number(request?.requestedAmount || 0).toLocaleString('en-IN')}</td>
-                  <td className="px-4 py-3 text-gray-700 capitalize">{request?.purpose || '-'}</td>
+            <tbody className="divide-y divide-slate-200 bg-white">
+              {myRequests.map((request) => {
+                const dateParts = formatRequestDate(request?.createdAt)
+
+                return (
+                <tr key={request?.id} className="transition-colors hover:bg-slate-50/80">
+                  <td className="px-4 py-3 text-gray-900 whitespace-nowrap">
+                    <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold tracking-wide text-emerald-900">
+                      {request?.applicationNo || '-'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-700">
+                    <p className="font-semibold text-slate-900 whitespace-nowrap">{dateParts.date}</p>
+                    {dateParts.time ? (
+                      <p className="mt-1 inline-flex w-fit rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                        {dateParts.time}
+                      </p>
+                    ) : null}
+                  </td>
+                  <td className="px-4 py-3 font-semibold uppercase tracking-wide text-slate-900">{request?.vehicleNumber || '-'}</td>
+                  <td className="px-4 py-3 font-semibold text-slate-800">₹ {Number(request?.requestedAmount || 0).toLocaleString('en-IN')}</td>
+                  <td className="px-4 py-3 text-gray-700 capitalize">
+                    <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                      {request?.purpose || '-'}
+                    </span>
+                  </td>
                   <td className="px-4 py-3">
                     <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold capitalize ${statusPillClass[request?.status] || statusPillClass.pending}`}>
                       {request?.status || 'pending'}
                     </span>
                   </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </div>

@@ -45,7 +45,6 @@ function Footer() {
                   <ul className="space-y-3 text-sm text-gray-300">
                   <li><a className="hover:text-white" href="/contact">FAQs</a></li>
                   <li><a className="hover:text-white" href="/contact">Loan Application Help</a></li>
-                  <li><a className="hover:text-white" href="/contact">Documentation Guide</a></li>
                   <li><a className="hover:text-white" href="/contact">Track Application</a></li>
                   <li><a className="hover:text-white" href="/contact">Raise a Ticket</a></li>
                   <li><Link className="hover:text-white" to="/privacy-policy">Privacy Policy</Link></li>

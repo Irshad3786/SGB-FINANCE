@@ -26,8 +26,6 @@ function Contact() {
     applicationStatus: '',
     loanAmount: '',
     remarks: '',
-    documentType: '',
-    documentDescription: '',
     issueCategory: '',
     ticketSubject: '',
     issueDescription: '',
@@ -54,8 +52,6 @@ function Contact() {
       applicationStatus: '',
       loanAmount: '',
       remarks: '',
-      documentType: '',
-      documentDescription: '',
       issueCategory: '',
       ticketSubject: '',
       issueDescription: '',
@@ -105,7 +101,7 @@ function Contact() {
       return
     }
 
-    const requestType = formType === 'ticket' ? 'ticket' : formType === 'application' ? 'application' : 'documentation'
+    const requestType = formType === 'ticket' ? 'ticket' : 'application'
 
     const payload = {
       requestType,
@@ -116,14 +112,10 @@ function Contact() {
       subject:
         requestType === 'application'
           ? requestForm.applicationType || 'Application Details'
-          : requestType === 'documentation'
-          ? requestForm.documentType || 'Documentation Guide'
           : requestForm.ticketSubject || 'Raise a Ticket',
       message:
         requestType === 'application'
           ? requestForm.remarks
-          : requestType === 'documentation'
-          ? requestForm.documentDescription
           : requestForm.issueDescription,
       extraData: {
         applicationNumber: requestForm.applicationNumber,
@@ -230,7 +222,6 @@ function Contact() {
             >
               <option value=''>Select Request Type</option>
               <option value='application'>Application Details</option>
-              <option value='documentation'>Documentation Guide</option>
               <option value='ticket'>Raise a Ticket</option>
             </select>
 
@@ -313,28 +304,6 @@ function Contact() {
               </>
             )}
 
-            {/* Documentation Guide Fields */}
-            {formType === 'documentation' && (
-              <>
-                <select name='documentType' value={requestForm.documentType} onChange={handleRequestChange} className='col-span-1 md:col-span-2 rounded-lg border border-black/15 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#9EEA88] bg-white'>
-                  <option value=''>Select Document Type</option>
-                  <option value='identity'>Identity Proof</option>
-                  <option value='address'>Address Proof</option>
-                  <option value='income'>Income Proof</option>
-                  <option value='vehicle'>Vehicle Documents</option>
-                  <option value='other'>Other</option>
-                </select>
-                <textarea
-                  rows='3'
-                  name='documentDescription'
-                  value={requestForm.documentDescription}
-                  onChange={handleRequestChange}
-                  placeholder='Description of Required Documents'
-                  className='col-span-1 md:col-span-2 rounded-lg border border-black/15 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#9EEA88]'
-                />
-              </>
-            )}
-
             {/* Raise a Ticket Fields */}
             {formType === 'ticket' && (
               <>
@@ -376,8 +345,6 @@ function Contact() {
                   ? 'Submitting...'
                   : formType === 'application'
                   ? 'Submit Application Details'
-                  : formType === 'documentation'
-                  ? 'Request Documentation Guide'
                   : 'Submit Ticket'}
               </button>
             )}

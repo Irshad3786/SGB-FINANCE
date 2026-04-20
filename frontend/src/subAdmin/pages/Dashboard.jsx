@@ -221,7 +221,6 @@ export default function Dashboard() {
       contact: 0,
       support: 0,
       application: 0,
-      documentation: 0,
       ticket: 0,
       other: 0,
     },
@@ -375,17 +374,6 @@ export default function Dashboard() {
               icon={(
                 <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-amber-200 rounded-xl flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#d97706" d="M7 2h7l5 5v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2m6 1.5V8h4.5zM8 12h8v2H8zm0 4h8v2H8z"/></svg>
-                </div>
-              )}
-            />
-
-            <StatCard
-              label="Documentation Requests"
-              value={requestSummary.documentation || 0}
-              className="bg-green-50"
-              icon={(
-                <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-green-200 rounded-xl flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#16a34a" d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2m8 1.5V8h4.5zM8 12h8v2H8zm0 4h8v2H8z"/></svg>
                 </div>
               )}
             />

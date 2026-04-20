@@ -126,7 +126,6 @@ export const getDashboardData = async (req, res) => {
       contact: 0,
       support: 0,
       application: 0,
-      documentation: 0,
       ticket: 0,
       other: 0,
     };

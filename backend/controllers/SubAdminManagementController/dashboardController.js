@@ -80,6 +80,7 @@ const getFinanceSummary = (buyers = []) => {
       acc.totalWithoutHA += financeAmount;
       acc.collectionDone += totalPaid;
       acc.pendingCollection += pending;
+      acc.pendingPaymentCount += pending > 0 ? 1 : 0;
       return acc;
     },
     {
@@ -88,17 +89,23 @@ const getFinanceSummary = (buyers = []) => {
       totalWithoutHA: 0,
       collectionDone: 0,
       pendingCollection: 0,
+      pendingPaymentCount: 0,
     }
   );
 };
 
 export const getDashboardData = async (req, res) => {
   try {
-    const [buyers, totalSellers, totalCollectionEntries, requestTypeRows, totalRequests] = await Promise.all([
+    const [buyers, totalSellers, totalVehicles, pendingPayments, totalCollectionEntries, requestTypeRows, totalRequests] = await Promise.all([
       Buyer.find({})
         .select("mode agreementNo finance.paymentEntries finance.emiDates finance.financeAmount finance.emiAmount finance.months finance.status")
         .lean(),
       Seller.countDocuments({}),
+      Seller.countDocuments({ "vehicle.status": { $ne: "sold" } }),
+      Buyer.countDocuments({
+        "dpPayment.amount": { $gt: 0 },
+        "dpPayment.status": { $ne: "paid" },
+      }),
       CollectionEntry.countDocuments({}),
       Request.aggregate([
         { $group: { _id: "$requestType", count: { $sum: 1 } } },
@@ -110,11 +117,6 @@ export const getDashboardData = async (req, res) => {
     const totalUsers = totalSellers + totalBuyers;
     const financed = buyers.filter((buyer) => Number(buyer?.finance?.financeAmount || 0) > 0).length;
     const refinance = buyers.filter((buyer) => String(buyer?.mode || "").toLowerCase() === "refinance").length;
-    const pendingPayments = buyers.filter((buyer) => {
-      const financeAmount = Number(buyer?.finance?.financeAmount || 0);
-      const status = String(buyer?.finance?.status || "").toLowerCase();
-      return financeAmount > 0 && status !== "paid";
-    }).length;
 
     const financeSummary = getFinanceSummary(buyers);
     const monthlyLabels = getLastMonthLabels(MONTHS_TO_SHOW);
@@ -147,7 +149,7 @@ export const getDashboardData = async (req, res) => {
           totalBuyers,
           financed,
           refinance,
-          totalVehicles: totalSellers,
+          totalVehicles,
           pendingPayments,
           totalFinancedAmount: Math.round(financeSummary.totalFinancedAmount),
           totalWithHA: Math.round(financeSummary.totalWithHA),

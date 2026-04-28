@@ -210,7 +210,7 @@ function Collection() {
   const [filters, setFilters] = useState({ agent: '', status: 'all', date: '' })
   const [searchQuery, setSearchQuery] = useState('')
   // Quick entry defaults so inputs are ready to edit
-  const [quickEntry, setQuickEntry] = useState({ aggNo: '', amount: '', agent: '' })
+  const [quickEntry, setQuickEntry] = useState({ aggNo: 'HA', amount: '', agent: '' })
   const [agentOptions, setAgentOptions] = useState([])
   const [financeData, setFinanceData] = useState([])
   const [savingQuickEntry, setSavingQuickEntry] = useState(false)
@@ -223,7 +223,7 @@ function Collection() {
   const [selectedRowIndex, setSelectedRowIndex] = useState(0)
   const tableContainerRef = useRef(null)
   const [emiEntryOpen, setEmiEntryOpen] = useState(false)
-  const [emiEntryForm, setEmiEntryForm] = useState({ agreementNo: '', bookNo: '', pageNo: '', amount: '', date: '' })
+  const [emiEntryForm, setEmiEntryForm] = useState({ agreementNo: 'HA', bookNo: '', pageNo: '', amount: '', date: '' })
   const [savingEntry, setSavingEntry] = useState(false)
   const bookInputRef = useRef(null)
   const [editFieldsPrompt, setEditFieldsPrompt] = useState({ open: false, bookNo: '', pageNo: '', amount: '', date: '' })
@@ -266,7 +266,7 @@ function Collection() {
     }
   }
 
-  const fetchCollectionEntries = async (agentFilter = '') => {
+  const fetchCollectionEntries = async (agentFilter = '', dateFilter = '') => {
     const selectedAgent = String(agentFilter || '').trim()
     if (!selectedAgent) {
       setEditableData([])
@@ -276,6 +276,9 @@ function Collection() {
     try {
       const params = {}
       params.agentName = selectedAgent
+      if (dateFilter) {
+        params.date = dateFilter
+      }
       const response = await apiClient.get('/api/subadmin/management/finance/collection-entries', { params })
       const entries = Array.isArray(response?.data?.data) ? response.data.data : []
       setEditableData(withSno(entries.map(mapCollectionEntryToTableRow)))
@@ -326,7 +329,7 @@ function Collection() {
         setEditableData(prev => withSno([...prev, newRow]))
       }
       showToast({ type: 'success', title: 'Saved', message: 'Collection entry added' })
-      setQuickEntry(prev => ({ aggNo: '', amount: '', agent: selectedAgent }))
+      setQuickEntry(prev => ({ aggNo: 'HA', amount: '', agent: selectedAgent }))
     } catch (error) {
       showToast({
         type: 'error',
@@ -609,9 +612,9 @@ function Collection() {
 
   // Re-fetch entries whenever agent filter changes
   useEffect(() => {
-    fetchCollectionEntries(filters.agent)
+    fetchCollectionEntries(filters.agent, filters.date)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.agent])
+  }, [filters.agent, filters.date])
 
   useEffect(() => {
     if (agentOptions.length === 0) return
@@ -767,7 +770,15 @@ function Collection() {
           </div>
 
           <div className="ml-auto">
-            <button onClick={() => setShowFilters(false)} className="px-3 py-1 text-xs bg-white rounded">Close</button>
+            <button
+              onClick={() => {
+                setFilters((prev) => ({ ...prev, date: '' }))
+                setShowFilters(false)
+              }}
+              className="px-3 py-1 text-xs bg-white rounded"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
@@ -777,14 +788,14 @@ function Collection() {
         <form className="flex flex-wrap items-center gap-3 bg-[#f3f1ff] rounded-xl px-4 py-3 shadow-sm" onSubmit={handleQuickEntrySubmit}>
           <div className="flex items-center gap-3">
             <label className="flex flex-col leading-tight text-gray-700 text-sm">
-              <span className="text-[11px] text-gray-500">Agg No</span>
+              <span className="text-[11px] text-gray-500">Agreement No</span>
               <input
                 type="text"
                 name="aggNo"
                 value={quickEntry.aggNo}
                 onChange={(e) => setQuickEntry(q => ({ ...q, aggNo: e.target.value }))}
                 className="mt-1 w-24 rounded-md border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
-                placeholder="Agg No"
+                placeholder="Agreement No"
                 autoComplete="off"
               />
             </label>
@@ -863,11 +874,11 @@ function Collection() {
           <table className="w-full border-collapse text-[11px]">
             <thead>
               <tr className="bg-gray-100 text-left sticky top-0">
-                <th className="py-2 px-2 font-semibold whitespace-nowrap">HA</th>
+                <th className="py-2 px-2 font-semibold whitespace-nowrap">Agreement No</th>
                 <th className="py-2 px-2 font-semibold whitespace-nowrap">Name</th>
                 <th className="py-2 px-2 font-semibold whitespace-nowrap">Vehicle</th>
                 <th className="py-2 px-2 font-semibold whitespace-nowrap">Phone</th>
-                <th className="py-2 px-2 font-semibold whitespace-nowrap">EMI</th>
+                <th className="py-2 px-2 font-semibold whitespace-nowrap">EMI AMOUNT</th>
                 <th className="py-2 px-2 font-semibold whitespace-nowrap">EMI Date</th>
                 <th className="py-2 px-2 font-semibold whitespace-nowrap">Comm Date</th>
                 <th className="py-2 px-2 font-semibold whitespace-nowrap">Comm Amt</th>
@@ -1019,7 +1030,7 @@ function Collection() {
               'bg-white'
             }`}>
               <div className="flex items-center justify-between mb-3">
-                <div className="text-xs font-semibold">{row.ha}</div>
+                <div className="text-xs font-semibold">Agreement No: {row.ha}</div>
                 <select
                   value={row.status}
                   onChange={(e) => handleCellChange(row.collectionEntryId, 'status', e.target.value)}
@@ -1041,7 +1052,7 @@ function Collection() {
                 <div><span className="text-[10px] text-gray-400">Name</span><div className="font-medium">{row.name}</div></div>
                 <div><span className="text-[10px] text-gray-400">Vehicle</span><div className="font-medium">{row.vehicle}</div></div>
                 <div><span className="text-[10px] text-gray-400">Phone</span><div className="font-medium">{row.phone}</div></div>
-                <div><span className="text-[10px] text-gray-400">EMI</span><div className="font-medium">{row.emi}</div></div>
+                <div><span className="text-[10px] text-gray-400">EMI AMOUNT</span><div className="font-medium">{row.emi}</div></div>
                 <div>
                   <span className="text-[10px] text-gray-400">Comm Date</span>
                   <input
@@ -1186,9 +1197,12 @@ function Collection() {
                     <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-300">Party Details</h3>
                     <div className="text-sm text-gray-700 space-y-2">
                       <div className="font-semibold text-gray-900">{financeModal.seller}</div>
-                      <div className="text-gray-600">Age : {financeModal.age}</div>
-                      <div className="text-gray-600">Phone No: {financeModal.phoneNo}</div>
-                      <div className="text-gray-600">Address: {financeModal.address}</div>
+                      <div className="text-gray-600">S/O C/O W/O : {financeModal.sowoco || '-'}</div>
+                      <div className="text-gray-600">Occupation : {financeModal.occupation || '-'}</div>
+                      <div className="text-gray-600">Age : {financeModal.age || '-'}</div>
+                      <div className="text-gray-600">Phone No: {financeModal.phoneNo || '-'}</div>
+                      <div className="text-gray-600">Alternate Phone No: {financeModal.alternatePhoneNo || '-'}</div>
+                      <div className="text-gray-600">Address: {financeModal.address || '-'}</div>
                     </div>
                   </div>
                   <div className="shrink-0">
@@ -1212,8 +1226,11 @@ function Collection() {
                     <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-300">Guarantor Details</h3>
                     <div className="text-sm text-gray-700 space-y-2">
                       <div className="font-semibold text-gray-900">{financeModal.guarantorName || '-'}</div>
+                      <div className="text-gray-600">S/O C/O W/O : {financeModal.guarantorSowoco || '-'}</div>
+                      <div className="text-gray-600">Occupation : {financeModal.guarantorOccupation || '-'}</div>
                       <div className="text-gray-600">Age : {financeModal.guarantorAge || '-'}</div>
                       <div className="text-gray-600">Phone No: {financeModal.guarantorPhoneNo || '-'}</div>
+                      <div className="text-gray-600">Alternate Phone No: {financeModal.guarantorAlternatePhoneNo || '-'}</div>
                       <div className="text-gray-600">Address: {financeModal.guarantorAddress || '-'}</div>
                     </div>
                   </div>
@@ -1503,7 +1520,7 @@ function Collection() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => setEmiEntryForm(prev => ({ ...prev, agreementNo: '' }))}
+                      onClick={() => setEmiEntryForm(prev => ({ ...prev, agreementNo: 'HA' }))}
                       className="ml-3 px-2 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-100 rounded transition-colors"
                     >
                       Clear

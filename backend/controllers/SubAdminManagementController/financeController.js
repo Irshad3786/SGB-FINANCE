@@ -657,14 +657,27 @@ export const clearCollectionEntries = async (req, res) => {
 	}
 };
 
-// Get all collection entries, optionally filtered by agentName
+// Get all collection entries, optionally filtered by agentName and date
 export const getCollectionEntries = async (req, res) => {
 	try {
-		const { agentName = "" } = req.query;
+		const { agentName = "", date = "" } = req.query;
 
 		const query = {};
 		if (agentName && agentName.trim()) {
 			query.agentName = { $regex: `^${agentName.trim()}$`, $options: "i" };
+		}
+
+		if (date && date.trim()) {
+			const selectedDate = new Date(date);
+			if (isNaN(selectedDate.getTime())) {
+				return res.status(400).json({ success: false, message: "Invalid date" });
+			}
+
+			const startOfDay = new Date(selectedDate);
+			startOfDay.setHours(0, 0, 0, 0);
+			const endOfDay = new Date(selectedDate);
+			endOfDay.setHours(23, 59, 59, 999);
+			query.date = { $gte: startOfDay, $lte: endOfDay };
 		}
 
 		const entries = await CollectionEntry.find(query)

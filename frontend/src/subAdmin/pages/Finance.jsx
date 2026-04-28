@@ -397,15 +397,7 @@ function Finance() {
       </div>
 
       <div className="md:flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <button onClick={() => setShowFilters(s => !s)} aria-expanded={showFilters} className="flex items-center gap-2 px-4 py-2 border font-semibold rounded-lg shadow hover:shadow-md transition-shadow bg-white text-base">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="w-5 h-5">
-              <path fill="#a6a6a6" fillRule="evenodd" d="M5 3h14L8.816 13.184a2.7 2.7 0 0 0-.778-1.086c-.228-.198-.547-.377-1.183-.736l-2.913-1.64c-.949-.533-1.423-.8-1.682-1.23C2 8.061 2 7.541 2 6.503v-.69c0-1.326 0-1.99.44-2.402C2.878 3 3.585 3 5 3" clipRule="evenodd"/>
-              <path fill="#a6a6a6" d="M22 6.504v-.69c0-1.326 0-1.99-.44-2.402C21.122 3 20.415 3 19 3L8.815 13.184q.075.193.121.403c.064.285.064.619.064 1.286v2.67c0 .909 0 1.364.252 1.718c.252.355.7.53 1.594.88c1.879.734 2.818 1.101 3.486.683S15 19.452 15 17.542v-2.67c0-.666 0-1 .063-1.285a2.68 2.68 0 0 1 .9-1.49c.227-.197.545-.376 1.182-.735l2.913-1.64c.948-.533 1.423-.8 1.682-1.23c.26-.43.26-.95.26-1.988" opacity="0.5"/>
-            </svg>
-            select filter
-          </button>
-        </div>
+        {/* 'select filter' button removed per user request */}
 
         <div className="w-full max-w-sm py-4">
           <label htmlFor="finance-search" className="sr-only">Search finance</label>
@@ -468,14 +460,14 @@ function Finance() {
         <div className="hidden md:block">
           <table className="w-full table-auto border-collapse">
             <thead>
-              <tr className="bg-gray-100 text-left rounded-lg">
+                <tr className="bg-gray-100 text-left rounded-lg">
                 <th className="py-3 px-3 text-base font-semibold rounded-tl-lg">s no</th>
                 <th className="py-3 px-3 text-base font-semibold">name</th>
                 <th className="py-3 px-3 text-base font-semibold">vehicle no</th>
                 <th className="py-3 px-3 text-base font-semibold">phone no</th>
                 <th className="py-3 px-3 text-base font-semibold">finance amount</th>
-                <th className="py-3 px-3 text-base font-semibold">emi date</th>
-                <th className="py-3 px-3 text-base font-semibold">emi</th>
+                <th className="py-3 px-3 text-base font-semibold">emi dates</th>
+                <th className="py-3 px-3 text-base font-semibold">emi amount</th>
                 <th className="py-3 px-3 text-base font-semibold rounded-tr-lg">action</th>
               </tr>
             </thead>
@@ -522,12 +514,12 @@ function Finance() {
                 <div className="text-xs font-semibold">{(pagination.page - 1) * pagination.limit + index + 1}. {f.seller}</div>
               </div>
 
-              <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-700">
+                <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-700">
                 <div><span className="text-[10px] text-gray-400">Vehicle</span><div className="font-medium">{f.vehicle}</div></div>
                 <div><span className="text-[10px] text-gray-400">Phone</span><div className="font-medium">{f.phoneNo}</div></div>
                 <div><span className="text-[10px] text-gray-400">Finance Amount</span><div className="font-medium">{f.financeAmount ? `₹ ${toInr(f.financeAmount)}` : '-'}</div></div>
-                <div><span className="text-[10px] text-gray-400">EMI</span><div className="font-medium">{f.emi ? `₹ ${toInr(f.emi)}` : '-'}</div></div>
-                <div className="col-span-2"><span className="text-[10px] text-gray-400">EMI Date</span><div className="font-medium">{f.emiDate || '-'}</div></div>
+                <div><span className="text-[10px] text-gray-400">EMI AMOUNT</span><div className="font-medium">{f.emi ? `₹ ${toInr(f.emi)}` : '-'}</div></div>
+                <div className="col-span-2"><span className="text-[10px] text-gray-400">EMI DATES</span><div className="font-medium">{f.emiDate || '-'}</div></div>
               </div>
 
               <div className="mt-3 flex items-center justify-end gap-2">

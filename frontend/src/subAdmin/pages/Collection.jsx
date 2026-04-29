@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react'
+import { useReactToPrint } from 'react-to-print'
 import { useEffect } from 'react'
 import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -202,10 +203,12 @@ const mapCollectionEntryToTableRow = (entry, index) => ({
 
 const withSno = (rows = []) => rows.map((row, index) => ({ ...row, sno: index + 1 }))
 
+
 function Collection() {
   const navigate = useNavigate()
   const { showToast } = useToast()
 
+  // All state declarations first
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({ agent: '', status: 'all', date: '' })
   const [searchQuery, setSearchQuery] = useState('')
@@ -227,6 +230,49 @@ function Collection() {
   const [savingEntry, setSavingEntry] = useState(false)
   const bookInputRef = useRef(null)
   const [editFieldsPrompt, setEditFieldsPrompt] = useState({ open: false, bookNo: '', pageNo: '', amount: '', date: '' })
+
+  // Print statement ref and handler (must be after financeModal state)
+  const statementPrintRef = useRef(null)
+  const printStatement = useReactToPrint({
+    contentRef: statementPrintRef,
+    documentTitle: financeModal ? `collection-statement-${financeModal.agreementNo || 'record'}` : 'collection-statement',
+    pageStyle: `
+      @page {
+        size: A4 portrait;
+        margin: 4mm;
+      }
+      @media print {
+        .finance-statement-print {
+          color: #000 !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+          font-size: 8px !important;
+          line-height: 1 !important;
+          transform: scale(1);
+          transform-origin: top left;
+          width: 100vw !important;
+          min-width: 100vw !important;
+          max-width: 100vw !important;
+          box-sizing: border-box !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+        .finance-statement-print * {
+          font-size: 8px !important;
+          line-height: 1 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          box-sizing: border-box !important;
+        }
+        .finance-statement-print table {
+          width: 100vw !important;
+          min-width: 100vw !important;
+          max-width: 100vw !important;
+          table-layout: fixed !important;
+        }
+      }
+    `
+  })
 
   const fetchCollectionData = async () => {
     try {
@@ -1187,159 +1233,171 @@ function Collection() {
               ✕
             </button>
 
-            <h2 className="text-3xl font-bold text-center mb-2 text-gray-800">Finance Statement</h2>
-            <div className="text-center text-sm text-gray-500 mb-8">Agreement No : {financeModal.agreementNo}</div>
+            <div ref={statementPrintRef} className="finance-statement-print">
+              <h2 className="text-3xl font-bold text-center mb-2 text-gray-800 statement-title">Finance Statement</h2>
+              <div className="text-center text-sm text-gray-500 mb-8 statement-subtitle">Agreement No : {financeModal.agreementNo}</div>
 
-            <div className="grid md:grid-cols-2 gap-6 mb-8">
-              <div className="border-2 border-gray-300 rounded-2xl p-6">
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-300">Party Details</h3>
-                    <div className="text-sm text-gray-700 space-y-2">
-                      <div className="font-semibold text-gray-900">{financeModal.seller}</div>
-                      <div className="text-gray-600">S/O C/O W/O : {financeModal.sowoco || '-'}</div>
-                      <div className="text-gray-600">Occupation : {financeModal.occupation || '-'}</div>
-                      <div className="text-gray-600">Age : {financeModal.age || '-'}</div>
-                      <div className="text-gray-600">Phone No: {financeModal.phoneNo || '-'}</div>
-                      <div className="text-gray-600">Alternate Phone No: {financeModal.alternatePhoneNo || '-'}</div>
-                      <div className="text-gray-600">Address: {financeModal.address || '-'}</div>
+              <div className="grid md:grid-cols-2 gap-6 mb-8 statement-header-grid">
+                <div className="border-2 border-gray-300 rounded-2xl p-6 statement-block">
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-300 statement-section-title">Party Details</h3>
+                      <div className="text-sm text-gray-700 space-y-2 statement-text-sm">
+                        <div className="font-semibold text-gray-900">{financeModal.seller}</div>
+                        <div className="text-gray-600">S/O C/O W/O : {financeModal.sowoco || '-'}</div>
+                        <div className="text-gray-600">Occupation : {financeModal.occupation || '-'}</div>
+                        <div className="text-gray-600">Age : {financeModal.age || '-'}</div>
+                        <div className="text-gray-600">Phone No: {financeModal.phoneNo || '-'}</div>
+                        <div className="text-gray-600">Alternate Phone No: {financeModal.alternatePhoneNo || '-'}</div>
+                        <div className="text-gray-600">Address: {financeModal.address || '-'}</div>
+                      </div>
+                    </div>
+                    <div className="shrink-0 statement-print-hide">
+                      <div className="bg-white border-2 border-gray-300 rounded-lg p-3 flex flex-col items-center">
+                        {financeModal.partyPhoto ? (
+                          <img src={financeModal.partyPhoto} alt="Party" className="w-28 h-28 rounded-lg object-cover mb-2" />
+                        ) : (
+                          <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-2">
+                            <span className="text-xs text-gray-500 text-center">Party<br/>Img</span>
+                          </div>
+                        )}
+                        <span className="text-xs text-gray-600 font-semibold">Party</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="shrink-0">
-                    <div className="bg-white border-2 border-gray-300 rounded-lg p-3 flex flex-col items-center">
-                      {financeModal.partyPhoto ? (
-                        <img src={financeModal.partyPhoto} alt="Party" className="w-28 h-28 rounded-lg object-cover mb-2" />
-                      ) : (
-                        <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-2">
-                          <span className="text-xs text-gray-500 text-center">Party<br/>Img</span>
-                        </div>
-                      )}
-                      <span className="text-xs text-gray-600 font-semibold">Party</span>
+                </div>
+
+                <div className="border-2 border-gray-300 rounded-2xl p-6 statement-block">
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-300 statement-section-title">Guarantor Details</h3>
+                      <div className="text-sm text-gray-700 space-y-2 statement-text-sm">
+                        <div className="font-semibold text-gray-900">{financeModal.guarantorName || '-'}</div>
+                        <div className="text-gray-600">S/O C/O W/O : {financeModal.guarantorSowoco || '-'}</div>
+                        <div className="text-gray-600">Occupation : {financeModal.guarantorOccupation || '-'}</div>
+                        <div className="text-gray-600">Age : {financeModal.guarantorAge || '-'}</div>
+                        <div className="text-gray-600">Phone No: {financeModal.guarantorPhoneNo || '-'}</div>
+                        <div className="text-gray-600">Alternate Phone No: {financeModal.guarantorAlternatePhoneNo || '-'}</div>
+                        <div className="text-gray-600">Address: {financeModal.guarantorAddress || '-'}</div>
+                      </div>
+                    </div>
+                    <div className="shrink-0 statement-print-hide">
+                      <div className="bg-white border-2 border-gray-300 rounded-lg p-3 flex flex-col items-center">
+                        {financeModal.guarantorPhoto ? (
+                          <img src={financeModal.guarantorPhoto} alt="Guarantor" className="w-28 h-28 rounded-lg object-cover mb-2" />
+                        ) : (
+                          <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-2">
+                            <span className="text-xs text-gray-500 text-center">Guarantor<br/>Img</span>
+                          </div>
+                        )}
+                        <span className="text-xs text-gray-600 font-semibold">Guarantor</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="border-2 border-gray-300 rounded-2xl p-6">
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-300">Guarantor Details</h3>
-                    <div className="text-sm text-gray-700 space-y-2">
-                      <div className="font-semibold text-gray-900">{financeModal.guarantorName || '-'}</div>
-                      <div className="text-gray-600">S/O C/O W/O : {financeModal.guarantorSowoco || '-'}</div>
-                      <div className="text-gray-600">Occupation : {financeModal.guarantorOccupation || '-'}</div>
-                      <div className="text-gray-600">Age : {financeModal.guarantorAge || '-'}</div>
-                      <div className="text-gray-600">Phone No: {financeModal.guarantorPhoneNo || '-'}</div>
-                      <div className="text-gray-600">Alternate Phone No: {financeModal.guarantorAlternatePhoneNo || '-'}</div>
-                      <div className="text-gray-600">Address: {financeModal.guarantorAddress || '-'}</div>
-                    </div>
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 mb-8 statement-block">
+                <h3 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b border-blue-300 statement-section-title">Vehicle Details</h3>
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 statement-grid-compact">
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 font-semibold mb-2">VEHICLE NO</div>
+                    <div className="text-lg font-bold text-gray-900">{financeModal.vehicle}</div>
                   </div>
-                  <div className="shrink-0">
-                    <div className="bg-white border-2 border-gray-300 rounded-lg p-3 flex flex-col items-center">
-                      {financeModal.guarantorPhoto ? (
-                        <img src={financeModal.guarantorPhoto} alt="Guarantor" className="w-28 h-28 rounded-lg object-cover mb-2" />
-                      ) : (
-                        <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-2">
-                          <span className="text-xs text-gray-500 text-center">Guarantor<br/>Img</span>
-                        </div>
-                      )}
-                      <span className="text-xs text-gray-600 font-semibold">Guarantor</span>
-                    </div>
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 font-semibold mb-2">VEHICLE NAME</div>
+                    <div className="text-lg font-bold text-gray-900">{financeModal.vehicleName}</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 font-semibold mb-2">CHASSIS NO</div>
+                    <div className="text-sm font-bold text-gray-900">{financeModal.chassisNo}</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 font-semibold mb-2">MODEL</div>
+                    <div className="text-lg font-bold text-gray-900">{financeModal.vehicleModel}</div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 mb-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b border-blue-300">Vehicle Details</h3>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-xs text-gray-500 font-semibold mb-2">VEHICLE NO</div>
-                  <div className="text-lg font-bold text-gray-900">{financeModal.vehicle}</div>
-                </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-xs text-gray-500 font-semibold mb-2">VEHICLE NAME</div>
-                  <div className="text-lg font-bold text-gray-900">{financeModal.vehicleName}</div>
-                </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-xs text-gray-500 font-semibold mb-2">CHASSIS NO</div>
-                  <div className="text-sm font-bold text-gray-900">{financeModal.chassisNo}</div>
-                </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-xs text-gray-500 font-semibold mb-2">MODEL</div>
-                  <div className="text-lg font-bold text-gray-900">{financeModal.vehicleModel}</div>
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 mb-8 statement-block">
+                <h3 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b border-purple-300 statement-section-title">Finance Details</h3>
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 statement-grid-compact">
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 font-semibold mb-2">VEHICLE PRICE</div>
+                    <div className="text-lg font-bold text-gray-900">₹ {toInr(financeModal.vehiclePrice)}</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 font-semibold mb-2">FINANCE AMOUNT</div>
+                    <div className="text-lg font-bold text-gray-900">₹ {toInr(financeModal.financeAmount)}</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 font-semibold mb-2">CHARGES & INTEREST</div>
+                    <div className="text-lg font-bold text-gray-900">₹ {toInr(financeModal.charges)}</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 shadow-sm border-2 border-purple-300">
+                    <div className="text-xs text-gray-500 font-semibold mb-2">TOTAL AMOUNT</div>
+                    <div className="text-lg font-bold text-purple-900">₹ {toInr(financeModal.totalAmount)}</div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 mb-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b border-purple-300">Finance Details</h3>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-xs text-gray-500 font-semibold mb-2">VEHICLE PRICE</div>
-                  <div className="text-lg font-bold text-gray-900">₹ {toInr(financeModal.vehiclePrice)}</div>
-                </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-xs text-gray-500 font-semibold mb-2">FINANCE AMOUNT</div>
-                  <div className="text-lg font-bold text-gray-900">₹ {toInr(financeModal.financeAmount)}</div>
-                </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-xs text-gray-500 font-semibold mb-2">CHARGES & INTEREST</div>
-                  <div className="text-lg font-bold text-gray-900">₹ {toInr(financeModal.charges)}</div>
-                </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm border-2 border-purple-300">
-                  <div className="text-xs text-gray-500 font-semibold mb-2">TOTAL AMOUNT</div>
-                  <div className="text-lg font-bold text-purple-900">₹ {toInr(financeModal.totalAmount)}</div>
-                </div>
-              </div>
-            </div>
-
-            {financeModal.emiSchedule && financeModal.emiSchedule.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-xl font-bold text-gray-800 mb-4 pb-3 border-b border-gray-300">EMI Schedule : ₹ {toInr(financeModal.emi)} x {financeModal.months || financeModal.emiSchedule.length} months</h3>
-                <div className="overflow-x-auto rounded-lg border border-gray-200">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-gray-800 text-white">
-                        <th className="px-4 py-3 text-left font-semibold">INST.NO</th>
-                        <th className="px-4 py-3 text-left font-semibold">INST.DATE</th>
-                        <th className="px-4 py-3 text-left font-semibold">INST.AMOUNT</th>
-                        <th className="px-4 py-3 text-left font-semibold">PAID DATE</th>
-                        <th className="px-4 py-3 text-left font-semibold">PAID AMT.</th>
-                        <th className="px-4 py-3 text-left font-semibold">BALANCE</th>
-                        <th className="px-4 py-3 text-left font-semibold">RECEIPT NO.</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {statementRows.map((schedule, idx) => (
-                        <tr key={`${schedule.instNo}-${idx}`} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                          <td className="px-4 py-3 font-semibold text-gray-900">{schedule.instNo}</td>
-                          <td className="px-4 py-3 text-gray-700">{schedule.instDate}</td>
-                          <td className="px-4 py-3 text-gray-700">{schedule.instAmount === '' ? '' : `₹ ${toInr(schedule.instAmount)}`}</td>
-                          <td className="px-4 py-3 text-gray-700">{schedule.paidDate}</td>
-                          <td className="px-4 py-3 text-gray-700">{schedule.paidAmt === null ? '-' : `₹ ${toInr(schedule.paidAmt)}`}</td>
-                          <td className={`px-4 py-3 font-semibold ${getBalanceClass(schedule.displayBalance ?? schedule.balance)}`}>
-                            {schedule.displayBalance === null ? '-' : formatBalance(schedule.displayBalance)}
-                          </td>
-                          <td className="px-4 py-3 text-gray-700">{schedule.receiptNo}</td>
+              {financeModal.emiSchedule && financeModal.emiSchedule.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 pb-3 border-b border-gray-300 statement-section-title">EMI Schedule : ₹ {toInr(financeModal.emi)} x {financeModal.months || financeModal.emiSchedule.length} months</h3>
+                  <div className="overflow-x-auto rounded-lg border border-gray-200">
+                    <table className="w-full text-sm statement-table">
+                      <thead>
+                        <tr className="bg-gray-800 text-white">
+                          <th className="px-4 py-3 text-left font-semibold">INST.NO</th>
+                          <th className="px-4 py-3 text-left font-semibold">INST.DATE</th>
+                          <th className="px-4 py-3 text-left font-semibold">INST.AMOUNT</th>
+                          <th className="px-4 py-3 text-left font-semibold">PAID DATE</th>
+                          <th className="px-4 py-3 text-left font-semibold">PAID AMT.</th>
+                          <th className="px-4 py-3 text-left font-semibold">BALANCE</th>
+                          <th className="px-4 py-3 text-left font-semibold">RECEIPT NO.</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {statementRows.map((schedule, idx) => (
+                          <tr key={`${schedule.instNo}-${idx}`} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                            <td className="px-4 py-3 font-semibold text-gray-900">{schedule.instNo}</td>
+                            <td className="px-4 py-3 text-gray-700">{schedule.instDate}</td>
+                            <td className="px-4 py-3 text-gray-700">{schedule.instAmount === '' ? '' : `₹ ${toInr(schedule.instAmount)}`}</td>
+                            <td className="px-4 py-3 text-gray-700">{schedule.paidDate}</td>
+                            <td className="px-4 py-3 text-gray-700">{schedule.paidAmt === null ? '-' : `₹ ${toInr(schedule.paidAmt)}`}</td>
+                            <td className={`px-4 py-3 font-semibold ${getBalanceClass(schedule.displayBalance ?? schedule.balance)}`}>
+                              {schedule.displayBalance === null ? '-' : formatBalance(schedule.displayBalance)}
+                            </td>
+                            <td className="px-4 py-3 text-gray-700">{schedule.receiptNo}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-gray-100 rounded-xl p-6 flex justify-between items-center statement-summary">
+                <div>
+                  <div className="text-xs text-gray-500 font-semibold mb-1">TOTAL PAID</div>
+                  <div className="text-2xl font-bold text-green-600">₹ {toInr(statementTotalPaid)}</div>
+                </div>
+                <div className="h-12 w-px bg-gray-300"></div>
+                <div>
+                  <div className="text-xs text-gray-500 font-semibold mb-1">PENDING AMOUNT</div>
+                  <div className="text-2xl font-bold text-red-600">₹ {toInr(statementPending)}</div>
                 </div>
               </div>
-            )}
+            </div>
 
-            <div className="bg-gray-100 rounded-xl p-6 flex justify-between items-center">
-              <div>
-                <div className="text-xs text-gray-500 font-semibold mb-1">TOTAL PAID</div>
-                <div className="text-2xl font-bold text-green-600">₹ {toInr(statementTotalPaid)}</div>
-              </div>
-              <div className="h-12 w-px bg-gray-300"></div>
-              <div>
-                <div className="text-xs text-gray-500 font-semibold mb-1">PENDING AMOUNT</div>
-                <div className="text-2xl font-bold text-red-600">₹ {toInr(statementPending)}</div>
-              </div>
+            {/* Print Button at the bottom */}
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => printStatement?.()}
+                className="px-5 py-2 rounded-lg bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] font-semibold text-gray-900 shadow hover:shadow-md transition-shadow"
+              >
+                Print Statement
+              </button>
             </div>
           </div>
         </div>

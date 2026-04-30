@@ -12,6 +12,7 @@ import financeRoute from "./routes/subAdminManagementRoutes/financeRoute.js";
 import dashboardRoute from "./routes/subAdminManagementRoutes/dashboardRoute.js";
 import requestsManagementRoute from "./routes/subAdminManagementRoutes/requestsManagementRoute.js";
 import districtLocationRoute from "./routes/subAdminManagementRoutes/districtLocationRoute.js";
+import ownershipTransferRoute from "./routes/subAdminManagementRoutes/ownershipTransferRoute.js";
 
 const app = express();
 
@@ -49,6 +50,7 @@ app.use("/api/subadmin/management", financeRoute);
 app.use("/api/subadmin/management", dashboardRoute);
 app.use("/api/subadmin/management", requestsManagementRoute);
 app.use("/api/subadmin/management", districtLocationRoute);
+app.use("/api/subadmin/management/ownership-transfer", ownershipTransferRoute);
 
 export { app, configureCORS };
 

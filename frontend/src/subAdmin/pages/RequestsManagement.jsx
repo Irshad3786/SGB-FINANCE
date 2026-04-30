@@ -286,7 +286,7 @@ function RequestsManagement() {
             <p className="inline-flex items-center rounded-full bg-[#e8f7d7] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#4b6b2a]">
               Requests workspace
             </p>
-            <h1 className="mt-3 text-2xl md:text-3xl font-bold text-gray-900">Requests Management</h1>
+            <h1 className="mt-3 text-2xl md:text-3xl font-bold text-gray-900">Request Center</h1>
             <p className="text-sm text-gray-600 mt-1 max-w-2xl">
               Track finance, contact, support and other incoming requests. Update the status from the row and save it instantly.
             </p>

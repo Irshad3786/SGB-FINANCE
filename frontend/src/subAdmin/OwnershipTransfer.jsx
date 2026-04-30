@@ -1,0 +1,532 @@
+import React, { useState, useEffect } from 'react';
+import apiClient from '../api/axios';
+import { useToast } from '../components/ToastProvider';
+import OwnershipTransferForm from './components/OwnershipTransferForm';
+
+function OwnershipTransfer() {
+  const { showToast } = useToast();
+  const [transfers, setTransfers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editedData, setEditedData] = useState({});
+  const [noteToView, setNoteToView] = useState(null);
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState({
+    all: 1,
+    ekyc: 1,
+    token: 1,
+    challan: 1,
+    'finance approval': 1,
+    'rto approval': 1,
+    completed: 1
+  });
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    fetchTransfers();
+  }, []);
+
+  const fetchTransfers = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get('/api/subadmin/management/ownership-transfer/all');
+      setTransfers(response.data?.data || []);
+    } catch (error) {
+      console.error('Error fetching transfers:', error);
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to fetch ownership transfers'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditChange = (field, value) => {
+    setEditedData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const startEdit = (transfer) => {
+    setShowAddForm(false);
+    setEditingId(transfer._id);
+    setEditedData(transfer);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditedData({});
+  };
+
+  const handleAddSuccess = () => {
+    setShowAddForm(false);
+    fetchTransfers();
+  };
+
+  const saveEdit = async () => {
+    if (!editedData.name || !editedData.phoneNo || !editedData.vehicleNumber || !editedData.chassisNumber || !editedData.paidAmount) {
+      return;
+    }
+
+    try {
+      await apiClient.put(`/api/subadmin/management/ownership-transfer/update/${editingId}`, editedData);
+      showToast({
+        type: 'success',
+        title: 'Updated',
+        message: 'Ownership transfer updated successfully'
+      });
+      setEditingId(null);
+      setEditedData({});
+      fetchTransfers();
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error?.response?.data?.message || 'Failed to update ownership transfer'
+      });
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await apiClient.delete(`/api/subadmin/management/ownership-transfer/delete/${id}`);
+      showToast({
+        type: 'success',
+        title: 'Deleted',
+        message: 'Ownership transfer deleted successfully'
+      });
+      fetchTransfers();
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to delete ownership transfer'
+      });
+    }
+  };
+
+  const filteredTransfers = (filterStatus === 'all' 
+    ? transfers 
+    : transfers.filter(t => t.status === filterStatus)).filter(t => {
+    const query = searchQuery.toLowerCase();
+    return (
+      t.name.toLowerCase().includes(query) ||
+      t.phoneNo.includes(query) ||
+      t.vehicleNumber.toLowerCase().includes(query) ||
+      t.chassisNumber.toLowerCase().includes(query)
+    );
+  });
+
+  const totalPages = Math.ceil(filteredTransfers.length / itemsPerPage);
+  const startIndex = (currentPage[filterStatus] - 1) * itemsPerPage;
+  const paginatedTransfers = filteredTransfers.slice(startIndex, startIndex + itemsPerPage);
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(prev => ({ ...prev, [filterStatus]: newPage }));
+    }
+  };
+
+  const getStatusColor = (status) => {
+    const colors = {
+        ekyc: 'bg-purple-100 text-purple-800',
+        token: 'bg-blue-100 text-blue-800',
+        challan: 'bg-orange-100 text-orange-800',
+        'finance approval': 'bg-cyan-100 text-cyan-800',
+        'rto approval': 'bg-indigo-100 text-indigo-800',
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+  };
+
+  return (
+    <div className="flex-1 p-6 bg-gray-50">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <h1 className="text-3xl font-bold text-gray-900">Ownership Transfer</h1>
+            <p className="text-gray-600 mt-2">Manage vehicle ownership transfer entries</p>
+            <button
+              onClick={() => {
+                setShowAddForm(prev => !prev);
+                setEditingId(null);
+              }}
+              className="px-5 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#B0FF1C] to-[#40FF00] hover:shadow-[-1px_8px_7px_-2px_rgba(0,_0,_0,_0.25)] transition-shadow"
+            >
+              {showAddForm ? 'Close Add Form' : 'Add Data'}
+            </button>
+          </div>
+        </div>
+
+        {showAddForm && (
+          <div className="mb-8 bg-white rounded-2xl shadow-sm p-6">
+            <div className="flex items-center gap-3 pb-4 border-b mb-6">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#40FF00" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2"/></svg>
+              </span>
+              <div>
+                <p className="text-lg font-semibold text-gray-900">Add New Entry</p>
+                <p className="text-sm text-gray-500">Enter the ownership transfer details</p>
+              </div>
+            </div>
+            <OwnershipTransferForm onSubmitSuccess={handleAddSuccess} />
+          </div>
+        )}
+
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search by name, phone, vehicle number, or chassis number..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-3 pl-12 rounded-xl border border-gray-300 shadow-inner bg-white focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+            />
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m21 21l-4.343-4.343m0 0A8 8 0 1 0 5.343 5.343a8 8 0 0 0 11.314 11.314"/></svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Filter */}
+        <div className="mb-6 flex gap-2 flex-wrap">
+          <button
+            onClick={() => setFilterStatus('all')}
+            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+              filterStatus === 'all'
+                ? 'bg-[#40FF00] text-gray-900'
+                : 'bg-white text-gray-700 border border-gray-300'
+            }`}
+          >
+            All ({transfers.length})
+          </button>
+          <button
+            onClick={() => { setFilterStatus('ekyc'); setCurrentPage(prev => ({ ...prev, ekyc: 1 })); }}
+            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+              filterStatus === 'ekyc'
+                ? 'bg-purple-100 text-purple-800'
+                : 'bg-white text-gray-700 border border-gray-300'
+            }`}
+          >
+            E-KYC ({transfers.filter(t => t.status === 'ekyc').length})
+          </button>
+          <button
+            onClick={() => { setFilterStatus('token'); setCurrentPage(prev => ({ ...prev, token: 1 })); }}
+            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+              filterStatus === 'token'
+                ? 'bg-blue-100 text-blue-800'
+                : 'bg-white text-gray-700 border border-gray-300'
+            }`}
+          >
+            Token ({transfers.filter(t => t.status === 'token').length})
+          </button>
+          <button
+            onClick={() => { setFilterStatus('challan'); setCurrentPage(prev => ({ ...prev, challan: 1 })); }}
+            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+              filterStatus === 'challan'
+                ? 'bg-orange-100 text-orange-800'
+                : 'bg-white text-gray-700 border border-gray-300'
+            }`}
+          >
+            Challan ({transfers.filter(t => t.status === 'challan').length})
+          </button>
+          <button
+            onClick={() => { setFilterStatus('finance approval'); setCurrentPage(prev => ({ ...prev, 'finance approval': 1 })); }}
+            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+              filterStatus === 'finance approval'
+                ? 'bg-cyan-100 text-cyan-800'
+                : 'bg-white text-gray-700 border border-gray-300'
+            }`}
+          >
+            Finance Approval ({transfers.filter(t => t.status === 'finance approval').length})
+          </button>
+          <button
+            onClick={() => { setFilterStatus('rto approval'); setCurrentPage(prev => ({ ...prev, 'rto approval': 1 })); }}
+            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+              filterStatus === 'rto approval'
+                ? 'bg-indigo-100 text-indigo-800'
+                : 'bg-white text-gray-700 border border-gray-300'
+            }`}
+          >
+            RTO Approval ({transfers.filter(t => t.status === 'rto approval').length})
+          </button>
+          <button
+            onClick={() => { setFilterStatus('completed'); setCurrentPage(prev => ({ ...prev, completed: 1 })); }}
+            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+              filterStatus === 'completed'
+                ? 'bg-green-100 text-green-800'
+                : 'bg-white text-gray-700 border border-gray-300'
+            }`}
+          >
+            Completed ({transfers.filter(t => t.status === 'completed').length})
+          </button>
+        </div>
+
+        {/* Table */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="w-12 h-12 rounded-full border-4 border-gray-300 border-t-[#40FF00] animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading transfers...</p>
+              </div>
+            </div>
+          ) : filteredTransfers.length === 0 ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" className="mx-auto mb-4 text-gray-400">
+                  <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5.04-6.71l-2.75 3.54l-2.96-3.83c-.3-.39-.97-.39-1.29 0-.31.4-.31 1.02 0 1.41l3.54 4.58c.3.39.97.39 1.29 0l3.83-4.96c.31-.39.31-1.02 0-1.41-.32-.4-.98-.4-1.29-.01z"/>
+                </svg>
+                <p className="text-gray-600">No ownership transfers found</p>
+              </div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Name</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                      <span className="inline-flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" fillRule="evenodd" d="m16.1 13.359l.456-.453c.63-.626 1.611-.755 2.417-.317l1.91 1.039c1.227.667 1.498 2.302.539 3.255l-1.42 1.412c-.362.36-.81.622-1.326.67c-1.192.111-3.645.051-6.539-1.643zm-5.91-5.876l.287-.286c.707-.702.774-1.83.157-2.654L9.374 2.86C8.61 1.84 7.135 1.705 6.26 2.575l-1.57 1.56c-.433.432-.723.99-.688 1.61c.065 1.14.453 3.22 2.149 5.776z" clipRule="evenodd"/><path fill="currentColor" d="M12.063 11.497c-2.946-2.929-1.88-4.008-1.873-4.015l-4.039 4.04c.667 1.004 1.535 2.081 2.664 3.204c1.14 1.134 2.26 1.975 3.322 2.596L16.1 13.36s-1.082 1.076-4.037-1.862" opacity=".6"/></svg>
+                        Phone
+                      </span>
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                      <span className="inline-flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="20" viewBox="0 0 17 24"><path fill="currentColor" d="M8.632 15.526a2.11 2.11 0 0 0-2.106 2.105v4.305a2.106 2.106 0 0 0 4.212 0v-.043v.002v-4.263a2.11 2.11 0 0 0-2.104-2.106z"/><path fill="currentColor" d="M16.263 2.631H12.21C11.719 1.094 10.303 0 8.631 0S5.544 1.094 5.06 2.604l-.007.027h-4a1.053 1.053 0 0 0 0 2.106h4.053c.268.899.85 1.635 1.615 2.096l.016.009c-2.871.867-4.929 3.48-4.947 6.577v5.528a1.753 1.753 0 0 0 1.736 1.737h1.422v-3a3.737 3.737 0 1 1 7.474 0v3h1.421a1.75 1.75 0 0 0 1.738-1.737v-5.474a6.855 6.855 0 0 0-4.899-6.567l-.048-.012a3.65 3.65 0 0 0 1.625-2.08l.007-.026h4.053a1.056 1.056 0 0 0 1.053-1.053a1.15 1.15 0 0 0-1.104-1.105h-.002zM8.631 5.84a2.106 2.106 0 1 1 2.106-2.106l.001.06c0 1.13-.916 2.046-2.046 2.046l-.063-.001h.003z"/></svg>
+                        Vehicle No
+                      </span>
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                      <span className="inline-flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="currentColor" d="M14.975 3.5a1.25 1.25 0 0 0-2.45-.5L11.2 9.5H5.25a1.25 1.25 0 1 0 0 2.5h5.439L9.26 19H4.25a1.25 1.25 0 0 0 0 2.5h4.5l-1.225 6a1.25 1.25 0 1 0 2.45.5l1.327-6.5h6.948l-1.224 6a1.25 1.25 0 1 0 2.449.5l1.326-6.5h5.949a1.25 1.25 0 1 0 0-2.5h-5.438l1.428-7h5.01a1.25 1.25 0 1 0 0-2.5h-4.5l1.225-6a1.25 1.25 0 0 0-2.45-.5L20.7 9.5h-6.95zM18.76 19h-6.948l1.428-7h6.949z"/></svg>
+                        Chassis No
+                      </span>
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                      <span className="inline-flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" fillRule="evenodd" d="M4 6.8V8H2.8A1.8 1.8 0 0 0 1 9.8v8.4A1.8 1.8 0 0 0 2.8 20h16.4a1.8 1.8 0 0 0 1.8-1.8V17h1.2c.992 0 1.8-.808 1.8-1.8V6.8c0-.992-.808-1.8-1.8-1.8H5.8C4.808 5 4 5.808 4 6.8M6 7v1h13.2A1.8 1.8 0 0 1 21 9.8V15h1V7zm3 7a2 2 0 1 1 4 0a2 2 0 0 1-4 0" clipRule="evenodd"/></svg>
+                        Amount
+                      </span>
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                      <span className="inline-flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 56 56"><path fill="currentColor" d="m50.923 21.002l.046.131l.171.566l.143.508l.061.232l.1.42a23.93 23.93 0 0 1-2.653 17.167a23.93 23.93 0 0 1-13.57 10.89l-.404.12l-.496.128l-.717.17a1.89 1.89 0 0 1-2.288-1.558a2.127 2.127 0 0 1 1.606-2.389l.577-.145q.54-.142.929-.273a19.93 19.93 0 0 0 10.899-8.943a19.93 19.93 0 0 0 2.292-13.923l-.069-.313l-.092-.365l-.115-.418l-.138-.47a2.135 2.135 0 0 1 1.26-2.602a1.894 1.894 0 0 1 2.458 1.067M7.385 19.92q.065.02.128.044A2.127 2.127 0 0 1 8.78 22.55q-.27.909-.39 1.513a19.93 19.93 0 0 0 2.295 13.91a19.93 19.93 0 0 0 10.911 8.947l.306.097l.174.05l.39.106l.694.171a2.135 2.135 0 0 1 1.623 2.393a1.894 1.894 0 0 1-2.152 1.594l-.138-.025l-.576-.135l-.51-.13l-.446-.125l-.2-.06A23.93 23.93 0 0 1 7.22 39.972a23.93 23.93 0 0 1-2.647-17.197l.077-.32l.1-.375l.194-.665l.076-.25a1.89 1.89 0 0 1 2.365-1.246M28.051 12c8.837 0 16 7.163 16 16s-7.163 16-16 16s-16-7.163-16-16s7.164-16 16-16m0 4c-6.627 0-12 5.373-12 12s5.373 12 12 12c6.628 0 12-5.373 12-12s-5.372-12-12-12m0-12a23.93 23.93 0 0 1 16.217 6.306l.239.227l.275.274l.31.322l.346.369a1.89 1.89 0 0 1-.205 2.76a2.127 2.127 0 0 1-2.873-.196q-.326-.345-.605-.617l-.35-.334l-.16-.143A19.93 19.93 0 0 0 28.051 8a19.93 19.93 0 0 0-13.204 4.976l-.114.102l-.253.24l-.287.285l-.495.515c-.76.809-2.014.9-2.883.21a1.894 1.894 0 0 1-.305-2.662l.09-.106l.405-.431l.368-.378q.262-.263.484-.465A23.93 23.93 0 0 1 28.05 4"/></svg>
+                        Status
+                      </span>
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Notes</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {paginatedTransfers.map(transfer => (
+                    <tr key={transfer._id} className={`hover:bg-gray-50 transition-colors ${editingId === transfer._id ? 'bg-blue-50' : ''}`}>
+                      <td className="px-6 py-4 text-sm">
+                        {editingId === transfer._id ? (
+                          <input
+                            type="text"
+                            value={editedData.name || ''}
+                            onChange={(e) => handleEditChange('name', e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                          />
+                        ) : (
+                          <span className="font-medium text-gray-900">{transfer.name}</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        {editingId === transfer._id ? (
+                          <input
+                            type="text"
+                            value={editedData.phoneNo || ''}
+                            onChange={(e) => handleEditChange('phoneNo', e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                          />
+                        ) : (
+                          <span className="text-gray-700">{transfer.phoneNo}</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        {editingId === transfer._id ? (
+                          <input
+                            type="text"
+                            value={editedData.vehicleNumber || ''}
+                            onChange={(e) => handleEditChange('vehicleNumber', e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bff86a] font-mono"
+                          />
+                        ) : (
+                          <span className="text-gray-700 font-mono">{transfer.vehicleNumber}</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        {editingId === transfer._id ? (
+                          <input
+                            type="text"
+                            value={editedData.chassisNumber || ''}
+                            onChange={(e) => handleEditChange('chassisNumber', e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bff86a] font-mono"
+                          />
+                        ) : (
+                          <span className="text-gray-700 font-mono">{transfer.chassisNumber}</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        {editingId === transfer._id ? (
+                          <input
+                            type="text"
+                            value={editedData.paidAmount || ''}
+                            onChange={(e) => handleEditChange('paidAmount', e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                          />
+                        ) : (
+                          <span className="font-semibold text-gray-900">₹{parseInt(transfer.paidAmount).toLocaleString('en-IN')}</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        {editingId === transfer._id ? (
+                          <select
+                            value={editedData.status || 'ekyc'}
+                            onChange={(e) => handleEditChange('status', e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                          >
+                            <option value="ekyc">E-KYC</option>
+                            <option value="token">Token</option>
+                            <option value="challan">Challan</option>
+                            <option value="finance approval">Finance Approval</option>
+                            <option value="rto approval">RTO Approval</option>
+                            <option value="completed">Completed</option>
+                          </select>
+                        ) : (
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${getStatusColor(transfer.status)}`}>
+                            {transfer.status}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        {editingId === transfer._id ? (
+                          <textarea
+                            value={editedData.notes || ''}
+                            onChange={(e) => handleEditChange('notes', e.target.value)}
+                            placeholder="Enter note"
+                            className="w-full min-h-28 px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bff86a] resize-y"
+                          />
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setNoteToView(transfer.notes || 'No notes added')}
+                            className="px-3 py-1 rounded-lg text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-semibold transition-colors"
+                          >
+                            Note
+                          </button>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm space-x-2 flex">
+                        {editingId === transfer._id ? (
+                          <>
+                            <button
+                              onClick={saveEdit}
+                              className="px-3 py-1 rounded-lg text-white bg-green-600 hover:bg-green-700 font-semibold transition-colors"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={cancelEdit}
+                              className="px-3 py-1 rounded-lg text-gray-600 bg-gray-200 hover:bg-gray-300 font-semibold transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => startEdit(transfer)}
+                              className="px-3 py-1 rounded-lg text-blue-600 hover:bg-blue-50 font-semibold transition-colors"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(transfer._id)}
+                              className="px-3 py-1 rounded-lg text-red-600 hover:bg-red-50 font-semibold transition-colors"
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Pagination */}
+        {filteredTransfers.length > 0 && totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-between bg-white rounded-xl p-4 shadow-sm">
+            <div className="text-sm text-gray-600">
+              Showing <span className="font-semibold">{startIndex + 1}</span> to <span className="font-semibold">{Math.min(startIndex + itemsPerPage, filteredTransfers.length)}</span> of <span className="font-semibold">{filteredTransfers.length}</span> entries
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage[filterStatus] - 1)}
+                disabled={currentPage[filterStatus] === 1}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+              >
+                Previous
+              </button>
+              <div className="flex gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`px-3 py-2 rounded-lg font-semibold transition-colors ${
+                      currentPage[filterStatus] === page
+                        ? 'bg-[#40FF00] text-gray-900'
+                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => handlePageChange(currentPage[filterStatus] + 1)}
+                disabled={currentPage[filterStatus] === totalPages}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {noteToView !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl bg-white p-8 shadow-xl">
+            <div className="flex items-center justify-between border-b pb-4 mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Note</h2>
+              <button
+                type="button"
+                onClick={() => setNoteToView(null)}
+                className="rounded-lg px-3 py-1 text-sm font-semibold text-gray-600 hover:bg-gray-100"
+              >
+                Close
+              </button>
+            </div>
+            <p className="whitespace-pre-wrap break-words text-base leading-7 text-gray-700">
+              {noteToView}
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default OwnershipTransfer;

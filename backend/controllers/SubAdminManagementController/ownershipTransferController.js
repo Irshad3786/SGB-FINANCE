@@ -1,5 +1,9 @@
 import OwnershipTransfer from "../../models/ownershipTransferModel.js";
 
+const VALID_STATUSES = ["ekyc", "token", "challan", "finance approval", "rto approval", "completed"];
+
+const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 // Create a new ownership transfer entry
 export const createOwnershipTransfer = async (req, res) => {
     try {
@@ -40,18 +44,69 @@ export const createOwnershipTransfer = async (req, res) => {
 export const getAllOwnershipTransfers = async (req, res) => {
     try {
         const subAdminId = req.subAdminId;
+        const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+        const limit = Math.max(parseInt(req.query.limit, 10) || 10, 1);
+        const status = req.query.status?.trim();
+        const search = req.query.search?.trim();
 
         if (!subAdminId) {
             return res.status(401).json({ message: "Unauthorized: SubAdmin ID not found" });
         }
 
-        const transfers = await OwnershipTransfer.find({ subAdminId })
-            .sort({ createdAt: -1 });
+        const query = { subAdminId };
+
+        if (status && status !== "all") {
+            if (!VALID_STATUSES.includes(status)) {
+                return res.status(400).json({ message: "Invalid status value" });
+            }
+
+            query.status = status;
+        }
+
+        if (search) {
+            const escapedSearch = escapeRegex(search);
+            query.$or = [
+                { name: { $regex: escapedSearch, $options: "i" } },
+                { phoneNo: { $regex: escapedSearch, $options: "i" } },
+                { vehicleNumber: { $regex: escapedSearch, $options: "i" } },
+                { chassisNumber: { $regex: escapedSearch, $options: "i" } },
+                { notes: { $regex: escapedSearch, $options: "i" } }
+            ];
+        }
+
+        const [transfers, totalCount, statusBreakdown] = await Promise.all([
+            OwnershipTransfer.find(query)
+                .sort({ createdAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit),
+            OwnershipTransfer.countDocuments(query),
+            OwnershipTransfer.aggregate([
+                { $match: { subAdminId } },
+                { $group: { _id: "$status", count: { $sum: 1 } } }
+            ])
+        ]);
+
+        const statusCounts = VALID_STATUSES.reduce((accumulator, currentStatus) => {
+            accumulator[currentStatus] = 0;
+            return accumulator;
+        }, { all: 0 });
+
+        statusBreakdown.forEach(item => {
+            if (item._id) {
+                statusCounts[item._id] = item.count;
+            }
+        });
+
+        statusCounts.all = await OwnershipTransfer.countDocuments({ subAdminId });
 
         res.status(200).json({
             message: "Ownership transfers retrieved successfully",
             data: transfers,
-            count: transfers.length
+            count: totalCount,
+            page,
+            limit,
+            totalPages: Math.max(Math.ceil(totalCount / limit), 1),
+            statusCounts
         });
     } catch (error) {
         console.error("Error fetching ownership transfers:", error);
@@ -162,25 +217,37 @@ export const getOwnershipTransfersByStatus = async (req, res) => {
     try {
         const { status } = req.params;
         const subAdminId = req.subAdminId;
+        const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+        const limit = Math.max(parseInt(req.query.limit, 10) || 10, 1);
 
         if (!subAdminId) {
             return res.status(401).json({ message: "Unauthorized: SubAdmin ID not found" });
         }
 
-        const validStatuses = ["ekyc", "token", "challan", "finance approval", "rto approval", "completed"];
-        if (!validStatuses.includes(status)) {
+        if (!VALID_STATUSES.includes(status)) {
             return res.status(400).json({ message: "Invalid status value" });
         }
 
-        const transfers = await OwnershipTransfer.find({
+        const query = {
             subAdminId,
             status
-        }).sort({ createdAt: -1 });
+        };
+
+        const [transfers, totalCount] = await Promise.all([
+            OwnershipTransfer.find(query)
+                .sort({ createdAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit),
+            OwnershipTransfer.countDocuments(query)
+        ]);
 
         res.status(200).json({
             message: `Ownership transfers with status '${status}' retrieved successfully`,
             data: transfers,
-            count: transfers.length
+            count: totalCount,
+            page,
+            limit,
+            totalPages: Math.max(Math.ceil(totalCount / limit), 1)
         });
     } catch (error) {
         console.error("Error fetching ownership transfers by status:", error);

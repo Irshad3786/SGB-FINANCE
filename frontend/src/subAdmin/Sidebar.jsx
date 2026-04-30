@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import Logo from '../home/components/Logo';
 import { useLocation } from 'react-router-dom';
+import apiClient, { setAuthToken, setRefreshToken } from '../api/axios';
 
 
 function Sidebar({toggle, onNavigate}) {
+  const navigate = useNavigate();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const location = useLocation();
@@ -198,10 +200,26 @@ function Sidebar({toggle, onNavigate}) {
               Cancel
             </button>
             <button
-              onClick={() => {
-                setShowLogoutModal(false);
-                // Add your logout logic here
-                console.log('Logging out...');
+              onClick={async () => {
+                try {
+                  await apiClient.post('/api/subadmin/logOutSubAdmin')
+                  setAuthToken(null)
+                  setRefreshToken(null)
+                  if (typeof window !== 'undefined') {
+                    sessionStorage.clear()
+                  }
+                  setShowLogoutModal(false)
+                  navigate('/login', { replace: true })
+                } catch (error) {
+                  console.error('Logout error:', error)
+                  setAuthToken(null)
+                  setRefreshToken(null)
+                  if (typeof window !== 'undefined') {
+                    sessionStorage.clear()
+                  }
+                  setShowLogoutModal(false)
+                  navigate('/login', { replace: true })
+                }
               }}
               className="flex-1 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 font-semibold text-white transition-colors"
             >

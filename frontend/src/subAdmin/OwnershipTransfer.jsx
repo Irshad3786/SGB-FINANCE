@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import apiClient from '../api/axios';
 import { useToast } from '../components/ToastProvider';
 import OwnershipTransferForm from './components/OwnershipTransferForm';
@@ -6,6 +6,9 @@ import OwnershipTransferForm from './components/OwnershipTransferForm';
 function OwnershipTransfer() {
   const { showToast } = useToast();
   const [transfers, setTransfers] = useState([]);
+  const [_totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [statusCounts, setStatusCounts] = useState({ all: 0 });
   const [loading, setLoading] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -23,16 +26,31 @@ function OwnershipTransfer() {
     completed: 1
   });
   const itemsPerPage = 10;
+  const activePage = currentPage[filterStatus] || 1;
 
-  useEffect(() => {
-    fetchTransfers();
-  }, []);
-
-  const fetchTransfers = async () => {
+  const fetchTransfers = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/subadmin/management/ownership-transfer/all');
-      setTransfers(response.data?.data || []);
+      const response = await apiClient.get('/api/subadmin/management/ownership-transfer/all', {
+        params: {
+          page: activePage,
+          limit: itemsPerPage,
+          status: filterStatus,
+          search: searchQuery.trim() || undefined
+        }
+      });
+
+      const nextTransfers = response.data?.data || [];
+      const nextTotalPages = response.data?.totalPages || 1;
+
+      setTransfers(nextTransfers);
+      setTotalCount(response.data?.count || 0);
+      setTotalPages(nextTotalPages);
+      setStatusCounts(response.data?.statusCounts || { all: 0 });
+
+      if (activePage > nextTotalPages && nextTotalPages > 0) {
+        setCurrentPage(prev => ({ ...prev, [filterStatus]: nextTotalPages }));
+      }
     } catch (error) {
       console.error('Error fetching transfers:', error);
       showToast({
@@ -43,7 +61,11 @@ function OwnershipTransfer() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast, activePage, itemsPerPage, filterStatus, searchQuery]);
+
+  useEffect(() => {
+    fetchTransfers();
+  }, [fetchTransfers]);
 
   const handleEditChange = (field, value) => {
     setEditedData(prev => ({ ...prev, [field]: value }));
@@ -102,26 +124,10 @@ function OwnershipTransfer() {
       showToast({
         type: 'error',
         title: 'Error',
-        message: 'Failed to delete ownership transfer'
+        message: error?.response?.data?.message || 'Failed to delete ownership transfer'
       });
     }
   };
-
-  const filteredTransfers = (filterStatus === 'all' 
-    ? transfers 
-    : transfers.filter(t => t.status === filterStatus)).filter(t => {
-    const query = searchQuery.toLowerCase();
-    return (
-      t.name.toLowerCase().includes(query) ||
-      t.phoneNo.includes(query) ||
-      t.vehicleNumber.toLowerCase().includes(query) ||
-      t.chassisNumber.toLowerCase().includes(query)
-    );
-  });
-
-  const totalPages = Math.ceil(filteredTransfers.length / itemsPerPage);
-  const startIndex = (currentPage[filterStatus] - 1) * itemsPerPage;
-  const paginatedTransfers = filteredTransfers.slice(startIndex, startIndex + itemsPerPage);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -136,8 +142,22 @@ function OwnershipTransfer() {
         challan: 'bg-orange-100 text-orange-800',
         'finance approval': 'bg-cyan-100 text-cyan-800',
         'rto approval': 'bg-indigo-100 text-indigo-800',
+        completed: 'bg-green-100 text-green-800',
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
+  };
+
+  const formatStatusLabel = (status = '') => {
+    return status
+      .split(' ')
+      .filter(Boolean)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
+    setCurrentPage(prev => ({ ...prev, [filterStatus]: 1 }));
   };
 
   return (
@@ -145,9 +165,11 @@ function OwnershipTransfer() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <h1 className="text-3xl font-bold text-gray-900">Ownership Transfer</h1>
-            <p className="text-gray-600 mt-2">Manage vehicle ownership transfer entries</p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="space-y-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Ownership Transfer</h1>
+              <p className="text-sm sm:text-base text-gray-600">Manage vehicle ownership transfer entries</p>
+            </div>
             <button
               onClick={() => {
                 setShowAddForm(prev => !prev);
@@ -182,7 +204,7 @@ function OwnershipTransfer() {
               type="text"
               placeholder="Search by name, phone, vehicle number, or chassis number..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="w-full px-4 py-3 pl-12 rounded-xl border border-gray-300 shadow-inner bg-white focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
             />
             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
@@ -194,14 +216,14 @@ function OwnershipTransfer() {
         {/* Filter */}
         <div className="mb-6 flex gap-2 flex-wrap">
           <button
-            onClick={() => setFilterStatus('all')}
+            onClick={() => { setFilterStatus('all'); setCurrentPage(prev => ({ ...prev, all: 1 })); }}
             className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
               filterStatus === 'all'
                 ? 'bg-[#40FF00] text-gray-900'
                 : 'bg-white text-gray-700 border border-gray-300'
             }`}
           >
-            All ({transfers.length})
+            All ({statusCounts.all || 0})
           </button>
           <button
             onClick={() => { setFilterStatus('ekyc'); setCurrentPage(prev => ({ ...prev, ekyc: 1 })); }}
@@ -211,7 +233,7 @@ function OwnershipTransfer() {
                 : 'bg-white text-gray-700 border border-gray-300'
             }`}
           >
-            E-KYC ({transfers.filter(t => t.status === 'ekyc').length})
+            E-KYC ({statusCounts.ekyc || 0})
           </button>
           <button
             onClick={() => { setFilterStatus('token'); setCurrentPage(prev => ({ ...prev, token: 1 })); }}
@@ -221,7 +243,7 @@ function OwnershipTransfer() {
                 : 'bg-white text-gray-700 border border-gray-300'
             }`}
           >
-            Token ({transfers.filter(t => t.status === 'token').length})
+            Token ({statusCounts.token || 0})
           </button>
           <button
             onClick={() => { setFilterStatus('challan'); setCurrentPage(prev => ({ ...prev, challan: 1 })); }}
@@ -231,7 +253,7 @@ function OwnershipTransfer() {
                 : 'bg-white text-gray-700 border border-gray-300'
             }`}
           >
-            Challan ({transfers.filter(t => t.status === 'challan').length})
+            Challan ({statusCounts.challan || 0})
           </button>
           <button
             onClick={() => { setFilterStatus('finance approval'); setCurrentPage(prev => ({ ...prev, 'finance approval': 1 })); }}
@@ -241,7 +263,7 @@ function OwnershipTransfer() {
                 : 'bg-white text-gray-700 border border-gray-300'
             }`}
           >
-            Finance Approval ({transfers.filter(t => t.status === 'finance approval').length})
+            Finance Approval ({statusCounts['finance approval'] || 0})
           </button>
           <button
             onClick={() => { setFilterStatus('rto approval'); setCurrentPage(prev => ({ ...prev, 'rto approval': 1 })); }}
@@ -251,7 +273,7 @@ function OwnershipTransfer() {
                 : 'bg-white text-gray-700 border border-gray-300'
             }`}
           >
-            RTO Approval ({transfers.filter(t => t.status === 'rto approval').length})
+            RTO Approval ({statusCounts['rto approval'] || 0})
           </button>
           <button
             onClick={() => { setFilterStatus('completed'); setCurrentPage(prev => ({ ...prev, completed: 1 })); }}
@@ -261,7 +283,7 @@ function OwnershipTransfer() {
                 : 'bg-white text-gray-700 border border-gray-300'
             }`}
           >
-            Completed ({transfers.filter(t => t.status === 'completed').length})
+            Completed ({statusCounts.completed || 0})
           </button>
         </div>
 
@@ -274,7 +296,7 @@ function OwnershipTransfer() {
                 <p className="text-gray-600">Loading transfers...</p>
               </div>
             </div>
-          ) : filteredTransfers.length === 0 ? (
+          ) : transfers.length === 0 ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" className="mx-auto mb-4 text-gray-400">
@@ -284,8 +306,9 @@ function OwnershipTransfer() {
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <>
+              <div className="hidden md:block">
+                <table className="w-full table-fixed">
                 <thead className="bg-gray-50 border-b">
                   <tr>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Name</th>
@@ -324,7 +347,7 @@ function OwnershipTransfer() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {paginatedTransfers.map(transfer => (
+                  {transfers.map(transfer => (
                     <tr key={transfer._id} className={`hover:bg-gray-50 transition-colors ${editingId === transfer._id ? 'bg-blue-50' : ''}`}>
                       <td className="px-6 py-4 text-sm">
                         {editingId === transfer._id ? (
@@ -401,19 +424,22 @@ function OwnershipTransfer() {
                             <option value="completed">Completed</option>
                           </select>
                         ) : (
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${getStatusColor(transfer.status)}`}>
-                            {transfer.status}
+                          <span className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold tracking-wide whitespace-nowrap ${getStatusColor(transfer.status)}`}>
+                            {formatStatusLabel(transfer.status)}
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm">
+                      <td className="px-6 py-4 text-sm align-top">
                         {editingId === transfer._id ? (
-                          <textarea
-                            value={editedData.notes || ''}
-                            onChange={(e) => handleEditChange('notes', e.target.value)}
-                            placeholder="Enter note"
-                            className="w-full min-h-28 px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bff86a] resize-y"
-                          />
+                          <div className="w-full max-w-md pt-3">
+                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Edit Note</p>
+                            <textarea
+                              value={editedData.notes || ''}
+                              onChange={(e) => handleEditChange('notes', e.target.value)}
+                              placeholder="Enter note"
+                              className="block w-52  min-h-48 rounded-xl border border-gray-300 px-4 py-3 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-[#bff86a] resize-y bg-white font-medium"
+                            />
+                          </div>
                         ) : (
                           <button
                             type="button"
@@ -424,92 +450,216 @@ function OwnershipTransfer() {
                           </button>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm space-x-2 flex">
+                      <td className="px-6 py-4 text-sm align-top">
                         {editingId === transfer._id ? (
-                          <>
+                          <div className="flex gap-1.5 items-center justify-center">
                             <button
                               onClick={saveEdit}
-                              className="px-3 py-1 rounded-lg text-white bg-green-600 hover:bg-green-700 font-semibold transition-colors"
+                              className="inline-flex items-center justify-center px-2.5 py-1.5 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs transition-all duration-200 shadow-sm hover:shadow-md"
+                              title="Save changes"
                             >
-                              Save
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                             </button>
                             <button
                               onClick={cancelEdit}
-                              className="px-3 py-1 rounded-lg text-gray-600 bg-gray-200 hover:bg-gray-300 font-semibold transition-colors"
+                              className="inline-flex items-center justify-center px-2.5 py-1.5 rounded-md bg-slate-300 hover:bg-slate-400 text-slate-700 font-semibold text-xs transition-all duration-200 shadow-sm hover:shadow-md"
+                              title="Cancel editing"
                             >
-                              Cancel
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                             </button>
-                          </>
+                          </div>
                         ) : (
-                          <>
+                          <div className="flex gap-1.5 items-center justify-center">
                             <button
                               onClick={() => startEdit(transfer)}
-                              className="px-3 py-1 rounded-lg text-blue-600 hover:bg-blue-50 font-semibold transition-colors"
+                              className="inline-flex items-center justify-center px-2.5 py-1.5 rounded-md bg-blue-500 hover:bg-blue-600 text-white font-semibold text-xs transition-all duration-200 shadow-sm hover:shadow-md"
+                              title="Edit entry"
                             >
-                              Edit
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19H4v-3L16.5 3.5z"></path></svg>
                             </button>
                             <button
                               onClick={() => handleDelete(transfer._id)}
-                              className="px-3 py-1 rounded-lg text-red-600 hover:bg-red-50 font-semibold transition-colors"
+                              className="inline-flex items-center justify-center px-2.5 py-1.5 rounded-md bg-red-500 hover:bg-red-600 text-white font-semibold text-xs transition-all duration-200 shadow-sm hover:shadow-md"
+                              title="Delete entry"
                             >
-                              Delete
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                             </button>
-                          </>
+                          </div>
                         )}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
+              </div>
+
+              <div className="space-y-4 p-4 md:hidden">
+                {transfers.map(transfer => (
+                  <div
+                    key={transfer._id}
+                    className={`rounded-2xl border border-gray-200 bg-white p-4 shadow-sm ${editingId === transfer._id ? 'ring-2 ring-[#bff86a]' : ''}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-lg font-semibold text-gray-900">{transfer.name}</p>
+                        <p className="mt-1 text-sm text-gray-500">{transfer.phoneNo}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">Status</p>
+                        <span className={`mt-1 inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold tracking-wide whitespace-nowrap ${getStatusColor(transfer.status)}`}>
+                          {formatStatusLabel(transfer.status)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-1 gap-3 text-sm">
+                      <div className="rounded-xl bg-gray-50 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Vehicle No</p>
+                        <p className="mt-1 font-mono text-gray-900 break-all">{transfer.vehicleNumber}</p>
+                      </div>
+                      <div className="rounded-xl bg-gray-50 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Chassis No</p>
+                        <p className="mt-1 font-mono text-gray-900 break-all">{transfer.chassisNumber}</p>
+                      </div>
+                      <div className="rounded-xl bg-gray-50 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Amount</p>
+                        <p className="mt-1 font-semibold text-gray-900">₹{parseInt(transfer.paidAmount).toLocaleString('en-IN')}</p>
+                      </div>
+                      <div className="rounded-xl bg-gray-50 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Notes</p>
+                        <button
+                          type="button"
+                          onClick={() => setNoteToView(transfer.notes || 'No notes added')}
+                          className="mt-2 inline-flex rounded-lg px-3 py-1 text-sm font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                        >
+                          View Note
+                        </button>
+                      </div>
+                    </div>
+
+                    {editingId === transfer._id ? (
+                      <div className="mt-4 space-y-3">
+                        <input
+                          type="text"
+                          value={editedData.name || ''}
+                          onChange={(e) => handleEditChange('name', e.target.value)}
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                          placeholder="Name"
+                        />
+                        <input
+                          type="text"
+                          value={editedData.phoneNo || ''}
+                          onChange={(e) => handleEditChange('phoneNo', e.target.value)}
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                          placeholder="Phone"
+                        />
+                        <input
+                          type="text"
+                          value={editedData.vehicleNumber || ''}
+                          onChange={(e) => handleEditChange('vehicleNumber', e.target.value)}
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                          placeholder="Vehicle No"
+                        />
+                        <input
+                          type="text"
+                          value={editedData.chassisNumber || ''}
+                          onChange={(e) => handleEditChange('chassisNumber', e.target.value)}
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                          placeholder="Chassis No"
+                        />
+                        <input
+                          type="text"
+                          value={editedData.paidAmount || ''}
+                          onChange={(e) => handleEditChange('paidAmount', e.target.value)}
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                          placeholder="Amount"
+                        />
+                        <select
+                          value={editedData.status || 'ekyc'}
+                          onChange={(e) => handleEditChange('status', e.target.value)}
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                        >
+                          <option value="ekyc">E-KYC</option>
+                          <option value="token">Token</option>
+                          <option value="challan">Challan</option>
+                          <option value="finance approval">Finance Approval</option>
+                          <option value="rto approval">RTO Approval</option>
+                          <option value="completed">Completed</option>
+                        </select>
+                        <textarea
+                          value={editedData.notes || ''}
+                          onChange={(e) => handleEditChange('notes', e.target.value)}
+                          placeholder="Enter note"
+                          className="w-full min-h-48 rounded-xl border border-gray-300 px-4 py-3 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-[#bff86a] resize-y"
+                        />
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          <button
+                            onClick={saveEdit}
+                            className="px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 font-semibold transition-colors"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={cancelEdit}
+                            className="px-4 py-2 rounded-lg text-gray-600 bg-gray-200 hover:bg-gray-300 font-semibold transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <button
+                          onClick={() => startEdit(transfer)}
+                          className="px-4 py-2 rounded-lg text-blue-600 bg-blue-50 hover:bg-blue-100 font-semibold transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(transfer._id)}
+                          className="px-4 py-2 rounded-lg text-red-600 bg-red-50 hover:bg-red-100 font-semibold transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
 
-        {/* Pagination */}
-        {filteredTransfers.length > 0 && totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-between bg-white rounded-xl p-4 shadow-sm">
-            <div className="text-sm text-gray-600">
-              Showing <span className="font-semibold">{startIndex + 1}</span> to <span className="font-semibold">{Math.min(startIndex + itemsPerPage, filteredTransfers.length)}</span> of <span className="font-semibold">{filteredTransfers.length}</span> entries
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handlePageChange(currentPage[filterStatus] - 1)}
-                disabled={currentPage[filterStatus] === 1}
-                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
-              >
-                Previous
-              </button>
-              <div className="flex gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button
-                    key={page}
-                    onClick={() => handlePageChange(page)}
-                    className={`px-3 py-2 rounded-lg font-semibold transition-colors ${
-                      currentPage[filterStatus] === page
-                        ? 'bg-[#40FF00] text-gray-900'
-                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-              </div>
-              <button
-                onClick={() => handlePageChange(currentPage[filterStatus] + 1)}
-                disabled={currentPage[filterStatus] === totalPages}
-                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
-              >
-                Next
-              </button>
-            </div>
+        {/* Pagination - Bottom Right */}
+        {transfers.length > 0 && (
+          <div className="mt-6 flex items-center justify-end gap-2">
+            <button
+              onClick={() => handlePageChange(activePage - 1)}
+              disabled={activePage === 1}
+              className="px-3 py-1 rounded-lg border border-gray-300 text-gray-700 font-semibold text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+            >
+              ← Prev
+            </button>
+
+            <span className="text-xs font-semibold text-gray-700 px-2">
+              Page <span className="text-[#40FF00]">{activePage}</span> of {totalPages}
+            </span>
+
+            <button
+              onClick={() => handlePageChange(activePage + 1)}
+              disabled={activePage === totalPages}
+              className="px-3 py-1 rounded-lg border border-gray-300 text-gray-700 font-semibold text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+            >
+              Next →
+            </button>
           </div>
         )}
       </div>
 
       {noteToView !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl bg-white p-8 shadow-xl">
-            <div className="flex items-center justify-between border-b pb-4 mb-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-3 py-3 sm:px-4">
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl bg-white p-5 sm:p-8 shadow-xl">
+            <div className="flex items-start justify-between gap-4 border-b pb-4 mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Note</h2>
               <button
                 type="button"
@@ -519,7 +669,7 @@ function OwnershipTransfer() {
                 Close
               </button>
             </div>
-            <p className="whitespace-pre-wrap break-words text-base leading-7 text-gray-700">
+            <p className="whitespace-pre-wrap break-words break-all text-base leading-7 text-gray-700">
               {noteToView}
             </p>
           </div>

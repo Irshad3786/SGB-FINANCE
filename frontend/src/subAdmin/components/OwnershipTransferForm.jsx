@@ -10,6 +10,7 @@ function OwnershipTransferForm({ onSubmitSuccess, initialData = null }) {
   
   const [form, setForm] = useState(initialData || {
     name: '',
+    vehicleName: '',
     phoneNo: '',
     vehicleNumber: '',
     chassisNumber: '',
@@ -26,6 +27,11 @@ function OwnershipTransferForm({ onSubmitSuccess, initialData = null }) {
     if (name === 'phoneNo') {
       const digitsOnly = value.replace(/\D/g, '').slice(0, 10);
       setForm(prev => ({ ...prev, [name]: digitsOnly }));
+      return;
+    }
+
+    if (name === 'vehicleName') {
+      setForm(prev => ({ ...prev, [name]: value.slice(0, 40) }));
       return;
     }
 
@@ -51,7 +57,7 @@ function OwnershipTransferForm({ onSubmitSuccess, initialData = null }) {
   const onSubmit = async (e) => {
     e.preventDefault();
     
-    if (!form.name || !form.phoneNo || !form.vehicleNumber || !form.chassisNumber || !form.paidAmount) {
+    if (!form.name || !form.vehicleName || !form.phoneNo || !form.vehicleNumber || !form.chassisNumber || !form.paidAmount) {
       showToast({
         type: 'error',
         title: 'Validation Error',
@@ -92,6 +98,7 @@ function OwnershipTransferForm({ onSubmitSuccess, initialData = null }) {
       if (!initialData?._id) {
         setForm({
           name: '',
+          vehicleName: '',
           phoneNo: '',
           vehicleNumber: '',
           chassisNumber: '',
@@ -140,6 +147,23 @@ function OwnershipTransferForm({ onSubmitSuccess, initialData = null }) {
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
               <path fill="#a6a6a6" d="M12 12q-1.65 0-2.825-1.175T8 8t1.175-2.825T12 4t2.825 1.175T16 8t-1.175 2.825T12 12m-8 6v-.8q0-.85.438-1.562T5.6 14.55q1.55-.775 3.15-1.162T12 13t3.25.388t3.15 1.162q.725.375 1.163 1.088T20 17.2v.8q0 .825-.587 1.413T18 20H6q-.825 0-1.412-.587T4 18" />
             </svg>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label className={baseLabel}>Vehicle Name *</label>
+        <div className="relative">
+          <input
+            name="vehicleName"
+            value={form.vehicleName}
+            onChange={onChange}
+            placeholder="Enter vehicle name"
+            className={baseInput}
+            required
+          />
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="currentColor" d="M7 3.5a.5.5 0 0 1 .5-.5h1.112a1.5 1.5 0 0 1 1.36.868l.335.722c.274-.359.707-.59 1.193-.59h1a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-1q-.038 0-.075-.002l.497 1.07Q12.2 8 12.5 8a2.5 2.5 0 1 1-1.485.489l-.346-.745A2.5 2.5 0 0 1 8.5 9h-3c.219.29.375.63.45 1h2.814a2.5 2.5 0 0 1-2 1H5.95A2.5 2.5 0 1 1 3.5 8h2.191L6 7.382A2.5 2.5 0 0 1 8.236 6H9.86l-.794-1.71A.5.5 0 0 0 8.612 4H7.5a.5.5 0 0 1-.5-.5m5.047 7.21l-.596-1.282a1.5 1.5 0 1 0 .907-.421l.595 1.282a.5.5 0 0 1-.906.422M3.5 9a1.5 1.5 0 1 0 0 3a1.5 1.5 0 0 0 0-3M11 5.5a.5.5 0 0 0 .5.5h.5V5h-.5a.5.5 0 0 0-.5.5"/></svg>
           </div>
         </div>
       </div>

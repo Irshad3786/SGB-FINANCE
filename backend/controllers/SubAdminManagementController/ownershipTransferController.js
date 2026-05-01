@@ -7,10 +7,10 @@ const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 // Create a new ownership transfer entry
 export const createOwnershipTransfer = async (req, res) => {
     try {
-        const { name, phoneNo, vehicleNumber, chassisNumber, paidAmount, status, notes } = req.body;
+        const { name, vehicleName, phoneNo, vehicleNumber, chassisNumber, paidAmount, status, notes } = req.body;
         const subAdminId = req.subAdminId;
 
-        if (!name || !phoneNo || !vehicleNumber || !chassisNumber || !paidAmount) {
+        if (!name || !vehicleName || !phoneNo || !vehicleNumber || !chassisNumber || !paidAmount) {
             return res.status(400).json({ message: "All required fields must be provided" });
         }
 
@@ -20,6 +20,7 @@ export const createOwnershipTransfer = async (req, res) => {
 
         const newTransfer = new OwnershipTransfer({
             name,
+            vehicleName,
             phoneNo,
             vehicleNumber,
             chassisNumber,
@@ -67,6 +68,7 @@ export const getAllOwnershipTransfers = async (req, res) => {
             const escapedSearch = escapeRegex(search);
             query.$or = [
                 { name: { $regex: escapedSearch, $options: "i" } },
+                { vehicleName: { $regex: escapedSearch, $options: "i" } },
                 { phoneNo: { $regex: escapedSearch, $options: "i" } },
                 { vehicleNumber: { $regex: escapedSearch, $options: "i" } },
                 { chassisNumber: { $regex: escapedSearch, $options: "i" } },
@@ -147,7 +149,7 @@ export const getOwnershipTransferById = async (req, res) => {
 export const updateOwnershipTransfer = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, phoneNo, vehicleNumber, chassisNumber, paidAmount, status, notes } = req.body;
+        const { name, vehicleName, phoneNo, vehicleNumber, chassisNumber, paidAmount, status, notes } = req.body;
         const subAdminId = req.subAdminId;
 
         if (!subAdminId) {
@@ -158,6 +160,7 @@ export const updateOwnershipTransfer = async (req, res) => {
             { _id: id, subAdminId },
             {
                 name,
+                vehicleName,
                 phoneNo,
                 vehicleNumber,
                 chassisNumber,

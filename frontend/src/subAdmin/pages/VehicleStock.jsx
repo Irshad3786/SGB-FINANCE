@@ -163,12 +163,12 @@ function VehicleStock() {
   };
 
   return (
-    <div className="px-4 md:px-6 py-4">
-      <div className="flex items-center justify-between mb-6">
+    <div className="px-4 md:px-6 py-4 max-w-full overflow-x-hidden">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
         <h1 className="text-2xl md:text-3xl font-semibold">Bike Stock</h1>
 
-        <div className="flex items-center gap-3">
-          <div className="relative">
+        <div className="flex w-full md:w-auto items-center gap-3">
+          <div className="relative w-full md:w-auto flex-1 md:flex-initial">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -183,7 +183,7 @@ function VehicleStock() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="search vehicle"
-              className="h-10 w-56 md:w-64 rounded-full bg-gray-100 border border-gray-200 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400"
+              className="h-10 w-full md:w-64 rounded-full bg-gray-100 border border-gray-200 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400"
             />
           </div>
         </div>
@@ -274,7 +274,7 @@ function VehicleStock() {
         )
       )}
 
-      <div className="mt-5 flex items-center justify-end gap-3">
+      <div className="mt-5 flex flex-wrap items-center justify-center md:justify-end gap-3">
         <button
           type="button"
           onClick={() => setPage((prev) => Math.max(1, prev - 1))}

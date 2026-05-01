@@ -224,6 +224,21 @@ export default function Dashboard() {
       ticket: 0,
       other: 0,
     },
+    ownershipTransfers: {
+      total: 0,
+      pending: 0,
+      completed: 0,
+      tokenPending: 0,
+      statusCounts: {
+        all: 0,
+        ekyc: 0,
+        token: 0,
+        challan: 0,
+        'finance approval': 0,
+        'rto approval': 0,
+        completed: 0,
+      },
+    },
     charts: {
       monthlyCollection: { labels: ['Jan', 'Feb', 'Mar', 'Apr'], values: [0, 0, 0, 0] },
       collectionDistribution: { collectionDone: 0, pendingCollection: 0 },
@@ -255,8 +270,16 @@ export default function Dashboard() {
 
   const stats = dashboard?.stats || {}
   const requestSummary = dashboard?.requestSummary || {}
+  const ownershipTransfers = dashboard?.ownershipTransfers || {
+    total: 0,
+    pending: 0,
+    completed: 0,
+    tokenPending: 0,
+    statusCounts: {},
+  }
   const monthlyCollection = dashboard?.charts?.monthlyCollection || { labels: [], values: [] }
   const collectionDistribution = dashboard?.charts?.collectionDistribution || { collectionDone: 0, pendingCollection: 0 }
+  const ownershipTransferStatusCounts = ownershipTransfers?.statusCounts || {}
 
   return (
     <div className="w-full px-4 sm:px-6 md:px-8">
@@ -440,6 +463,89 @@ export default function Dashboard() {
                 </div>
               )}
             />
+          </div>
+        </div>
+
+        {/* Ownership Transfer Section */}
+        <div className="bg-white rounded-2xl p-4 sm:p-6 mt-6 border shadow-[0px_6px_7px_-4px_rgba(0,_0,_0,_0.25)]">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 className="text-lg sm:text-xl font-extrabold">Ownership Transfer</h2>
+              <p className="text-sm text-gray-500 mt-1">Track transfer volume and status progress at a glance.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              label="Total Transfers"
+              value={ownershipTransfers.total || 0}
+              className="bg-emerald-50"
+              icon={(
+                <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-emerald-200 rounded-xl flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#059669" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2m-1 14.414l-3.707-3.707l1.414-1.414L11 13.586l4.293-4.293l1.414 1.414z"/></svg>
+                </div>
+              )}
+            />
+
+            <StatCard
+              label="Token Pending"
+              value={ownershipTransfers.tokenPending || 0}
+              className="bg-amber-50"
+              icon={(
+                <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-amber-200 rounded-xl flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#d97706" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2m1 14h-2v-2h2zm0-4h-2V7h2z"/></svg>
+                </div>
+              )}
+            />
+
+            <StatCard
+              label="Completed"
+              value={ownershipTransfers.completed || 0}
+              className="bg-blue-50"
+              icon={(
+                <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-blue-200 rounded-xl flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#2563eb" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2m-1 14.414l-3.707-3.707l1.414-1.414L11 13.586l4.293-4.293l1.414 1.414z"/></svg>
+                </div>
+              )}
+            />
+
+            <StatCard
+              label="In Progress"
+              value={ownershipTransfers.pending || 0}
+              className="bg-purple-50"
+              icon={(
+                <div className="w-10 h-10 border-[1px] border-[#f0f0f0] bg-purple-200 rounded-xl flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#7c3aed" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2m1 11h4v2h-6V7h2z"/></svg>
+                </div>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mt-4">
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">E-KYC</p>
+              <p className="mt-1 text-xl font-bold text-gray-900">{ownershipTransferStatusCounts.ekyc || 0}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Token</p>
+              <p className="mt-1 text-xl font-bold text-gray-900">{ownershipTransferStatusCounts.token || 0}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Challan</p>
+              <p className="mt-1 text-xl font-bold text-gray-900">{ownershipTransferStatusCounts.challan || 0}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Finance Approval</p>
+              <p className="mt-1 text-xl font-bold text-gray-900">{ownershipTransferStatusCounts['finance approval'] || 0}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">RTO Approval</p>
+              <p className="mt-1 text-xl font-bold text-gray-900">{ownershipTransferStatusCounts['rto approval'] || 0}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Completed All</p>
+              <p className="mt-1 text-xl font-bold text-gray-900">{ownershipTransferStatusCounts.completed || 0}</p>
+            </div>
           </div>
         </div>
 

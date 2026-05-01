@@ -26,7 +26,7 @@ function Subadmin() {
   }, [isDarkMode])
 
   return (
-    <div className={`flex min-h-screen ${isDarkMode ? 'subadmin-dark' : 'subadmin-light'}`}>
+    <div className={`flex min-h-screen overflow-x-hidden ${isDarkMode ? 'subadmin-dark' : 'subadmin-light'}`}>
 
       <style>{`
         .subadmin-dark {
@@ -90,13 +90,13 @@ function Subadmin() {
       `}</style>
 
       {/* LEFT SIDEBAR */}
-      {!sidebarOpen &&  <div>
+      {sidebarOpen &&  <div>
         <Sidebar toggle={setSidebarOpen} onNavigate={setTopTitle} />
       </div>}
       
 
       {/* RIGHT SECTION */}
-      <div className="flex-1 flex flex-col">
+      <div className={`flex-1 flex flex-col overflow-hidden ${sidebarOpen ? 'ml-48 md:ml-64' : ''}`}>
 
         {/* TOP BAR */}
         <TopBar
@@ -107,8 +107,8 @@ function Subadmin() {
           onToggleTheme={() => setIsDarkMode((prev) => !prev)}
         />
 
-        {/* MAIN CONTENT BELOW TOP BAR */}
-        <main className="p-6 flex-1">
+        {/* MAIN CONTENT BELOW TOP BAR - SCROLLABLE */}
+        <main className="p-6 flex-1 overflow-y-auto">
           <Outlet />
         </main>
 

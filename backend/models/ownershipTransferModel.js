@@ -5,6 +5,10 @@ const ownershipTransferSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    vehicleName: {
+        type: String,
+        required: true
+    },
     phoneNo: {
         type: String,
         required: true

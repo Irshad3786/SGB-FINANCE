@@ -88,7 +88,7 @@ function OwnershipTransfer() {
   };
 
   const saveEdit = async () => {
-    if (!editedData.name || !editedData.phoneNo || !editedData.vehicleNumber || !editedData.chassisNumber || !editedData.paidAmount) {
+    if (!editedData.name || !editedData.vehicleName || !editedData.phoneNo || !editedData.vehicleNumber || !editedData.chassisNumber || !editedData.paidAmount) {
       return;
     }
 
@@ -161,7 +161,7 @@ function OwnershipTransfer() {
   };
 
   return (
-    <div className="flex-1 p-6 bg-gray-50">
+    <div className="flex-1 px-3 py-4 sm:px-4 sm:py-5 md:p-6 bg-white max-w-full overflow-x-hidden">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
@@ -175,7 +175,7 @@ function OwnershipTransfer() {
                 setShowAddForm(prev => !prev);
                 setEditingId(null);
               }}
-              className="px-5 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#B0FF1C] to-[#40FF00] hover:shadow-[-1px_8px_7px_-2px_rgba(0,_0,_0,_0.25)] transition-shadow"
+              className="w-full sm:w-auto px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold text-white bg-gradient-to-r from-[#B0FF1C] to-[#40FF00] hover:shadow-[-1px_8px_7px_-2px_rgba(0,_0,_0,_0.25)] transition-shadow"
             >
               {showAddForm ? 'Close Add Form' : 'Add Data'}
             </button>
@@ -183,14 +183,14 @@ function OwnershipTransfer() {
         </div>
 
         {showAddForm && (
-          <div className="mb-8 bg-white rounded-2xl shadow-sm p-6">
+          <div className="mb-8 bg-white rounded-2xl shadow-sm p-3 sm:p-6">
             <div className="flex items-center gap-3 pb-4 border-b mb-6">
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#40FF00" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2"/></svg>
               </span>
               <div>
-                <p className="text-lg font-semibold text-gray-900">Add New Entry</p>
-                <p className="text-sm text-gray-500">Enter the ownership transfer details</p>
+                <p className="text-base sm:text-lg font-semibold text-gray-900">Add New Entry</p>
+                <p className="text-xs sm:text-sm text-gray-500">Enter the ownership transfer details</p>
               </div>
             </div>
             <OwnershipTransferForm onSubmitSuccess={handleAddSuccess} />
@@ -205,10 +205,10 @@ function OwnershipTransfer() {
               placeholder="Search by name, phone, vehicle number, or chassis number..."
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full px-4 py-3 pl-12 rounded-xl border border-gray-300 shadow-inner bg-white focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 rounded-xl border border-gray-300 shadow-inner bg-white text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
             />
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m21 21l-4.343-4.343m0 0A8 8 0 1 0 5.343 5.343a8 8 0 0 0 11.314 11.314"/></svg>
+            <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="m21 21l-4.343-4.343m0 0A8 8 0 1 0 5.343 5.343a8 8 0 0 0 11.314 11.314"/></svg>
             </div>
           </div>
         </div>
@@ -217,7 +217,7 @@ function OwnershipTransfer() {
         <div className="mb-6 flex gap-2 flex-wrap">
           <button
             onClick={() => { setFilterStatus('all'); setCurrentPage(prev => ({ ...prev, all: 1 })); }}
-            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
               filterStatus === 'all'
                 ? 'bg-[#40FF00] text-gray-900'
                 : 'bg-white text-gray-700 border border-gray-300'
@@ -227,7 +227,7 @@ function OwnershipTransfer() {
           </button>
           <button
             onClick={() => { setFilterStatus('ekyc'); setCurrentPage(prev => ({ ...prev, ekyc: 1 })); }}
-            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
               filterStatus === 'ekyc'
                 ? 'bg-purple-100 text-purple-800'
                 : 'bg-white text-gray-700 border border-gray-300'
@@ -237,7 +237,7 @@ function OwnershipTransfer() {
           </button>
           <button
             onClick={() => { setFilterStatus('token'); setCurrentPage(prev => ({ ...prev, token: 1 })); }}
-            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
               filterStatus === 'token'
                 ? 'bg-blue-100 text-blue-800'
                 : 'bg-white text-gray-700 border border-gray-300'
@@ -247,7 +247,7 @@ function OwnershipTransfer() {
           </button>
           <button
             onClick={() => { setFilterStatus('challan'); setCurrentPage(prev => ({ ...prev, challan: 1 })); }}
-            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
               filterStatus === 'challan'
                 ? 'bg-orange-100 text-orange-800'
                 : 'bg-white text-gray-700 border border-gray-300'
@@ -257,7 +257,7 @@ function OwnershipTransfer() {
           </button>
           <button
             onClick={() => { setFilterStatus('finance approval'); setCurrentPage(prev => ({ ...prev, 'finance approval': 1 })); }}
-            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
               filterStatus === 'finance approval'
                 ? 'bg-cyan-100 text-cyan-800'
                 : 'bg-white text-gray-700 border border-gray-300'
@@ -267,7 +267,7 @@ function OwnershipTransfer() {
           </button>
           <button
             onClick={() => { setFilterStatus('rto approval'); setCurrentPage(prev => ({ ...prev, 'rto approval': 1 })); }}
-            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
               filterStatus === 'rto approval'
                 ? 'bg-indigo-100 text-indigo-800'
                 : 'bg-white text-gray-700 border border-gray-300'
@@ -277,7 +277,7 @@ function OwnershipTransfer() {
           </button>
           <button
             onClick={() => { setFilterStatus('completed'); setCurrentPage(prev => ({ ...prev, completed: 1 })); }}
-            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
               filterStatus === 'completed'
                 ? 'bg-green-100 text-green-800'
                 : 'bg-white text-gray-700 border border-gray-300'
@@ -300,7 +300,7 @@ function OwnershipTransfer() {
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" className="mx-auto mb-4 text-gray-400">
-                  <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5.04-6.71l-2.75 3.54l-2.96-3.83c-.3-.39-.97-.39-1.29 0-.31.4-.31 1.02 0 1.41l3.54 4.58c.3.39.97.39 1.29 0l3.83-4.96c.31-.39.31-1.02 0-1.41-.32-.4-.98-.4-1.29-.01z"/>
+                  <path fill="currentColor" d="M8.542 6.012Q8.3 5.769 8.3 5.446t.242-.565l1.402-1.402q.217-.217.522-.348T11.094 3h6.29q.691 0 1.154.463T19 4.616v9.87q0 .541-.497.743t-.876-.177zM6.616 21q-.691 0-1.153-.462T5 19.385V9.095q0-.324.13-.629q.132-.304.349-.522l.39-.39L2.4 4.084q-.146-.145-.153-.343q-.006-.199.159-.364q.165-.16.354-.162t.354.162l17.663 17.664q.14.14.15.34q.01.202-.15.367q-.165.165-.357.165t-.357-.165l-3.478-3.479l.713-.707L19 19.263v.121q0 .691-.462 1.153T17.384 21z"/>
                 </svg>
                 <p className="text-gray-600">No ownership transfers found</p>
               </div>
@@ -311,7 +311,18 @@ function OwnershipTransfer() {
                 <table className="w-full table-fixed">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Name</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                      <span className="inline-flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M12 12q-1.65 0-2.825-1.175T8 8t1.175-2.825T12 4t2.825 1.175T16 8t-1.175 2.825T12 12m-8 6v-.8q0-.85.438-1.562T5.6 14.55q1.55-.775 3.15-1.162T12 13t3.25.388t3.15 1.162q.725.375 1.163 1.088T20 17.2v.8q0 .825-.587 1.413T18 20H6q-.825 0-1.412-.587T4 18"/></svg>
+                        <span>Name</span>
+                      </span>
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                      <span className="inline-flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="currentColor" d="M7 3.5a.5.5 0 0 1 .5-.5h1.112a1.5 1.5 0 0 1 1.36.868l.335.722c.274-.359.707-.59 1.193-.59h1a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-1q-.038 0-.075-.002l.497 1.07Q12.2 8 12.5 8a2.5 2.5 0 1 1-1.485.489l-.346-.745A2.5 2.5 0 0 1 8.5 9h-3c.219.29.375.63.45 1h2.814a2.5 2.5 0 0 1-2 1H5.95A2.5 2.5 0 1 1 3.5 8h2.191L6 7.382A2.5 2.5 0 0 1 8.236 6H9.86l-.794-1.71A.5.5 0 0 0 8.612 4H7.5a.5.5 0 0 1-.5-.5m5.047 7.21l-.596-1.282a1.5 1.5 0 1 0 .907-.421l.595 1.282a.5.5 0 0 1-.906.422M3.5 9a1.5 1.5 0 1 0 0 3a1.5 1.5 0 0 0 0-3M11 5.5a.5.5 0 0 0 .5.5h.5V5h-.5a.5.5 0 0 0-.5.5"/></svg>
+                        <span>Vehicle Name</span>
+                      </span>
+                    </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
                       <span className="inline-flex items-center gap-1">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" fillRule="evenodd" d="m16.1 13.359l.456-.453c.63-.626 1.611-.755 2.417-.317l1.91 1.039c1.227.667 1.498 2.302.539 3.255l-1.42 1.412c-.362.36-.81.622-1.326.67c-1.192.111-3.645.051-6.539-1.643zm-5.91-5.876l.287-.286c.707-.702.774-1.83.157-2.654L9.374 2.86C8.61 1.84 7.135 1.705 6.26 2.575l-1.57 1.56c-.433.432-.723.99-.688 1.61c.065 1.14.453 3.22 2.149 5.776z" clipRule="evenodd"/><path fill="currentColor" d="M12.063 11.497c-2.946-2.929-1.88-4.008-1.873-4.015l-4.039 4.04c.667 1.004 1.535 2.081 2.664 3.204c1.14 1.134 2.26 1.975 3.322 2.596L16.1 13.36s-1.082 1.076-4.037-1.862" opacity=".6"/></svg>
@@ -365,6 +376,19 @@ function OwnershipTransfer() {
                         {editingId === transfer._id ? (
                           <input
                             type="text"
+                            value={editedData.vehicleName || ''}
+                            onChange={(e) => handleEditChange('vehicleName', e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                            placeholder="Vehicle name"
+                          />
+                        ) : (
+                          <span className="font-medium text-gray-900">{transfer.vehicleName || '-'}</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        {editingId === transfer._id ? (
+                          <input
+                            type="text"
                             value={editedData.phoneNo || ''}
                             onChange={(e) => handleEditChange('phoneNo', e.target.value)}
                             className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
@@ -382,7 +406,7 @@ function OwnershipTransfer() {
                             className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bff86a] font-mono"
                           />
                         ) : (
-                          <span className="text-gray-700 font-mono">{transfer.vehicleNumber}</span>
+                          <span className="block text-gray-700 font-mono break-all">{transfer.vehicleNumber}</span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-sm">
@@ -394,7 +418,7 @@ function OwnershipTransfer() {
                             className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bff86a] font-mono"
                           />
                         ) : (
-                          <span className="text-gray-700 font-mono">{transfer.chassisNumber}</span>
+                          <span className="block text-gray-700 font-mono break-all">{transfer.chassisNumber}</span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-sm">
@@ -406,7 +430,7 @@ function OwnershipTransfer() {
                             className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
                           />
                         ) : (
-                          <span className="font-semibold text-gray-900">₹{parseInt(transfer.paidAmount).toLocaleString('en-IN')}</span>
+                          <span className="font-semibold text-gray-900 whitespace-nowrap">₹{parseInt(transfer.paidAmount).toLocaleString('en-IN')}</span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-sm">
@@ -493,44 +517,49 @@ function OwnershipTransfer() {
               </table>
               </div>
 
-              <div className="space-y-4 p-4 md:hidden">
+              <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 md:hidden">
                 {transfers.map(transfer => (
                   <div
                     key={transfer._id}
-                    className={`rounded-2xl border border-gray-200 bg-white p-4 shadow-sm ${editingId === transfer._id ? 'ring-2 ring-[#bff86a]' : ''}`}
+                    className={`rounded-xl sm:rounded-2xl border border-gray-200 bg-white p-3 sm:p-4 shadow-sm ${editingId === transfer._id ? 'ring-2 ring-[#bff86a]' : ''}`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-lg font-semibold text-gray-900">{transfer.name}</p>
-                        <p className="mt-1 text-sm text-gray-500">{transfer.phoneNo}</p>
+                        <p className="text-base sm:text-lg font-semibold text-gray-900">{transfer.name}</p>
+                        <p className="mt-1 text-xs sm:text-sm text-gray-500">{transfer.phoneNo}</p>
+                        <p className="mt-1 text-xs sm:text-sm font-medium text-gray-700">{transfer.vehicleName || '-'}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">Status</p>
+                        <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">Status</p>
                         <span className={`mt-1 inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold tracking-wide whitespace-nowrap ${getStatusColor(transfer.status)}`}>
                           {formatStatusLabel(transfer.status)}
                         </span>
                       </div>
                     </div>
 
-                    <div className="mt-4 grid grid-cols-1 gap-3 text-sm">
-                      <div className="rounded-xl bg-gray-50 p-3">
+                    <div className="mt-3 sm:mt-4 grid grid-cols-1 gap-2 sm:gap-3 text-xs sm:text-sm">
+                      <div className="rounded-xl bg-gray-50 p-2.5 sm:p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Vehicle Name</p>
+                        <p className="mt-1 text-gray-900 break-words">{transfer.vehicleName || '-'}</p>
+                      </div>
+                      <div className="rounded-xl bg-gray-50 p-2.5 sm:p-3">
                         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Vehicle No</p>
                         <p className="mt-1 font-mono text-gray-900 break-all">{transfer.vehicleNumber}</p>
                       </div>
-                      <div className="rounded-xl bg-gray-50 p-3">
+                      <div className="rounded-xl bg-gray-50 p-2.5 sm:p-3">
                         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Chassis No</p>
                         <p className="mt-1 font-mono text-gray-900 break-all">{transfer.chassisNumber}</p>
                       </div>
-                      <div className="rounded-xl bg-gray-50 p-3">
+                      <div className="rounded-xl bg-gray-50 p-2.5 sm:p-3">
                         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Amount</p>
                         <p className="mt-1 font-semibold text-gray-900">₹{parseInt(transfer.paidAmount).toLocaleString('en-IN')}</p>
                       </div>
-                      <div className="rounded-xl bg-gray-50 p-3">
+                      <div className="rounded-xl bg-gray-50 p-2.5 sm:p-3">
                         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Notes</p>
                         <button
                           type="button"
                           onClick={() => setNoteToView(transfer.notes || 'No notes added')}
-                          className="mt-2 inline-flex rounded-lg px-3 py-1 text-sm font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                          className="mt-2 inline-flex rounded-lg px-3 py-1 text-xs sm:text-sm font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
                         >
                           View Note
                         </button>
@@ -538,46 +567,53 @@ function OwnershipTransfer() {
                     </div>
 
                     {editingId === transfer._id ? (
-                      <div className="mt-4 space-y-3">
+                      <div className="mt-4 space-y-2.5 sm:space-y-3">
                         <input
                           type="text"
                           value={editedData.name || ''}
                           onChange={(e) => handleEditChange('name', e.target.value)}
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
                           placeholder="Name"
+                        />
+                        <input
+                          type="text"
+                          value={editedData.vehicleName || ''}
+                          onChange={(e) => handleEditChange('vehicleName', e.target.value)}
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                          placeholder="Vehicle Name"
                         />
                         <input
                           type="text"
                           value={editedData.phoneNo || ''}
                           onChange={(e) => handleEditChange('phoneNo', e.target.value)}
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
                           placeholder="Phone"
                         />
                         <input
                           type="text"
                           value={editedData.vehicleNumber || ''}
                           onChange={(e) => handleEditChange('vehicleNumber', e.target.value)}
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
                           placeholder="Vehicle No"
                         />
                         <input
                           type="text"
                           value={editedData.chassisNumber || ''}
                           onChange={(e) => handleEditChange('chassisNumber', e.target.value)}
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
                           placeholder="Chassis No"
                         />
                         <input
                           type="text"
                           value={editedData.paidAmount || ''}
                           onChange={(e) => handleEditChange('paidAmount', e.target.value)}
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
                           placeholder="Amount"
                         />
                         <select
                           value={editedData.status || 'ekyc'}
                           onChange={(e) => handleEditChange('status', e.target.value)}
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
                         >
                           <option value="ekyc">E-KYC</option>
                           <option value="token">Token</option>
@@ -590,34 +626,34 @@ function OwnershipTransfer() {
                           value={editedData.notes || ''}
                           onChange={(e) => handleEditChange('notes', e.target.value)}
                           placeholder="Enter note"
-                          className="w-full min-h-48 rounded-xl border border-gray-300 px-4 py-3 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-[#bff86a] resize-y"
+                          className="w-full min-h-40 sm:min-h-48 rounded-xl border border-gray-300 px-3 sm:px-4 py-2.5 sm:py-3 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-[#bff86a] resize-y"
                         />
-                        <div className="flex flex-wrap gap-2 mt-3">
+                        <div className="flex flex-wrap gap-2 mt-2 sm:mt-3">
                           <button
                             onClick={saveEdit}
-                            className="px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 font-semibold transition-colors"
+                            className="px-3 sm:px-4 py-2 rounded-lg text-sm text-white bg-green-600 hover:bg-green-700 font-semibold transition-colors"
                           >
                             Save
                           </button>
                           <button
                             onClick={cancelEdit}
-                            className="px-4 py-2 rounded-lg text-gray-600 bg-gray-200 hover:bg-gray-300 font-semibold transition-colors"
+                            className="px-3 sm:px-4 py-2 rounded-lg text-sm text-gray-600 bg-gray-200 hover:bg-gray-300 font-semibold transition-colors"
                           >
                             Cancel
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="mt-4 flex flex-wrap gap-2">
+                      <div className="mt-3 sm:mt-4 flex flex-wrap gap-2">
                         <button
                           onClick={() => startEdit(transfer)}
-                          className="px-4 py-2 rounded-lg text-blue-600 bg-blue-50 hover:bg-blue-100 font-semibold transition-colors"
+                          className="px-3 sm:px-4 py-2 rounded-lg text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 font-semibold transition-colors"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDelete(transfer._id)}
-                          className="px-4 py-2 rounded-lg text-red-600 bg-red-50 hover:bg-red-100 font-semibold transition-colors"
+                          className="px-3 sm:px-4 py-2 rounded-lg text-sm text-red-600 bg-red-50 hover:bg-red-100 font-semibold transition-colors"
                         >
                           Delete
                         </button>
@@ -632,7 +668,7 @@ function OwnershipTransfer() {
 
         {/* Pagination - Bottom Right */}
         {transfers.length > 0 && (
-          <div className="mt-6 flex items-center justify-end gap-2">
+          <div className="mt-5 sm:mt-6 flex flex-wrap items-center justify-center sm:justify-end gap-2">
             <button
               onClick={() => handlePageChange(activePage - 1)}
               disabled={activePage === 1}
@@ -641,7 +677,7 @@ function OwnershipTransfer() {
               ← Prev
             </button>
 
-            <span className="text-xs font-semibold text-gray-700 px-2">
+            <span className="text-xs font-semibold text-gray-700 px-1 sm:px-2">
               Page <span className="text-[#40FF00]">{activePage}</span> of {totalPages}
             </span>
 
@@ -658,18 +694,18 @@ function OwnershipTransfer() {
 
       {noteToView !== null && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-3 py-3 sm:px-4">
-          <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl bg-white p-5 sm:p-8 shadow-xl">
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl bg-white p-4 sm:p-8 shadow-xl">
             <div className="flex items-start justify-between gap-4 border-b pb-4 mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Note</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">Note</h2>
               <button
                 type="button"
                 onClick={() => setNoteToView(null)}
-                className="rounded-lg px-3 py-1 text-sm font-semibold text-gray-600 hover:bg-gray-100"
+                className="rounded-lg px-3 py-1 text-xs sm:text-sm font-semibold text-gray-600 hover:bg-gray-100"
               >
                 Close
               </button>
             </div>
-            <p className="whitespace-pre-wrap break-words break-all text-base leading-7 text-gray-700">
+            <p className="whitespace-pre-wrap break-words break-all text-sm sm:text-base leading-6 sm:leading-7 text-gray-700">
               {noteToView}
             </p>
           </div>

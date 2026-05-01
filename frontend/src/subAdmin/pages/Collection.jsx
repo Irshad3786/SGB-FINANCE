@@ -717,16 +717,16 @@ function Collection() {
   const statementPending = Math.max(statementTotalEmi - statementTotalPaid, 0)
 
   return (
-    <div className="p-3 sm:p-6 overflow-x-hidden max-w-full break-words w-full">
+    <div className="px-4 sm:px-6 py-4 max-w-full overflow-x-hidden bg-white">
       <style>{`
         .no-scrollbar::-webkit-scrollbar{display:none;}
         .no-scrollbar{-ms-overflow-style:none; scrollbar-width:none;}
       `}</style>
 
       {/* Top Buttons */}
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 mb-6 sm:mb-8">
         {/* All Users Button (inactive on Collection) */}
-        <button onClick={() => navigate('/subadmin/finance')} className="flex items-center gap-2 px-6 py-3 rounded-lg bg-white border-2 border-gray-300 font-semibold text-gray-800 shadow hover:shadow-md transition-shadow">
+        <button onClick={() => navigate('/subadmin/finance')} className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-lg bg-white border-2 border-gray-300 font-semibold text-gray-800 shadow hover:shadow-md transition-shadow w-full sm:w-auto">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="w-5 h-5">
             <path fill="#000" d="M21.987 18.73a2 2 0 0 1-.34.85a1.9 1.9 0 0 1-1.56.8h-1.651a.74.74 0 0 1-.6-.31a.76.76 0 0 1-.11-.67c.37-1.18.29-2.51-3.061-4.64a.77.77 0 0 1-.32-.85a.76.76 0 0 1 .72-.54a7.61 7.61 0 0 1 6.792 4.39a2 2 0 0 1 .13.97M19.486 7.7a4.43 4.43 0 0 1-4.421 4.42a.76.76 0 0 1-.65-1.13a6.16 6.16 0 0 0 0-6.53a.75.75 0 0 1 .61-1.18a4.3 4.3 0 0 1 3.13 1.34a4.46 4.46 0 0 1 1.291 3.12z"/>
             <path fill="#000" d="M16.675 18.7a2.65 2.65 0 0 1-1.26 2.48c-.418.257-.9.392-1.39.39H4.652a2.63 2.63 0 0 1-1.39-.39A2.62 2.62 0 0 1 2.01 18.7a2.6 2.6 0 0 1 .5-1.35a8.8 8.8 0 0 1 6.812-3.51a8.78 8.78 0 0 1 6.842 3.5a2.7 2.7 0 0 1 .51 1.36M14.245 7.32a4.92 4.92 0 0 1-4.902 4.91a4.903 4.903 0 0 1-4.797-5.858a4.9 4.9 0 0 1 6.678-3.57a4.9 4.9 0 0 1 3.03 4.518z"/>
@@ -735,7 +735,7 @@ function Collection() {
         </button>
 
         {/* Collection Button (active on Collection) */}
-        <button disabled className="flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] font-semibold text-gray-900 shadow-lg cursor-default opacity-100">
+        <button disabled className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-lg bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] font-semibold text-gray-900 shadow-lg cursor-default opacity-100 w-full sm:w-auto">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" className="w-5 h-5">
             <path fill="#000" d="M0 13a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 16 13V6a1.5 1.5 0 0 0-1.5-1.5h-13A1.5 1.5 0 0 0 0 6zM2 3a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 0-1h-11A.5.5 0 0 0 2 3m2-2a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 0-1h-7A.5.5 0 0 0 4 1"/>
           </svg>
@@ -746,9 +746,9 @@ function Collection() {
       {/* Quick controls */}
       
 
-      <div className="md:flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <button onClick={() => setShowFilters(s => !s)} aria-expanded={showFilters} className="flex items-center gap-2 px-4 py-2 border font-semibold rounded-lg shadow hover:shadow-md transition-shadow bg-white text-base">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+          <button onClick={() => setShowFilters(s => !s)} aria-expanded={showFilters} className="flex items-center justify-center gap-2 px-4 py-2 border font-semibold rounded-lg shadow hover:shadow-md transition-shadow bg-white text-base w-full sm:w-auto">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="w-5 h-5">
               <path fill="#a6a6a6" fillRule="evenodd" d="M5 3h14L8.816 13.184a2.7 2.7 0 0 0-.778-1.086c-.228-.198-.547-.377-1.183-.736l-2.913-1.64c-.949-.533-1.423-.8-1.682-1.23C2 8.061 2 7.541 2 6.503v-.69c0-1.326 0-1.99.44-2.402C2.878 3 3.585 3 5 3" clipRule="evenodd"/>
               <path fill="#a6a6a6" d="M22 6.504v-.69c0-1.326 0-1.99-.44-2.402C21.122 3 20.415 3 19 3L8.815 13.184q.075.193.121.403c.064.285.064.619.064 1.286v2.67c0 .909 0 1.364.252 1.718c.252.355.7.53 1.594.88c1.879.734 2.818 1.101 3.486.683S15 19.452 15 17.542v-2.67c0-.666 0-1 .063-1.285a2.68 2.68 0 0 1 .9-1.49c.227-.197.545-.376 1.182-.735l2.913-1.64c.948-.533 1.423-.8 1.682-1.23c.26-.43.26-.95.26-1.988" opacity="0.5"/>
@@ -758,7 +758,7 @@ function Collection() {
 
           <button
             onClick={() => setEmiEntryOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 border font-semibold rounded-lg shadow hover:shadow-md transition-shadow bg-white text-base"
+            className="flex items-center justify-center gap-2 px-4 py-2 border font-semibold rounded-lg shadow hover:shadow-md transition-shadow bg-white text-base w-full sm:w-auto"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-0.5 -0.5 24 24" className="w-5 h-5">
               <path fill="#a6a6a6" d="m21.289.98l.59.59c.813.814.69 2.257-.277 3.223L9.435 16.96l-3.942 1.442c-.495.182-.977-.054-1.075-.525a.93.93 0 0 1 .045-.51l1.47-3.976L18.066 1.257c.967-.966 2.41-1.09 3.223-.276zM8.904 2.19a1 1 0 1 1 0 2h-4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4a1 1 0 0 1 2 0v4a4 4 0 0 1-4 4h-12a4 4 0 0 1-4-4v-12a4 4 0 0 1 4-4z"/>
@@ -767,7 +767,7 @@ function Collection() {
           </button>
         </div>
 
-        <div className="w-full max-w-sm py-4">
+        <div className="w-full md:max-w-sm">
           <label htmlFor="collection-search" className="sr-only">Search collection</label>
           <div className="relative">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
@@ -782,7 +782,7 @@ function Collection() {
               placeholder="search user"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-3 py-3 rounded-3xl border border-transparent bg-white/90 text-xs focus:outline-none focus:ring-2 focus:ring-[#bff86a] shadow-[1px_2px_9px_-4px_rgba(0,_0,_0,_0.7)]"
+              className="w-full pl-10 pr-3 py-3 rounded-3xl border border-transparent bg-white/90 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a] shadow-[1px_2px_9px_-4px_rgba(0,_0,_0,_0.7)]"
             />
           </div>
         </div>
@@ -790,12 +790,12 @@ function Collection() {
 
       {/* Filter panel */}
       {showFilters && (
-        <div className="mt-2 mb-14 md:mt-0  w-full md:w-fit bg-[#f0f0fa] rounded-lg p-3 shadow flex flex-col md:flex-row items-center gap-3">
-          <div className="flex items-center gap-2 text-xs text-gray-700">
+        <div className="mt-2 mb-14 md:mt-0 w-full md:w-fit bg-[#f0f0fa] rounded-lg p-3 shadow flex flex-col md:flex-row md:items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs text-gray-700 w-full md:w-auto">
             <span className="shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 16 16"><path fill="#a6a6a6" d="M5.75 7.5a.75.75 0 1 0 0 1.5a.75.75 0 0 0 0-1.5m1.5.75A.75.75 0 0 1 8 7.5h2.25a.75.75 0 0 1 0 1.5H8a.75.75 0 0 1-.75-.75M5.75 9.5a.75.75 0 0 0 0 1.5H8a.75.75 0 0 0 0-1.5z"/><path fill="#a6a6a6" fill-rule="evenodd" d="M4.75 1a.75.75 0 0 0-.75.75V3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2V1.75a.75.75 0 0 0-1.5 0V3h-5V1.75A.75.75 0 0 0 4.75 1M3.5 7a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1z" clip-rule="evenodd"/></svg>
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full">
               <label className="text-[12px] text-gray-500">Select Agent</label>
               <select value={filters.agent} onChange={(e)=> setFilters(f=>({...f, agent: e.target.value}))} className="text-xs border rounded px-2 py-1">
                 {agentOptions.map(agent => (
@@ -805,17 +805,17 @@ function Collection() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-gray-700">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs text-gray-700 w-full md:w-auto">
             <span className="shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M15 16.69V13h1.5v2.82l2.44 1.41l-.75 1.3zM19.5 3.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2L7.5 3.5L6 2L4.5 3.5L3 2v20l1.5-1.5L6 22l1.5-1.5L9 22l1.58-1.58c.14.19.3.36.47.53A7.001 7.001 0 0 0 21 11.1V2zM11.1 11c-.6.57-1.07 1.25-1.43 2H6v-2zm-2.03 4c-.07.33-.07.66-.07 1s0 .67.07 1H6v-2zM18 9H6V7h12zm2.85 7c0 .64-.12 1.27-.35 1.86c-.26.58-.62 1.14-1.07 1.57c-.43.45-.99.81-1.57 1.07c-.59.23-1.22.35-1.86.35c-2.68 0-4.85-2.17-4.85-4.85c0-1.29.51-2.5 1.42-3.43c.93-.91 2.14-1.42 3.43-1.42c2.67 0 4.85 2.17 4.85 4.85"/></svg>
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full">
               <label className="text-[12px] text-gray-500">Commentary date</label>
-              <input type="date" value={filters.date} onChange={(e)=> setFilters(f=>({...f, date: e.target.value}))} className="text-xs border rounded px-2 py-1" />
+              <input type="date" value={filters.date} onChange={(e)=> setFilters(f=>({...f, date: e.target.value}))} className="text-xs border rounded px-2 py-1 w-full sm:w-auto" />
             </div>
           </div>
 
-          <div className="ml-auto">
+          <div className="ml-0 md:ml-auto w-full md:w-auto flex justify-end">
             <button
               onClick={() => {
                 setFilters((prev) => ({ ...prev, date: '' }))
@@ -830,81 +830,77 @@ function Collection() {
       )}
 
 
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
-        <form className="flex flex-wrap items-center gap-3 bg-[#f3f1ff] rounded-xl px-4 py-3 shadow-sm" onSubmit={handleQuickEntrySubmit}>
-          <div className="flex items-center gap-3">
-            <label className="flex flex-col leading-tight text-gray-700 text-sm">
-              <span className="text-[11px] text-gray-500">Agreement No</span>
-              <input
-                type="text"
-                name="aggNo"
-                value={quickEntry.aggNo}
-                onChange={(e) => setQuickEntry(q => ({ ...q, aggNo: e.target.value }))}
-                className="mt-1 w-24 rounded-md border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
-                placeholder="Agreement No"
-                autoComplete="off"
-              />
-            </label>
-            <label className="flex flex-col leading-tight text-gray-700 text-sm">
-              <span className="text-[11px] text-gray-500">Amount</span>
-              <input
-                type="number"
-                name="amount"
-                value={quickEntry.amount}
-                onChange={(e) => setQuickEntry(q => ({ ...q, amount: e.target.value }))}
-                className="mt-1 w-24 rounded-md border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
-                placeholder="Amount"
-                inputMode="numeric"
-              />
-            </label>
-            <label className="flex flex-col leading-tight text-gray-700 text-sm">
-              <span className="text-[11px] text-gray-500">Agent</span>
-              <select
-                name="agent"
-                value={quickEntry.agent}
-                onChange={(e) => {
-                  const selectedAgent = e.target.value
-                  setQuickEntry(q => ({ ...q, agent: selectedAgent }))
-                  setFilters(f => ({ ...f, agent: selectedAgent }))
-                }}
-                className="mt-1 w-28 rounded-md border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a] capitalize bg-white"
-              >
-                <option value="" disabled>Select agent</option>
-                {agentOptions.map(agent => (
-                  <option key={agent} value={agent}>{agent}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <button
-            type="submit"
-            disabled={savingQuickEntry}
-            className="w-9 h-9 flex items-center justify-center rounded-full border border-[#5751f5] text-[#5751f5] bg-white hover:bg-[#5751f5] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Add quick entry"
+      <form className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-end gap-3 bg-[#f3f1ff] rounded-xl px-4 py-3 shadow-sm w-fit mb-6" onSubmit={handleQuickEntrySubmit}>
+        <label className="flex flex-col leading-tight text-gray-700 text-sm w-full sm:w-auto">
+          <span className="text-[11px] text-gray-500 ">Agreement No</span>
+          <input
+            type="text"
+            name="aggNo"
+            value={quickEntry.aggNo}
+            onChange={(e) => setQuickEntry(q => ({ ...q, aggNo: e.target.value }))}
+            className="mt-1 w-full sm:w-24 rounded-md border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+            placeholder="Agreement No"
+            autoComplete="off"
+          />
+        </label>
+        <label className="flex flex-col leading-tight text-gray-700 text-sm w-full sm:w-auto">
+          <span className="text-[11px] text-gray-500">Amount</span>
+          <input
+            type="number"
+            name="amount"
+            value={quickEntry.amount}
+            onChange={(e) => setQuickEntry(q => ({ ...q, amount: e.target.value }))}
+            className="mt-1 w-full sm:w-24 rounded-md border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+            placeholder="Amount"
+            inputMode="numeric"
+          />
+        </label>
+        <label className="flex flex-col leading-tight text-gray-700 text-sm w-full sm:w-auto">
+          <span className="text-[11px] text-gray-500">Agent</span>
+          <select
+            name="agent"
+            value={quickEntry.agent}
+            onChange={(e) => {
+              const selectedAgent = e.target.value
+              setQuickEntry(q => ({ ...q, agent: selectedAgent }))
+              setFilters(f => ({ ...f, agent: selectedAgent }))
+            }}
+            className="mt-1 w-full sm:w-28 rounded-md border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#bff86a] capitalize bg-white"
           >
-            {savingQuickEntry ? (
-              <svg className="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 5c.552 0 1 .448 1 1v5h5c.552 0 1 .448 1 1s-.448 1-1 1h-5v5c0 .552-.448 1-1 1s-1-.448-1-1v-5H6c-.552 0-1-.448-1-1s.448-1 1-1h5V6c0-.552.448-1 1-1" />
-              </svg>
-            )}
-          </button>
-        </form>
+            <option value="" disabled>Select agent</option>
+            {agentOptions.map(agent => (
+              <option key={agent} value={agent}>{agent}</option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="submit"
+          disabled={savingQuickEntry}
+          className="w-9 h-9 flex items-center justify-center rounded-full border border-[#5751f5] text-[#5751f5] bg-white hover:bg-[#5751f5] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-5 sm:mt-0"
+          aria-label="Add quick entry"
+        >
+          {savingQuickEntry ? (
+            <svg className="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 5c.552 0 1 .448 1 1v5h5c.552 0 1 .448 1 1s-.448 1-1 1h-5v5c0 .552-.448 1-1 1s-1-.448-1-1v-5H6c-.552 0-1-.448-1-1s.448-1 1-1h5V6c0-.552.448-1 1-1" />
+            </svg>
+          )}
+        </button>
+      </form>
 
-        <div className="flex justify-start md:justify-end">
-          <button
-            onClick={() => openDeleteConfirmModal('reset')}
-            disabled={resettingCollection}
-            className="flex items-center gap-2 bg-[#ff7a19] text-white font-semibold px-5 py-3 rounded-full shadow hover:shadow-md"
-          >
-            <span>{resettingCollection ? 'resetting...' : 'reset collection'}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21"><g fill="none" fill-rule="evenodd" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"><path d="M3.578 6.487A8 8 0 1 1 2.5 10.5"/><path d="M7.5 6.5h-4v-4"/></g></svg>
-          </button>
-        </div>
+      <div className="flex justify-start md:justify-end w-full mb-6">
+        <button
+          onClick={() => openDeleteConfirmModal('reset')}
+          disabled={resettingCollection}
+          className="flex items-center justify-center gap-2 bg-[#ff7a19] text-white font-semibold px-5 py-3 rounded-full shadow hover:shadow-md w-full md:w-auto"
+        >
+          <span>{resettingCollection ? 'resetting...' : 'reset collection'}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21"><g fill="none" fill-rule="evenodd" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"><path d="M3.578 6.487A8 8 0 1 1 2.5 10.5"/><path d="M7.5 6.5h-4v-4"/></g></svg>
+        </button>
       </div>
 
 
@@ -1216,7 +1212,7 @@ function Collection() {
         </div>
 
         {/* Pagination */}
-        <div className="mt-4 flex justify-end items-center gap-3">
+        <div className="mt-4 flex flex-wrap justify-center md:justify-end items-center gap-3">
           <button className="px-3 py-1 rounded-full bg-gray-100 text-xs">previous</button>
           <div className="text-xs">1</div>
           <button className="px-3 py-1 rounded-full bg-gray-100 text-xs">next</button>
@@ -1225,7 +1221,7 @@ function Collection() {
 
       {financeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="relative w-[95%] md:w-4/5 lg:w-3/4 bg-white rounded-3xl p-8 shadow-2xl no-scrollbar max-h-[90vh] overflow-auto">
+          <div className="relative w-[95%] md:w-4/5 lg:w-3/4 bg-white rounded-3xl p-4 sm:p-8 shadow-2xl no-scrollbar max-h-[90vh] overflow-auto">
             <button
               onClick={() => setFinanceModal(null)}
               className="absolute top-6 right-6 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center font-bold"
@@ -1406,7 +1402,7 @@ function Collection() {
       {/* EMI Entry Modal */}
       {emiEntryOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl">
+          <div className="relative w-full max-w-md bg-white rounded-2xl p-4 sm:p-6 shadow-2xl">
             <button
               onClick={() => setEmiEntryOpen(false)}
               className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center font-bold"

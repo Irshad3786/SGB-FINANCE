@@ -2,6 +2,7 @@ import Buyer from "../../models/buyerModel.js";
 import Seller from "../../models/sellerModel.js";
 import CollectionEntry from "../../models/collectionEntryModel.js";
 import Request from "../../models/requestModel.js";
+import OwnershipTransfer from "../../models/ownershipTransferModel.js";
 
 const MONTHS_TO_SHOW = 4;
 
@@ -96,7 +97,9 @@ const getFinanceSummary = (buyers = []) => {
 
 export const getDashboardData = async (req, res) => {
   try {
-    const [buyers, totalSellers, totalVehicles, pendingPayments, totalCollectionEntries, requestTypeRows, totalRequests] = await Promise.all([
+    const subAdminId = req.subAdminId;
+
+    const [buyers, totalSellers, totalVehicles, pendingPayments, totalCollectionEntries, requestTypeRows, totalRequests, ownershipTransferRows, totalOwnershipTransfers] = await Promise.all([
       Buyer.find({})
         .select("mode agreementNo finance.paymentEntries finance.emiDates finance.financeAmount finance.emiAmount finance.months finance.status")
         .lean(),
@@ -111,6 +114,11 @@ export const getDashboardData = async (req, res) => {
         { $group: { _id: "$requestType", count: { $sum: 1 } } },
       ]),
       Request.countDocuments({}),
+      OwnershipTransfer.aggregate([
+        { $match: { subAdminId } },
+        { $group: { _id: "$status", count: { $sum: 1 } } },
+      ]),
+      OwnershipTransfer.countDocuments({ subAdminId }),
     ]);
 
     const totalBuyers = buyers.length;
@@ -139,6 +147,28 @@ export const getDashboardData = async (req, res) => {
       }
     });
 
+    const ownershipTransferStatusCounts = {
+      all: totalOwnershipTransfers,
+      ekyc: 0,
+      token: 0,
+      challan: 0,
+      "finance approval": 0,
+      "rto approval": 0,
+      completed: 0,
+    };
+
+    ownershipTransferRows.forEach((row) => {
+      const statusKey = String(row?._id || "").toLowerCase();
+      if (Object.prototype.hasOwnProperty.call(ownershipTransferStatusCounts, statusKey)) {
+        ownershipTransferStatusCounts[statusKey] = Number(row?.count || 0);
+      }
+    });
+
+    const ownershipTransferPending = Math.max(
+      totalOwnershipTransfers - ownershipTransferStatusCounts.completed,
+      0
+    );
+
     return res.status(200).json({
       success: true,
       message: "Dashboard data fetched successfully",
@@ -155,6 +185,13 @@ export const getDashboardData = async (req, res) => {
           totalWithHA: Math.round(financeSummary.totalWithHA),
           totalWithoutHA: Math.round(financeSummary.totalWithoutHA),
           totalCollections: totalCollectionEntries,
+        },
+        ownershipTransfers: {
+          total: totalOwnershipTransfers,
+          pending: ownershipTransferPending,
+          completed: ownershipTransferStatusCounts.completed,
+          tokenPending: ownershipTransferStatusCounts.token,
+          statusCounts: ownershipTransferStatusCounts,
         },
         requestSummary: requestTypeCounts,
         charts: {

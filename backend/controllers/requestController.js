@@ -59,6 +59,54 @@ const buildSearchQuery = (search) => {
   };
 };
 
+const buildMyRequestsQuery = ({
+  userId = null,
+  email = "",
+  phoneNumber = "",
+  vehicleNumber = "",
+  chassisNumber = "",
+  type = "all",
+  status = "all",
+  search = "",
+} = {}) => {
+  const query = {};
+
+  if (userId) {
+    query.createdByUser = userId;
+  } else {
+    const normalizedEmail = normalizeText(email).toLowerCase();
+    const normalizedPhoneNumber = normalizeText(phoneNumber);
+    const normalizedVehicleNumber = normalizeText(vehicleNumber).toLowerCase();
+    const normalizedChassisNumber = normalizeText(chassisNumber).toLowerCase();
+
+    if (normalizedEmail || normalizedPhoneNumber || normalizedVehicleNumber || normalizedChassisNumber) {
+      query.$or = [];
+      if (normalizedEmail) query.$or.push({ email: normalizedEmail });
+      if (normalizedPhoneNumber) query.$or.push({ phoneNumber: normalizedPhoneNumber });
+      if (normalizedVehicleNumber) query.$or.push({ vehicleNumber: normalizedVehicleNumber });
+      if (normalizedChassisNumber) query.$or.push({ chassisNumber: normalizedChassisNumber });
+    }
+  }
+
+  const normalizedType = normalizeText(type).toLowerCase();
+  if (normalizedType && normalizedType !== "all") {
+    query.requestType = normalizedType;
+  }
+
+  const normalizedStatus = normalizeText(status).toLowerCase();
+  if (normalizedStatus && normalizedStatus !== "all") {
+    query.status = normalizedStatus;
+  }
+
+  const searchQuery = buildSearchQuery(search);
+  if (searchQuery) {
+    query.$and = query.$and || [];
+    query.$and.push(searchQuery);
+  }
+
+  return query;
+};
+
 export const createFinanceRequest = async (req, res) => {
   try {
     const {
@@ -69,10 +117,15 @@ export const createFinanceRequest = async (req, res) => {
       chassisNumber,
       vehicleName = "",
       vehicleManufactureYear = null,
+      amount,
       requestedAmount,
       purpose = "refinance",
       comments = "",
     } = req.body || {};
+
+    const normalizedRequestedAmount = Number(
+      amount ?? requestedAmount
+    );
 
     const payload = {
       name: normalizeText(name),
@@ -82,7 +135,7 @@ export const createFinanceRequest = async (req, res) => {
       chassisNumber: normalizeText(chassisNumber),
       vehicleName: normalizeText(vehicleName),
       vehicleManufactureYear: vehicleManufactureYear ? Number(vehicleManufactureYear) : null,
-      requestedAmount: Number(requestedAmount),
+      requestedAmount: normalizedRequestedAmount,
       purpose: normalizeText(purpose),
       comments: normalizeText(comments),
     };
@@ -220,25 +273,65 @@ export const createContactRequest = async (req, res) => {
 export const getMyRequests = async (req, res) => {
   try {
     const { type = "all", status = "all", search = "", page = 1, limit = 20 } = req.query;
+    const query = buildMyRequestsQuery({ userId: req.userId, type, status, search });
 
-    const query = {
-      createdByUser: req.userId,
-    };
+    const parsedPage = toPositiveInt(page, 1);
+    const parsedLimit = Math.min(toPositiveInt(limit, 20), 100);
 
-    const normalizedType = normalizeText(type).toLowerCase();
-    if (normalizedType && normalizedType !== "all") {
-      query.requestType = normalizedType;
-    }
+    const totalRecords = await Request.countDocuments(query);
+    const totalPages = Math.max(1, Math.ceil(totalRecords / parsedLimit));
+    const safePage = Math.min(parsedPage, totalPages);
+    const skip = (safePage - 1) * parsedLimit;
 
-    const normalizedStatus = normalizeText(status).toLowerCase();
-    if (normalizedStatus && normalizedStatus !== "all") {
-      query.status = normalizedStatus;
-    }
+    const rows = await Request.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parsedLimit)
+      .lean();
 
-    const searchQuery = buildSearchQuery(search);
-    if (searchQuery) {
-      query.$and = query.$and || [];
-      query.$and.push(searchQuery);
+    return res.status(200).json({
+      success: true,
+      message: "Requests fetched successfully",
+      data: rows.map(toRequestDTO),
+      pagination: {
+        page: safePage,
+        limit: parsedLimit,
+        totalRecords,
+        totalPages,
+        hasPrev: safePage > 1,
+        hasNext: safePage < totalPages,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch requests",
+      error: error.message,
+    });
+  }
+};
+
+export const getPublicMyRequests = async (req, res) => {
+  try {
+    const {
+      type = "all",
+      status = "all",
+      search = "",
+      page = 1,
+      limit = 20,
+      email = "",
+      phoneNumber = "",
+      vehicleNumber = "",
+      chassisNumber = "",
+    } = req.query;
+
+    const query = buildMyRequestsQuery({ email, phoneNumber, vehicleNumber, chassisNumber, type, status, search });
+
+    if (!query.createdByUser && (!query.$or || query.$or.length === 0)) {
+      return res.status(400).json({
+        success: false,
+        message: "email, phoneNumber, vehicleNumber, or chassisNumber is required",
+      });
     }
 
     const parsedPage = toPositiveInt(page, 1);

@@ -13,6 +13,7 @@ import {
 	createFinanceRequest,
 	createContactRequest,
 	getMyRequests,
+	getPublicMyRequests,
 } from "../controllers/requestController.js";
 import { verifyUserToken } from "../middlewares/userMiddleware.js";
 
@@ -27,7 +28,8 @@ router.post("/finance-by-vehicle", getUserFinanceByVehicle);
 router.post("/send-otp", sendUserOtp);
 router.post("/verify-otp", verifyUserOtp);
 router.post("/requests/contact", createContactRequest);
-router.post("/requests/finance", verifyUserToken, createFinanceRequest);
+router.post("/requests/finance", createFinanceRequest);
 router.get("/requests/my", verifyUserToken, getMyRequests);
+router.get("/requests/my-public", getPublicMyRequests);
 
 export default router;

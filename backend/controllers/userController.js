@@ -545,18 +545,25 @@ const getUserFinanceByVehicle = async (req, res) => {
 		console.log("Found buyer:", buyer ? "Yes" : "No");
 
 		if (!buyer) {
-			return res.status(404).json({
-				success: false,
-				message: "No finance record found for the provided vehicle details",
+			return res.status(200).json({
+				success: true,
+				financeFound: false,
+				message: "No finance record found for the provided vehicle details. You can submit a finance request.",
 				data: null,
 			});
 		}
 
-		// Check if finance data exists
-		if (!buyer.finance || !buyer.finance.financeAmount || buyer.finance.financeAmount <= 0) {
-			return res.status(404).json({
-				success: false,
-				message: "No active finance found for this vehicle",
+		const finance = buyer.finance || {};
+		const hasFinanceData =
+			Number(finance.financeAmount || 0) > 0 ||
+			(Array.isArray(finance.emiDates) && finance.emiDates.length > 0) ||
+			(Array.isArray(finance.paymentEntries) && finance.paymentEntries.length > 0);
+
+		if (!hasFinanceData) {
+			return res.status(200).json({
+				success: true,
+				financeFound: false,
+				message: "No active finance found for this vehicle. You can submit a finance request.",
 				data: null,
 			});
 		}
@@ -565,6 +572,7 @@ const getUserFinanceByVehicle = async (req, res) => {
 
 		return res.status(200).json({
 			success: true,
+			financeFound: true,
 			message: "Finance statement retrieved successfully",
 			data: financeStatement,
 		});

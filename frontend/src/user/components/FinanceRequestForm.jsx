@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useToast } from '../../components/ToastProvider'
 import apiClient from '../../api/axios'
 
@@ -13,6 +13,7 @@ const statusPillClass = {
 function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
   const { showToast } = useToast()
   const userData = JSON.parse(localStorage.getItem('userData') || '{}')
+  const hasAuthSession = typeof window !== 'undefined' && Boolean(sessionStorage.getItem('authState'))
   
   const [formData, setFormData] = useState({
     name: userData?.username || '',
@@ -22,7 +23,7 @@ function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
     chassisNumber: chassisNumber || userData?.chassisNumber || '',
     vehicleName: userData?.vehicleName || '',
     vehicleManufactureYear: userData?.vehicleManufactureYear || '',
-    requestedAmount: '',
+    amount: '',
     purpose: 'refinance',
     comments: '',
   })
@@ -32,10 +33,39 @@ function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
   const [myRequests, setMyRequests] = useState([])
   const [isRequestsPanelOpen, setIsRequestsPanelOpen] = useState(false)
   const hasExistingRequest = myRequests.length > 0
+  const latestRequest = myRequests[0] || null
 
-  const loadMyRequests = async () => {
+  const normalizeRequestList = (requests = []) => {
+    const seen = new Set()
+    return requests.filter((request) => {
+      const key = request?.id || request?.applicationNo
+      if (!key || seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }
+
+  const loadMyRequests = useCallback(async () => {
     try {
-      const response = await apiClient.get('/api/user/requests/my', {
+      const publicParams = {
+        type: 'finance',
+        page: 1,
+        limit: 20,
+        email: formData.email || userData?.email || '',
+        phoneNumber: formData.phoneNumber || userData?.phoneNumber || '',
+        vehicleNumber: formData.vehicleNumber || userData?.vehicleNumber || vehicleNumber || '',
+        chassisNumber: formData.chassisNumber || userData?.chassisNumber || chassisNumber || '',
+      }
+
+      const publicResponse = await apiClient.get('/api/user/requests/my-public', { params: publicParams })
+      const publicRequests = Array.isArray(publicResponse?.data?.data) ? publicResponse.data.data : []
+
+      if (!hasAuthSession) {
+        setMyRequests(normalizeRequestList(publicRequests))
+        return
+      }
+
+      const authResponse = await apiClient.get('/api/user/requests/my', {
         params: {
           type: 'finance',
           page: 1,
@@ -43,26 +73,49 @@ function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
         },
       })
 
-      const requests = response?.data?.data || []
-      setMyRequests(Array.isArray(requests) ? requests : [])
+      const authRequests = Array.isArray(authResponse?.data?.data) ? authResponse.data.data : []
+      setMyRequests(normalizeRequestList([...authRequests, ...publicRequests]))
     } catch (error) {
+      if (error?.response?.status === 401) {
+        setMyRequests([])
+        return
+      }
+
+      if (error?.response?.status === 400 && !hasAuthSession) {
+        setMyRequests([])
+        return
+      }
+
       showToast({
         type: 'error',
         title: 'Error',
         message: error?.response?.data?.message || 'Failed to load your requests',
       })
     }
-  }
+  }, [
+    showToast,
+    hasAuthSession,
+    formData.email,
+    formData.phoneNumber,
+    formData.vehicleNumber,
+    formData.chassisNumber,
+    userData?.email,
+    userData?.phoneNumber,
+    userData?.vehicleNumber,
+    userData?.chassisNumber,
+    vehicleNumber,
+    chassisNumber,
+  ])
 
   useEffect(() => {
     loadMyRequests()
-  }, [])
+  }, [loadMyRequests])
 
   useEffect(() => {
     if (isRequestsPanelOpen) {
       loadMyRequests()
     }
-  }, [isRequestsPanelOpen])
+  }, [isRequestsPanelOpen, loadMyRequests])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -86,7 +139,7 @@ function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
 
     // Validation
     if (!formData.name || !formData.email || !formData.phoneNumber || 
-        !formData.vehicleNumber || !formData.chassisNumber || !formData.requestedAmount) {
+        !formData.vehicleNumber || !formData.chassisNumber || !formData.amount) {
       showToast({
         type: 'error',
         title: 'Validation Error',
@@ -95,7 +148,7 @@ function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
       return
     }
 
-    if (Number(formData.requestedAmount) <= 0) {
+    if (Number(formData.amount) <= 0) {
       showToast({
         type: 'error',
         title: 'Validation Error',
@@ -107,7 +160,10 @@ function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
     setLoading(true)
 
     try {
-      await apiClient.post('/api/user/requests/finance', formData)
+      await apiClient.post('/api/user/requests/finance', {
+        ...formData,
+        requestedAmount: formData.amount,
+      })
       await loadMyRequests()
 
       setSubmitted(true)
@@ -128,7 +184,7 @@ function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
           chassisNumber: chassisNumber || userData?.chassisNumber || '',
           vehicleName: userData?.vehicleName || '',
           vehicleManufactureYear: userData?.vehicleManufactureYear || '',
-          requestedAmount: '',
+          amount: '',
           purpose: 'refinance',
           comments: '',
         })
@@ -258,6 +314,41 @@ function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
     )
   }
 
+  const renderLatestRequestStatus = () => {
+    if (!latestRequest) return null
+
+    return (
+      <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 md:p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">My Req Status</p>
+            <div className="mt-1 flex flex-wrap items-center gap-3">
+              <span className="inline-flex rounded-full bg-white px-3 py-1 text-sm font-bold text-emerald-900 shadow-sm">
+                {latestRequest?.applicationNo || '-'}
+              </span>
+              <span className="text-sm text-emerald-900">
+                {latestRequest?.vehicleNumber || '-'}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusPillClass[latestRequest?.status] || statusPillClass.pending}`}>
+              {latestRequest?.status || 'pending'}
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsRequestsPanelOpen(true)}
+              className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-800"
+            >
+              View All
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (submitted) {
     return (
       <div className="space-y-6">
@@ -294,6 +385,8 @@ function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
 
   return (
     <div className="w-full bg-white rounded-2xl shadow-lg p-6 md:p-8">
+      {renderLatestRequestStatus()}
+
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
@@ -447,12 +540,12 @@ function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Requested Amount (₹) <span className="text-red-500">*</span>
+                Amount (₹) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
-                name="requestedAmount"
-                value={formData.requestedAmount}
+                name="amount"
+                value={formData.amount}
                 onChange={handleChange}
                 placeholder="E.g., 50000"
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#40FF00] transition-colors"

@@ -114,11 +114,10 @@ const requestSchema = new mongoose.Schema(
 
 requestSchema.index({ createdAt: -1 });
 
-requestSchema.pre("validate", function setApplicationNo(next) {
+requestSchema.pre("validate", function setApplicationNo() {
   if (!this.applicationNo) {
     this.applicationNo = buildApplicationNo(this);
   }
-  next();
 });
 
 const Request = mongoose.models.Request || mongoose.model("Request", requestSchema);

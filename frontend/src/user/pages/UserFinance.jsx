@@ -30,38 +30,42 @@ function UserFinance() {
 
   // Auto-fetch finance data on page load
   useEffect(() => {
-    fetchFinanceData()
-  }, [])
-
-  const fetchFinanceData = async () => {
-    if (!userData?.vehicleNumber || !userData?.chassisNumber) {
-      setLoading(false)
-      return
-    }
-
-    setLoading(true)
-    try {
-      console.log('Auto-fetching finance for:', { vehicleNumber: userData.vehicleNumber, chassisNumber: userData.chassisNumber })
-      
-      const response = await axiosInstance.post('/api/user/finance-by-vehicle', {
-        vehicleNumber: userData.vehicleNumber,
-        chassisNumber: userData.chassisNumber,
-      })
-
-      if (response.data.success) {
-        setFinanceData(response.data.data)
-        console.log('Finance data found:', response.data.data)
-      } else {
-        setFinanceData(null)
-        console.log('No finance record found')
+    const fetchFinanceData = async () => {
+      if (!userData?.vehicleNumber || !userData?.chassisNumber) {
+        setLoading(false)
+        return
       }
-    } catch (error) {
-      console.error('Error fetching finance:', error)
-      setFinanceData(null)
-    } finally {
-      setLoading(false)
+
+      setLoading(true)
+      try {
+        console.log('Auto-fetching finance for:', { vehicleNumber: userData.vehicleNumber, chassisNumber: userData.chassisNumber })
+        
+        const response = await axiosInstance.post('/api/user/finance-by-vehicle', {
+          vehicleNumber: userData.vehicleNumber,
+          chassisNumber: userData.chassisNumber,
+        })
+
+        if (response.data.success) {
+          setFinanceData(response.data.financeFound ? response.data.data : null)
+          if (response.data.financeFound) {
+            console.log('Finance data found:', response.data.data)
+          } else {
+            console.log('No finance record found, showing request form')
+          }
+        } else {
+          setFinanceData(null)
+          console.log('No finance record found')
+        }
+      } catch (error) {
+        console.error('Error fetching finance:', error)
+        setFinanceData(null)
+      } finally {
+        setLoading(false)
+      }
     }
-  }
+
+    fetchFinanceData()
+  }, [userData?.vehicleNumber, userData?.chassisNumber])
 
   const getStatementRows = (emiSchedule = []) => {
     if (!Array.isArray(emiSchedule) || emiSchedule.length === 0) return []

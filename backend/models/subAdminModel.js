@@ -7,7 +7,7 @@ const permissionSchema = new mongoose.Schema(
     module: {
       type: String,
       required: true,
-      enum: ["dashboard", "vehicleStock", "users", "finance","addEntry","pendingPayments"]
+      enum: ["dashboard", "vehicleStock", "users", "finance", "addEntry", "pendingPayments", "requestCenter", "ownershipTransfer"]
     },
 
     actions: {

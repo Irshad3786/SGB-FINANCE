@@ -8,6 +8,7 @@ import InvoicePreviewModal from '../components/InvoicePreviewModal'
 import { apDistricts, apMandals, fetchLocationLookup, normalizeKey } from '../constants/apLocations'
 import apiClient from '../../api/axios'
 import { useToast } from '../../components/ToastProvider'
+import { readStoredSubAdminProfile, canEditModule } from '../utils/subAdminAccess'
 
 const INITIAL_SELL_FORM = {
   fullName: '',
@@ -56,6 +57,9 @@ function Sell() {
 
   const inputBase = 'w-full pl-10 px-3 py-2 rounded-xl border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a] pr-4 text-sm'
   const { showToast } = useToast()
+  const storedProfile = readStoredSubAdminProfile()
+  const permissions = storedProfile?.permissions || []
+  const canEditAddEntry = canEditModule(permissions, 'addEntry')
   const printInvoice = useReactToPrint({
     contentRef: invoiceRef,
     documentTitle: 'seller-invoice',
@@ -179,6 +183,10 @@ function Sell() {
 
   async function onSubmit(e) {
     e.preventDefault()
+    if (!canEditAddEntry) {
+      showToast({ type: 'error', title: 'Permission', message: 'You do not have permission to add entries' })
+      return
+    }
     try {
       const phoneFields = ['phone', 'alternatePhone', 'referralPhone']
       const aadhaarFields = ['aadhaar']
@@ -705,7 +713,8 @@ function Sell() {
           <div className="mt-6 flex justify-center">
             <button
               type="submit"
-              className="px-6 py-2 rounded-full bg-gradient-to-b from-[#bfff3a] to-[#40ff00] font-semibold shadow"
+              disabled={!canEditAddEntry}
+              className="px-6 py-2 rounded-full bg-gradient-to-b from-[#bfff3a] to-[#40ff00] font-semibold shadow disabled:opacity-50"
             >
               Submit
             </button>

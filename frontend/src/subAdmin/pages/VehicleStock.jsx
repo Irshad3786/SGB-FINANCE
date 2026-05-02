@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import apiClient from '../../api/axios';
 import { useToast } from '../../components/ToastProvider';
+import { canEditModule, readStoredSubAdminProfile } from '../utils/subAdminAccess'
 
 function VehicleStock() {
+  const { permissions } = readStoredSubAdminProfile()
+  const canEditVehicleStock = canEditModule(permissions, 'vehicleStock')
+
   const getTodayDate = () => {
     const now = new Date();
     const year = now.getFullYear();
@@ -63,6 +67,11 @@ function VehicleStock() {
     details.reduce((sum, d) => sum + Number(d.amount || 0), 0);
 
   const handleMarkSold = async (sellerId) => {
+    if (!canEditVehicleStock) {
+      showToast({ type: 'error', title: 'Access denied', message: 'You can view this section only.' })
+      return
+    }
+
     try {
       await apiClient.patch(`/api/subadmin/management/vehicle-stock/${sellerId}/sold`);
       setStock((prev) => prev.filter((item) => item.id !== sellerId));
@@ -109,6 +118,11 @@ function VehicleStock() {
   };
 
   const handleUpdateSpare = async (index, originalWork) => {
+    if (!canEditVehicleStock) {
+      showToast({ type: 'error', title: 'Access denied', message: 'You can view this section only.' })
+      return
+    }
+
     if (!editedWork.title || editedWork.amount === "") return;
 
     try {
@@ -136,6 +150,11 @@ function VehicleStock() {
   };
 
   const handleAddSpare = async () => {
+    if (!canEditVehicleStock) {
+      showToast({ type: 'error', title: 'Access denied', message: 'You can view this section only.' })
+      return
+    }
+
     if (!newWork.title || newWork.amount === "") return;
 
     try {
@@ -260,8 +279,12 @@ function VehicleStock() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => openSoldConfirm(item)}
-                        className="px-2 py-0.5 rounded-full bg-gray-900 text-white text-[11px] font-semibold hover:bg-black"
+                        onClick={() => {
+                          if (!canEditVehicleStock) return;
+                          openSoldConfirm(item);
+                        }}
+                        disabled={!canEditVehicleStock}
+                        className="px-2 py-0.5 rounded-full bg-gray-900 text-white text-[11px] font-semibold hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Sold
                       </button>
@@ -337,7 +360,7 @@ function VehicleStock() {
               <div className="space-y-2">
                 {modalItem.workDetails.map((w, idx) => (
                   <div key={idx}>
-                    {editingWork === idx ? (
+                    {canEditVehicleStock && editingWork === idx ? (
                       <div className="space-y-2 p-3 border rounded-lg bg-gray-50">
                         <div className="grid grid-cols-2 gap-2">
                           <input
@@ -345,27 +368,34 @@ function VehicleStock() {
                             value={editedWork.title}
                             onChange={(e) => setEditedWork({ ...editedWork, title: e.target.value })}
                             placeholder="Work title"
-                            className="col-span-2 h-7 px-2 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-lime-400"
+                            disabled={!canEditVehicleStock}
+                            className="col-span-2 h-7 px-2 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-lime-400 disabled:opacity-50 disabled:bg-gray-200 disabled:cursor-not-allowed"
                           />
                           <input
                             type="number"
                             value={editedWork.amount}
                             onChange={(e) => setEditedWork({ ...editedWork, amount: e.target.value })}
                             placeholder="Amount"
-                            className="h-7 px-2 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-lime-400"
+                            disabled={!canEditVehicleStock}
+                            className="h-7 px-2 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-lime-400 disabled:opacity-50 disabled:bg-gray-200 disabled:cursor-not-allowed"
                           />
                           <input
                             type="date"
                             value={editedWork.date}
                             onChange={(e) => setEditedWork({ ...editedWork, date: e.target.value })}
-                            className="h-7 px-2 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-lime-400"
+                            disabled={!canEditVehicleStock}
+                            className="h-7 px-2 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-lime-400 disabled:opacity-50 disabled:bg-gray-200 disabled:cursor-not-allowed"
                           />
                         </div>
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => handleUpdateSpare(idx, w)}
-                            className="flex-1 h-7 rounded bg-lime-400 text-gray-800 text-xs font-semibold hover:bg-lime-500"
+                            onClick={() => {
+                              if (!canEditVehicleStock) return;
+                              handleUpdateSpare(idx, w);
+                            }}
+                            disabled={!canEditVehicleStock}
+                            className="flex-1 h-7 rounded bg-lime-400 text-gray-800 text-xs font-semibold hover:bg-lime-500 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Save
                           </button>
@@ -398,6 +428,7 @@ function VehicleStock() {
                         <button
                           type="button"
                           onClick={() => {
+                            if (!canEditVehicleStock) return;
                             setEditingWork(idx);
                             setEditedWork({ 
                               index: idx, 
@@ -407,7 +438,8 @@ function VehicleStock() {
                               lastModified: w.lastModified 
                             });
                           }}
-                          className="h-6 w-6 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ml-2"
+                          disabled={!canEditVehicleStock}
+                          className="h-6 w-6 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ml-2 disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Edit"
                         >
                           <svg
@@ -429,14 +461,15 @@ function VehicleStock() {
                 ))}
               </div>
 
-              {addingWorkTo === modalItem.id ? (
+              {canEditVehicleStock && addingWorkTo === modalItem.id ? (
                 <div className="mt-4 pt-3 border-t space-y-2">
                   <input
                     type="text"
                     value={newWork.title}
                     onChange={(e) => setNewWork({ ...newWork, title: e.target.value })}
                     placeholder="Work title"
-                    className="w-full h-8 px-2 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-lime-400"
+                    disabled={!canEditVehicleStock}
+                    className="w-full h-8 px-2 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-lime-400 disabled:opacity-50 disabled:bg-gray-200 disabled:cursor-not-allowed"
                   />
                   <div className="grid grid-cols-2 gap-2">
                     <input
@@ -444,20 +477,26 @@ function VehicleStock() {
                       value={newWork.amount}
                       onChange={(e) => setNewWork({ ...newWork, amount: e.target.value })}
                       placeholder="Amount"
-                      className="h-8 px-2 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-lime-400"
+                      disabled={!canEditVehicleStock}
+                      className="h-8 px-2 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-lime-400 disabled:opacity-50 disabled:bg-gray-200 disabled:cursor-not-allowed"
                     />
                     <input
                       type="date"
                       value={newWork.date}
                       onChange={(e) => setNewWork({ ...newWork, date: e.target.value })}
-                      className="h-8 px-2 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-lime-400"
+                      disabled={!canEditVehicleStock}
+                      className="h-8 px-2 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-lime-400 disabled:opacity-50 disabled:bg-gray-200 disabled:cursor-not-allowed"
                     />
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={handleAddSpare}
-                      className="flex-1 h-8 rounded bg-lime-400 text-gray-800 text-xs font-semibold hover:bg-lime-500"
+                      onClick={() => {
+                        if (!canEditVehicleStock) return;
+                        handleAddSpare();
+                      }}
+                      disabled={!canEditVehicleStock}
+                      className="flex-1 h-8 rounded bg-lime-400 text-gray-800 text-xs font-semibold hover:bg-lime-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Add
                     </button>
@@ -485,10 +524,12 @@ function VehicleStock() {
                     <button
                       type="button"
                       onClick={() => {
+                        if (!canEditVehicleStock) return;
                         setAddingWorkTo(modalItem.id);
                         setNewWork({ title: "", amount: "", date: getTodayDate(), lastModified: "" });
                       }}
-                      className="h-8 w-8 rounded bg-lime-400 text-gray-800 font-semibold hover:bg-lime-500 flex items-center justify-center"
+                      disabled={!canEditVehicleStock}
+                      className="h-8 w-8 rounded bg-lime-400 text-gray-800 font-semibold hover:bg-lime-500 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       +
                     </button>
@@ -522,8 +563,12 @@ function VehicleStock() {
                   Cancel
                 </button>
                 <button
-                  onClick={confirmMarkSold}
-                  className="flex-1 h-10 rounded-lg bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] text-gray-800 font-semibold hover:shadow-lg transition-shadow"
+                  onClick={() => {
+                    if (!canEditVehicleStock) return;
+                    confirmMarkSold();
+                  }}
+                  disabled={!canEditVehicleStock}
+                  className="flex-1 h-10 rounded-lg bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] text-gray-800 font-semibold hover:shadow-lg transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Confirm
                 </button>

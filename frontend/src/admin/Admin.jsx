@@ -28,12 +28,14 @@ function Admin() {
     roleName: '',
     status: 'active',
     roleAccess: {
-      dashboard: { enabled: false, edit: false, view: false },
-      vehicleStock: { enabled: false, edit: false, view: false },
-      users: { enabled: false, edit: false, view: false },
-      addEntry: { enabled: false, edit: false, view: false },
-      finance: { enabled: false, edit: false, view: false },
-      pendingPayments: { enabled: false, edit: false, view: false }
+      dashboard: { enabled: false, edit: false },
+      vehicleStock: { enabled: false, edit: false },
+      users: { enabled: false, edit: false },
+      addEntry: { enabled: false, edit: false },
+      finance: { enabled: false, edit: false },
+      pendingPayments: { enabled: false, edit: false },
+      requestCenter: { enabled: false, edit: false },
+      ownershipTransfer: { enabled: false, edit: false }
     }
   })
 
@@ -102,6 +104,24 @@ function Admin() {
           <path fill="#0e6b53" d="M19 14h-6a.23.23 0 0 1-.22-.14L11.82 12a.5.5 0 0 0-.39-.28a.51.51 0 0 0-.45.18L9.1 14.21a.9.9 0 0 1-.59.28h-1A.5.5 0 0 0 7 15v6a.48.48 0 0 0 .2.4c2.3 1.73 4.08 2.6 5.3 2.6h5.55A1.7 1.7 0 0 0 20 22.66a56 56 0 0 0 1-7.16c0-.75-.69-1.5-2-1.5m-14.17-.5H1.75a.25.25 0 0 0-.25.25v9a.25.25 0 0 0 .25.25h3.08a.6.6 0 0 0 .67-.59v-8.32a.6.6 0 0 0-.67-.59M15.5 9a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M10 11a1 1 0 0 0 1-1.16L9.73 2.29a.28.28 0 0 1 0-.2A.25.25 0 0 1 10 2h8a1 1 0 0 0 0-2H8.5a1 1 0 0 0-1 1.16l1.5 9a1 1 0 0 0 1 .84"/>
         </svg>
       ) 
+    },
+    {
+      id: 'requestCenter',
+      label: 'Request Center',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+          <path fill="#0e6b53" d="M5 3a2 2 0 0 0-2 2v14.5A1.5 1.5 0 0 0 4.5 21H19a2 2 0 0 0 2-2V8.828a2 2 0 0 0-.586-1.414l-3.828-3.828A2 2 0 0 0 15.172 3zm9 1.5V8h3.5zM7 11a1 1 0 1 1 0-2h10a1 1 0 1 1 0 2zm0 4a1 1 0 1 1 0-2h10a1 1 0 1 1 0 2zm0 4a1 1 0 1 1 0-2h7a1 1 0 1 1 0 2z"/>
+        </svg>
+      )
+    },
+    {
+      id: 'ownershipTransfer',
+      label: 'Ownership Transfer',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+          <path fill="#0e6b53" d="M8.56 11.9a1.5 1.5 0 0 1 0 2.12l-.974.976H16a1.5 1.5 0 0 1 0 3H7.586l.975.974a1.5 1.5 0 1 1-2.122 2.122l-3.535-3.536a1.5 1.5 0 0 1 0-2.121l3.535-3.536a1.5 1.5 0 0 1 2.122 0Zm6.88-9a1.5 1.5 0 0 1 2.007-.104l.114.103l3.535 3.536a1.5 1.5 0 0 1 .103 2.007l-.103.114l-3.535 3.536a1.5 1.5 0 0 1-2.225-2.008l.103-.114l.975-.974H8a1.5 1.5 0 0 1-.144-2.994L8 5.996h8.414l-.975-.975a1.5 1.5 0 0 1 0-2.122Z"/>
+        </svg>
+      )
     }
   ]
 
@@ -124,9 +144,7 @@ function Admin() {
         [roleId]: {
           ...prev.roleAccess[roleId],
           enabled: !prev.roleAccess[roleId].enabled,
-          // Reset edit and view when disabling
-          edit: !prev.roleAccess[roleId].enabled ? false : prev.roleAccess[roleId].edit,
-          view: !prev.roleAccess[roleId].enabled ? false : prev.roleAccess[roleId].view
+          edit: !prev.roleAccess[roleId].enabled ? false : prev.roleAccess[roleId].edit
         }
       }
     }))
@@ -205,8 +223,7 @@ function Admin() {
           .map(([module, actions]) => ({
             module,
             actions: {
-              edit: actions.edit,
-              view: actions.view
+              edit: actions.edit
             }
           }))
 
@@ -249,12 +266,14 @@ function Admin() {
       roleName: '',
       status: 'active',
       roleAccess: {
-        dashboard: { enabled: false, edit: false, view: false },
-        vehicleStock: { enabled: false, edit: false, view: false },
-        users: { enabled: false, edit: false, view: false },
-        addEntry: { enabled: false, edit: false, view: false },
-        finance: { enabled: false, edit: false, view: false },
-        pendingPayments: { enabled: false, edit: false, view: false }
+        dashboard: { enabled: false, edit: false },
+        vehicleStock: { enabled: false, edit: false },
+        users: { enabled: false, edit: false },
+        addEntry: { enabled: false, edit: false },
+        finance: { enabled: false, edit: false },
+        pendingPayments: { enabled: false, edit: false },
+        requestCenter: { enabled: false, edit: false },
+        ownershipTransfer: { enabled: false, edit: false }
       }
     })
     setErrors({})
@@ -592,15 +611,6 @@ function Admin() {
                             className="w-4 h-4 text-[#40FF00] rounded focus:ring-[#bff86a] border-gray-300"
                           />
                           <span className="text-sm font-medium text-[#0e6b53]">Edit</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={form.roleAccess[role.id].view}
-                            onChange={() => handlePermissionChange(role.id, 'view')}
-                            className="w-4 h-4 text-[#40FF00] rounded focus:ring-[#bff86a] border-gray-300"
-                          />
-                          <span className="text-sm font-medium text-[#0e6b53]">View</span>
                         </label>
                       </div>
                     )}

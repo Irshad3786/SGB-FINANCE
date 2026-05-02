@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import apiClient from '../../api/axios';
 import { useToast } from '../../components/ToastProvider';
+import { canEditModule, readStoredSubAdminProfile } from '../utils/subAdminAccess';
 
 function PendingDownpayment() {
+  const { permissions } = readStoredSubAdminProfile();
+  const canEditPendingPayments = canEditModule(permissions, 'pendingPayments');
   const [query, setQuery] = useState("");
   const [editingAmount, setEditingAmount] = useState(null);
   const [amountValue, setAmountValue] = useState("");
@@ -62,6 +65,11 @@ function PendingDownpayment() {
   };
 
   const handleAmountUpdate = async (id) => {
+    if (!canEditPendingPayments) {
+      showToast({ type: 'error', title: 'Access denied', message: 'You can view this section only.' });
+      return;
+    }
+
     const parsedAmount = Number(amountValue);
     if (Number.isNaN(parsedAmount) || parsedAmount <= 0) {
       showToast({ type: 'error', title: 'Error', message: 'Enter valid amount greater than 0' });
@@ -92,6 +100,11 @@ function PendingDownpayment() {
   };
 
   const handleCommitmentUpdate = async (id) => {
+    if (!canEditPendingPayments) {
+      showToast({ type: 'error', title: 'Access denied', message: 'You can view this section only.' });
+      return;
+    }
+
     if (!commitmentDate) return;
 
     try {
@@ -125,6 +138,11 @@ function PendingDownpayment() {
 
   const handleConfirmPaid = async () => {
     if (!selectedPaymentId) return;
+
+    if (!canEditPendingPayments) {
+      showToast({ type: 'error', title: 'Access denied', message: 'You can view this section only.' });
+      return;
+    }
 
     try {
       await apiClient.patch(`/api/subadmin/management/pending-payments/${selectedPaymentId}/status`, {

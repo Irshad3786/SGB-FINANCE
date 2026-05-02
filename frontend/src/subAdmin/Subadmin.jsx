@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import { Outlet } from "react-router-dom";
+import apiClient from '../api/axios';
 import Sidebar from "./Sidebar";
 import TopBar from './Topbar';
 import Footer from '../home/components/Footer';
+import { readStoredSubAdminProfile } from './utils/subAdminAccess';
 
 
 function Subadmin() {
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [topTitle, setTopTitle] = useState('Dashboard');
+  const [subAdminProfile, setSubAdminProfile] = useState(() => readStoredSubAdminProfile());
   const [isDarkMode, setIsDarkMode] = useState(() => {
     try {
       return localStorage.getItem('subadmin-theme') === 'dark'
@@ -24,6 +27,25 @@ function Subadmin() {
       // Ignore storage errors and keep runtime behavior.
     }
   }, [isDarkMode])
+
+  useEffect(() => {
+    const fetchSubAdminProfile = async () => {
+      try {
+        const response = await apiClient.get('/api/subadmin/me')
+        const profile = response?.data?.data || {}
+
+        setSubAdminProfile({
+          name: profile?.name || 'Sub Admin',
+          roleName: profile?.roleName || '',
+          permissions: Array.isArray(profile?.permissions) ? profile.permissions : [],
+        })
+      } catch {
+        // Keep the stored profile if the API call fails.
+      }
+    }
+
+    fetchSubAdminProfile()
+  }, [])
 
   return (
     <div className={`flex min-h-screen overflow-x-hidden ${isDarkMode ? 'subadmin-dark' : 'subadmin-light'}`}>
@@ -91,7 +113,11 @@ function Subadmin() {
 
       {/* LEFT SIDEBAR */}
       {sidebarOpen &&  <div>
-        <Sidebar toggle={setSidebarOpen} onNavigate={setTopTitle} />
+        <Sidebar
+          toggle={setSidebarOpen}
+          onNavigate={setTopTitle}
+          permissions={subAdminProfile.permissions || []}
+        />
       </div>}
       
 
@@ -104,6 +130,7 @@ function Subadmin() {
           data={sidebarOpen}
           title={topTitle}
           isDarkMode={isDarkMode}
+          subAdminProfile={subAdminProfile}
           onToggleTheme={() => setIsDarkMode((prev) => !prev)}
         />
 

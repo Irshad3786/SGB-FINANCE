@@ -1,25 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import apiClient from '../api/axios'
+import React, { useMemo } from 'react'
 
-function Topbar({topbarData , data, title, isDarkMode = false, onToggleTheme}) {
-    const [subAdminProfile, setSubAdminProfile] = useState({ name: 'Sub Admin' });
-
-    useEffect(() => {
-      const fetchProfile = async () => {
-        try {
-          const response = await apiClient.get('/api/subadmin/me')
-          const profile = response?.data?.data || {}
-          setSubAdminProfile({
-            name: profile?.name || 'Sub Admin',
-            roleName: profile?.roleName || '',
-          })
-        } catch {
-          setSubAdminProfile({ name: 'Sub Admin', roleName: '' })
-        }
-      }
-
-      fetchProfile()
-    }, [])
+function Topbar({topbarData , data, title, isDarkMode = false, onToggleTheme, subAdminProfile = { name: 'Sub Admin', roleName: '' }}) {
 
     const initials = useMemo(() => {
       const name = String(subAdminProfile?.name || 'Sub Admin').trim()

@@ -367,6 +367,7 @@ const loginSubAdmin = async (req, res) => {
           email: subAdmin.email,
           phone: subAdmin.phone,
           roleName: subAdmin.roleName,
+          permissions: subAdmin.permissions || [],
         },
       });
   } catch (error) {
@@ -513,6 +514,7 @@ const getCurrentSubAdmin = async (req, res) => {
         email: req.subAdmin.email,
         phone: req.subAdmin.phone,
         roleName: req.subAdmin.roleName,
+        permissions: req.subAdmin.permissions || [],
       },
     });
   } catch (error) {

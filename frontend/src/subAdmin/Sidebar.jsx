@@ -3,9 +3,10 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import Logo from '../home/components/Logo';
 import { useLocation } from 'react-router-dom';
 import apiClient, { setAuthToken, setRefreshToken } from '../api/axios';
+import { canAccessModule } from './utils/subAdminAccess';
 
 
-function Sidebar({toggle, onNavigate}) {
+function Sidebar({toggle, onNavigate, permissions = []}) {
   const navigate = useNavigate();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -14,6 +15,8 @@ function Sidebar({toggle, onNavigate}) {
   const isActiveCustom =
     location.pathname.startsWith("/subadmin/sell") ||
     location.pathname.startsWith("/subadmin/buy");
+
+  const canSee = (moduleName) => canAccessModule(permissions, moduleName);
     
   return (
     <>
@@ -28,6 +31,7 @@ function Sidebar({toggle, onNavigate}) {
       </div>
  
       <nav className="space-y-3 flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide pb-5" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        {canSee('dashboard') && (
         <NavLink
           to="/subadmin/dashboard"
           onClick={() => onNavigate && onNavigate('Dashboard')}
@@ -38,7 +42,9 @@ function Sidebar({toggle, onNavigate}) {
           <div ><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 14 14"><path fill="#000" fill-rule="evenodd" d="M1.375 1.375v5.75h3.75v-5.75zM.125 1.25C.125.629.629.125 1.25.125h4c.621 0 1.125.504 1.125 1.125v6c0 .621-.504 1.125-1.125 1.125h-4A1.125 1.125 0 0 1 .125 7.25zM8.75.125c-.621 0-1.125.504-1.125 1.125v2.01c0 .621.504 1.125 1.125 1.125h4c.621 0 1.125-.504 1.125-1.125V1.25c0-.621-.504-1.125-1.125-1.125zm.125 6.75v5.75h3.75v-5.75zm-1.25-.125c0-.621.504-1.125 1.125-1.125h4c.621 0 1.125.504 1.125 1.125v6c0 .621-.504 1.125-1.125 1.125h-4a1.125 1.125 0 0 1-1.125-1.125zM1.25 9.615c-.621 0-1.125.504-1.125 1.125v2.01c0 .621.504 1.125 1.125 1.125h4c.621 0 1.125-.504 1.125-1.125v-2.01c0-.621-.504-1.125-1.125-1.125z" clip-rule="evenodd"/></svg></div>
            Dashboard 
         </NavLink>
+        )}
 
+        {canSee('vehicleStock') && (
         <NavLink
           to="/subadmin/vehicle-stock"
           onClick={() => onNavigate && onNavigate('Vehicle Stock')}
@@ -51,7 +57,9 @@ function Sidebar({toggle, onNavigate}) {
           </div>
           Vehicle Stock
         </NavLink>
+        )}
 
+        {canSee('users') && (
         <NavLink
           to="/subadmin/users"
           onClick={() => onNavigate && onNavigate('Users')}
@@ -62,7 +70,9 @@ function Sidebar({toggle, onNavigate}) {
          <div ><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#000" d="M16 17v2H2v-2s0-4 7-4s7 4 7 4m-3.5-9.5A3.5 3.5 0 1 0 9 11a3.5 3.5 0 0 0 3.5-3.5m3.44 5.5A5.32 5.32 0 0 1 18 17v2h4v-2s0-3.63-6.06-4M15 4a3.4 3.4 0 0 0-1.93.59a5 5 0 0 1 0 5.82A3.4 3.4 0 0 0 15 11a3.5 3.5 0 0 0 0-7"/></svg></div>
         Users
         </NavLink>
+        )}
 
+        {canSee('addEntry') && (
         <NavLink
       to="/subadmin/sell"
       onClick={() => onNavigate && onNavigate("Buy & Sell Entry")}
@@ -89,7 +99,9 @@ function Sidebar({toggle, onNavigate}) {
       </svg>
       Add Entry
     </NavLink>
+      )}
 
+        {canSee('finance') && (
         <NavLink
           to="/subadmin/finance"
           onClick={() => onNavigate && onNavigate('Finance')}
@@ -106,7 +118,9 @@ function Sidebar({toggle, onNavigate}) {
           </svg>
           Finance
         </NavLink>
+        )}
 
+        {canSee('pendingPayments') && (
         <NavLink
           to="/subadmin/pending-downpayment"
           onClick={() => onNavigate && onNavigate('Pending Payments')}
@@ -122,7 +136,9 @@ function Sidebar({toggle, onNavigate}) {
           </div>
           Pending Payments
         </NavLink>
+        )}
 
+        {canSee('requestCenter') && (
         <NavLink
           to="/subadmin/requests-management"
           onClick={() => onNavigate && onNavigate('Request Center')}
@@ -137,7 +153,9 @@ function Sidebar({toggle, onNavigate}) {
           </div>
           Request Center
         </NavLink>
+        )}
 
+        {canSee('ownershipTransfer') && (
         <NavLink
           to="/subadmin/ownership-transfer"
           onClick={() => onNavigate && onNavigate('Ownership Transfer')}
@@ -150,6 +168,7 @@ function Sidebar({toggle, onNavigate}) {
           </div>
           Ownership Transfer
         </NavLink>
+        )}
       </nav>
 
       <div className="flex-shrink-0 pb-2 pt-4">

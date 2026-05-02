@@ -141,7 +141,7 @@ function SubAdminList() {
                       <div key={idx} className="text-xs text-gray-700 bg-gray-50 px-2 py-1 rounded">
                         <span className="font-medium capitalize">{perm.module}</span>
                         <span className="text-gray-500">
-                          {' '}({perm.actions.view ? 'V' : ''}{perm.actions.edit ? 'E' : ''})
+                          {' '}({perm.actions.edit ? 'E' : ''})
                         </span>
                       </div>
                     ))}

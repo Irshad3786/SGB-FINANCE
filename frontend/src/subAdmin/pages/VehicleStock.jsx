@@ -4,7 +4,7 @@ import { useToast } from '../../components/ToastProvider';
 import { canEditModule, readStoredSubAdminProfile } from '../utils/subAdminAccess'
 
 function VehicleStock() {
-  const { permissions } = readStoredSubAdminProfile()
+  const [permissions, setPermissions] = useState(() => readStoredSubAdminProfile().permissions || [])
   const canEditVehicleStock = canEditModule(permissions, 'vehicleStock')
 
   const getTodayDate = () => {
@@ -32,6 +32,34 @@ function VehicleStock() {
   useEffect(() => {
     setPage(1);
   }, [query]);
+
+  useEffect(() => {
+    let isMounted = true
+
+    const syncPermissions = async () => {
+      try {
+        const response = await apiClient.get('/api/subadmin/me')
+        const currentPermissions = Array.isArray(response?.data?.data?.permissions)
+          ? response.data.data.permissions
+          : []
+
+        if (isMounted) {
+          setPermissions(currentPermissions)
+        }
+      } catch {
+        if (isMounted) {
+          const storedProfile = readStoredSubAdminProfile()
+          setPermissions(storedProfile?.permissions || [])
+        }
+      }
+    }
+
+    syncPermissions()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   useEffect(() => {
     const fetchVehicleStock = async () => {

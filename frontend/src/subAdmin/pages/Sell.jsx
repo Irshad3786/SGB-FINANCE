@@ -41,6 +41,7 @@ const INITIAL_SELL_FILES = {
 
 function Sell() {
   const [role, setRole] = useState('seller')
+  const [permissions, setPermissions] = useState(() => readStoredSubAdminProfile().permissions || [])
   const navigate = useNavigate()
 
   const [form, setForm] = useState(INITIAL_SELL_FORM)
@@ -57,13 +58,39 @@ function Sell() {
 
   const inputBase = 'w-full pl-10 px-3 py-2 rounded-xl border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a] pr-4 text-sm'
   const { showToast } = useToast()
-  const storedProfile = readStoredSubAdminProfile()
-  const permissions = storedProfile?.permissions || []
   const canEditAddEntry = canEditModule(permissions, 'addEntry')
   const printInvoice = useReactToPrint({
     contentRef: invoiceRef,
     documentTitle: 'seller-invoice',
   })
+
+  useEffect(() => {
+    let isMounted = true
+
+    const syncPermissions = async () => {
+      try {
+        const response = await apiClient.get('/api/subadmin/me')
+        const currentPermissions = Array.isArray(response?.data?.data?.permissions)
+          ? response.data.data.permissions
+          : []
+
+        if (isMounted) {
+          setPermissions(currentPermissions)
+        }
+      } catch {
+        if (isMounted) {
+          const storedProfile = readStoredSubAdminProfile()
+          setPermissions(storedProfile?.permissions || [])
+        }
+      }
+    }
+
+    syncPermissions()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const handleInvoicePreviewClose = () => {
     setShowInvoicePreview(false)

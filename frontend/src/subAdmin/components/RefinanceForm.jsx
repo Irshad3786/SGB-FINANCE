@@ -4,6 +4,7 @@ import { apDistricts, apMandals, fetchLocationLookup, normalizeKey } from "../co
 import apiClient from "../../api/axios";
 import { useToast } from "../../components/ToastProvider";
 import InvoicePreviewModal from "./InvoicePreviewModal";
+import { canEditModule, readStoredSubAdminProfile } from "../utils/subAdminAccess";
 
 const formatDateInput = (dateValue) => {
   if (!dateValue) return "";
@@ -92,6 +93,8 @@ function RefinanceForm({ inputBase, labelClass }) {
   const baseLabel = labelClass || "text-sm text-[#27563C] font-semibold";
 
   const [form, setForm] = useState(INITIAL_REFINANCE_FORM);
+  const [permissions, setPermissions] = useState(() => readStoredSubAdminProfile().permissions || []);
+  const canEditRefinance = canEditModule(permissions, "addEntry");
   const [suggestedAgreementNo, setSuggestedAgreementNo] = useState("");
 
   const [files, setFiles] = useState(INITIAL_REFINANCE_FILES);
@@ -140,6 +143,34 @@ function RefinanceForm({ inputBase, labelClass }) {
 
   useEffect(() => {
     fetchNextAgreementNumber();
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const syncPermissions = async () => {
+      try {
+        const response = await apiClient.get('/api/subadmin/me');
+        const currentPermissions = Array.isArray(response?.data?.data?.permissions)
+          ? response.data.data.permissions
+          : [];
+
+        if (isMounted) {
+          setPermissions(currentPermissions);
+        }
+      } catch {
+        if (isMounted) {
+          const storedProfile = readStoredSubAdminProfile();
+          setPermissions(storedProfile?.permissions || []);
+        }
+      }
+    };
+
+    syncPermissions();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -412,6 +443,15 @@ function RefinanceForm({ inputBase, labelClass }) {
   };
 
   const onSubmit = async () => {
+    if (!canEditRefinance) {
+      showToast({
+        type: "error",
+        title: "Permission",
+        message: "You do not have permission to add entries",
+      });
+      return;
+    }
+
     try {
       const phoneFields = ["phone", "alternatePhone", "referralPhone", "guarantorPhone", "guarantorAlternatePhone"];
       const aadhaarFields = ["aadhaar", "guarantorAadhaar"];
@@ -1313,7 +1353,8 @@ function RefinanceForm({ inputBase, labelClass }) {
         <button
           type="button"
           onClick={onSubmit}
-          className="px-6 py-2 rounded-full bg-gradient-to-b from-[#bfff3a] to-[#40ff00] font-semibold shadow"
+          disabled={!canEditRefinance}
+          className="px-6 py-2 rounded-full bg-gradient-to-b from-[#bfff3a] to-[#40ff00] font-semibold shadow disabled:opacity-60 disabled:cursor-not-allowed"
         >
           Save Refinance
         </button>

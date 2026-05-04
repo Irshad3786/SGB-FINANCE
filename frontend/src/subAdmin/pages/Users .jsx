@@ -4,6 +4,7 @@ import EditUserModal from '../components/EditUserModal'
 import InvoicePreviewModal from '../components/InvoicePreviewModal'
 import apiClient from '../../api/axios'
 import { useToast } from '../../components/ToastProvider'
+import { canEditModule, readStoredSubAdminProfile } from '../utils/subAdminAccess'
 
 const getTodayInputDate = () => {
   const date = new Date()
@@ -25,6 +26,8 @@ const formatDisplayDate = (value) => {
 function Users () {
   const PAGE_SIZE = 10
   const { showToast } = useToast()
+  const [permissions, setPermissions] = useState(() => readStoredSubAdminProfile().permissions || [])
+  const canEditUsers = canEditModule(permissions, 'users')
   const [modalUser, setModalUser] = useState(null)
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -38,7 +41,7 @@ function Users () {
   const [page, setPage] = useState(1)
   const [showInvoicePreview, setShowInvoicePreview] = useState(false)
   const [invoice, setInvoice] = useState(null)
-  const [invoiceMode, setInvoiceMode] = useState(null)
+  const [, setInvoiceMode] = useState(null)
   const printInvoiceRef = useRef(null)
   const [pagination, setPagination] = useState({
     page: 1,
@@ -49,6 +52,34 @@ function Users () {
     hasPrevPage: false,
   })
   const isInitialLoadRef = useRef(true)
+
+  useEffect(() => {
+    let isMounted = true
+
+    const syncPermissions = async () => {
+      try {
+        const response = await apiClient.get('/api/subadmin/me')
+        const currentPermissions = Array.isArray(response?.data?.data?.permissions)
+          ? response.data.data.permissions
+          : []
+
+        if (isMounted) {
+          setPermissions(currentPermissions)
+        }
+      } catch {
+        if (isMounted) {
+          const storedProfile = readStoredSubAdminProfile()
+          setPermissions(storedProfile?.permissions || [])
+        }
+      }
+    }
+
+    syncPermissions()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -152,14 +183,18 @@ function Users () {
 
   async function handleSave(updated) {
     if (!updated || !updated.id || !modalUser) return
+    if (!canEditUsers) {
+      showToast({ type: 'error', title: 'Permission', message: 'You do not have permission to edit users' })
+      return
+    }
 
     const {
-      sellerProfile,
-      sellerAadhaarFront,
-      sellerAadhaarBack,
-      buyerProfile,
-      buyerAadhaarFront,
-      buyerAadhaarBack,
+      sellerProfile: _sellerProfile,
+      sellerAadhaarFront: _sellerAadhaarFront,
+      sellerAadhaarBack: _sellerAadhaarBack,
+      buyerProfile: _buyerProfile,
+      buyerAadhaarFront: _buyerAadhaarFront,
+      buyerAadhaarBack: _buyerAadhaarBack,
       ...editablePayload
     } = updated
 
@@ -201,6 +236,11 @@ function Users () {
 
   async function handleDelete() {
     if (!deleteUserId) return
+    if (!canEditUsers) {
+      showToast({ type: 'error', title: 'Permission', message: 'You do not have permission to edit users' })
+      setDeleteUserId(null)
+      return
+    }
 
     const selectedUser =
       users.find((u) => u.id === deleteUserId) ||
@@ -475,7 +515,7 @@ function Users () {
                       <button onClick={() => setModalUser(u)} className="p-2 text-gray-700" title="view">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="#a6a6a6"/><path fill="#a6a6a6" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5"/></svg>
                       </button>
-                      <button onClick={() => setDeleteUserId(u.id)} className="p-2 text-red-600 hover:text-red-800" title="delete">
+                      <button onClick={() => setDeleteUserId(u.id)} disabled={!canEditUsers} className="p-2 text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed" title="delete">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M7 21q-.825 0-1.412-.587T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413T17 21zM17 6H7v13h10zM9 17h2V8H9zm4 0h2V8h-2zM7 6v13z"/></svg>
                       </button>
                     </div>
@@ -525,7 +565,7 @@ function Users () {
 
               <div className="mt-3 flex items-center justify-end gap-2">
                 <button onClick={() => setModalUser(u)} className="p-2 text-gray-700" title="view"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="#a6a6a6"/><path fill="#a6a6a6" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5"/></svg></button>
-                <button onClick={() => setDeleteUserId(u.id)} className="p-2 text-red-600 hover:text-red-800" title="delete">
+                <button onClick={() => setDeleteUserId(u.id)} disabled={!canEditUsers} className="p-2 text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed" title="delete">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M7 21q-.825 0-1.412-.587T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413T17 21zM17 6H7v13h10zM9 17h2V8H9zm4 0h2V8h-2zM7 6v13z"/></svg>
                 </button>
               </div>
@@ -586,8 +626,13 @@ function Users () {
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation()
+                    if (!canEditUsers) {
+                      showToast({ type: 'error', title: 'Permission', message: 'You do not have permission to edit users' })
+                      return
+                    }
                     setEditOpen(true)
                   }}
+                  disabled={!canEditUsers}
                   className="px-3 py-1 rounded bg-yellow-50 text-sm inline-flex items-center gap-2"
                   aria-label="Edit user"
                 >

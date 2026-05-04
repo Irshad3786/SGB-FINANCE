@@ -43,6 +43,25 @@ const parseDateBoundary = (value, boundary = "start") => {
   return parsed;
 };
 
+const findModulePermission = (permissions = [], moduleName = "") => {
+  if (!Array.isArray(permissions) || !moduleName) return null;
+  return (
+    permissions.find((permission) => {
+      const currentModule = permission?.module || permission?.name || permission?.key;
+      return currentModule === moduleName;
+    }) || null
+  );
+};
+
+const canEditModule = (permissions = [], moduleName = "") => {
+  const modulePermission = findModulePermission(permissions, moduleName);
+  if (!modulePermission) return false;
+
+  const hasEditAction =
+    modulePermission?.actions?.edit ?? modulePermission?.edit ?? false;
+  return Boolean(hasEditAction);
+};
+
 const getUserData = async (req, res) => {
   try {
     const {
@@ -389,6 +408,13 @@ const buildEmiSchedule = ({ startDate, months, emiAmount, existingSchedule = [] 
 
 const updateUserData = async (req, res) => {
   try {
+    if (!canEditModule(req?.subAdmin?.permissions, "users")) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to edit users",
+      });
+    }
+
     const {
       sellerId,
       buyerId,
@@ -588,6 +614,13 @@ const updateUserData = async (req, res) => {
 
 const deleteUserData = async (req, res) => {
   try {
+    if (!canEditModule(req?.subAdmin?.permissions, "users")) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to edit users",
+      });
+    }
+
     const { sellerId, buyerId } = req.body || {};
 
     if (!sellerId && !buyerId) {

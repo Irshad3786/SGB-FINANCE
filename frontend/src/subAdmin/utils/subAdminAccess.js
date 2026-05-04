@@ -27,7 +27,10 @@ export function canAccessModule(permissions, moduleName) {
     return false
   }
 
-  return permissions.some(permission => permission?.module === moduleName)
+  return permissions.some(permission => {
+    const currentModule = permission?.module || permission?.name || permission?.key
+    return currentModule === moduleName
+  })
 }
 
 export function canEditModule(permissions, moduleName) {
@@ -36,6 +39,10 @@ export function canEditModule(permissions, moduleName) {
   }
 
   return permissions.some(
-    permission => permission?.module === moduleName && Boolean(permission?.actions?.edit)
+    permission => {
+      const currentModule = permission?.module || permission?.name || permission?.key
+      const canEdit = permission?.actions?.edit ?? permission?.edit ?? false
+      return currentModule === moduleName && Boolean(canEdit)
+    }
   )
 }

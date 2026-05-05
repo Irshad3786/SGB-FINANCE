@@ -2,12 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import apiClient from '../api/axios';
 import { useToast } from '../components/ToastProvider';
 import OwnershipTransferForm from './components/OwnershipTransferForm';
-import { canEditModule, readStoredSubAdminProfile } from './utils/subAdminAccess';
 
 function OwnershipTransfer() {
   const { showToast } = useToast();
-  const { permissions } = readStoredSubAdminProfile();
-  const canEditOwnershipTransfer = canEditModule(permissions, 'ownershipTransfer');
   const [transfers, setTransfers] = useState([]);
   const [_totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -71,20 +68,10 @@ function OwnershipTransfer() {
   }, [fetchTransfers]);
 
   const handleEditChange = (field, value) => {
-    if (!canEditOwnershipTransfer) {
-      showToast({ type: 'error', title: 'Access denied', message: 'You can view this section only.' });
-      return;
-    }
-
     setEditedData(prev => ({ ...prev, [field]: value }));
   };
 
   const startEdit = (transfer) => {
-    if (!canEditOwnershipTransfer) {
-      showToast({ type: 'error', title: 'Access denied', message: 'You can view this section only.' });
-      return;
-    }
-
     setShowAddForm(false);
     setEditingId(transfer._id);
     setEditedData(transfer);
@@ -101,11 +88,6 @@ function OwnershipTransfer() {
   };
 
   const saveEdit = async () => {
-    if (!canEditOwnershipTransfer) {
-      showToast({ type: 'error', title: 'Access denied', message: 'You can view this section only.' });
-      return;
-    }
-
     if (!editedData.name || !editedData.vehicleName || !editedData.phoneNo || !editedData.vehicleNumber || !editedData.chassisNumber || !editedData.paidAmount) {
       return;
     }
@@ -130,11 +112,6 @@ function OwnershipTransfer() {
   };
 
   const handleDelete = async (id) => {
-    if (!canEditOwnershipTransfer) {
-      showToast({ type: 'error', title: 'Access denied', message: 'You can view this section only.' });
-      return;
-    }
-
     try {
       await apiClient.delete(`/api/subadmin/management/ownership-transfer/delete/${id}`);
       showToast({
@@ -195,10 +172,6 @@ function OwnershipTransfer() {
             </div>
             <button
               onClick={() => {
-                if (!canEditOwnershipTransfer) {
-                  showToast({ type: 'error', title: 'Access denied', message: 'You can view this section only.' });
-                  return;
-                }
                 setShowAddForm(prev => !prev);
                 setEditingId(null);
               }}

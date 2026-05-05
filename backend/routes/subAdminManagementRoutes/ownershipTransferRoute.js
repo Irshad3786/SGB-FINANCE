@@ -1,5 +1,5 @@
 import express from 'express';
-import { verifySubAdminToken } from '../../middlewares/subAdminMiddleware.js';
+import { verifySubAdminToken, checkModuleEditPermission } from '../../middlewares/subAdminMiddleware.js';
 import {
     createOwnershipTransfer,
     getAllOwnershipTransfers,
@@ -12,7 +12,7 @@ import {
 const router = express.Router();
 
 // Create a new ownership transfer
-router.post('/create', verifySubAdminToken, createOwnershipTransfer);
+router.post('/create', verifySubAdminToken, checkModuleEditPermission('ownershipTransfer'), createOwnershipTransfer);
 
 // Get all ownership transfers for the sub-admin
 router.get('/all', verifySubAdminToken, getAllOwnershipTransfers);
@@ -24,9 +24,9 @@ router.get('/status/:status', verifySubAdminToken, getOwnershipTransfersByStatus
 router.get('/:id', verifySubAdminToken, getOwnershipTransferById);
 
 // Update an ownership transfer
-router.put('/update/:id', verifySubAdminToken, updateOwnershipTransfer);
+router.put('/update/:id', verifySubAdminToken, checkModuleEditPermission('ownershipTransfer'), updateOwnershipTransfer);
 
 // Delete an ownership transfer
-router.delete('/delete/:id', verifySubAdminToken, deleteOwnershipTransfer);
+router.delete('/delete/:id', verifySubAdminToken, checkModuleEditPermission('ownershipTransfer'), deleteOwnershipTransfer);
 
 export default router;

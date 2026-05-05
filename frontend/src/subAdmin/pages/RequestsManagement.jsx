@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import apiClient from '../../api/axios'
 import { useToast } from '../../components/ToastProvider'
-import { canEditModule, readStoredSubAdminProfile } from '../utils/subAdminAccess'
 
 const statusPillClass = {
   pending: 'bg-amber-100 text-amber-800',
@@ -38,8 +37,6 @@ const formatDateTime = (value) => {
 
 function RequestsManagement() {
   const { showToast } = useToast()
-  const { permissions } = readStoredSubAdminProfile()
-  const canEditRequestCenter = canEditModule(permissions, 'requestCenter')
   const [activeType, setActiveType] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [query, setQuery] = useState('')
@@ -133,11 +130,6 @@ function RequestsManagement() {
   }
 
   const handleUpdateStatus = async (request) => {
-    if (!canEditRequestCenter) {
-      showToast({ type: 'error', title: 'Access denied', message: 'You can view this section only.' })
-      return
-    }
-
     const nextStatus = statusDrafts[request.id] || request.status || 'pending'
 
     if (nextStatus === request.status) {
@@ -181,11 +173,6 @@ function RequestsManagement() {
   }
 
   const openDeleteConfirm = (request) => {
-    if (!canEditRequestCenter) {
-      showToast({ type: 'error', title: 'Access denied', message: 'You can view this section only.' })
-      return
-    }
-
     setDeleteConfirm({ isOpen: true, request })
   }
 

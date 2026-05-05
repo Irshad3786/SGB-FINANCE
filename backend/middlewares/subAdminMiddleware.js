@@ -105,4 +105,79 @@ const verifySubAdminOtpToken = async (req, res, next) => {
   }
 };
 
-export { verifySubAdminToken, verifySubAdminOtpToken, pendingRegistrations };
+const MODULE_ALIASES = {
+  pendingpayment: "pendingPayments",
+  pendingpayments: "pendingPayments",
+  pendingdownpayment: "pendingPayments",
+  requestcenter: "requestCenter",
+  vehiclestock: "vehicleStock",
+  ownershiptransfer: "ownershipTransfer",
+  addentry: "addEntry",
+};
+
+const normalizeModuleName = (value) => {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const key = raw.replace(/[^a-zA-Z]/g, "").toLowerCase();
+  return MODULE_ALIASES[key] || raw;
+};
+
+const hasEditAccess = (permission) => {
+  const value = permission?.actions?.edit ?? permission?.edit ?? permission?.actions?.canEdit;
+  if (typeof value === "string") {
+    return value.toLowerCase() === "true";
+  }
+  return Boolean(value);
+};
+
+// Middleware to check if SubAdmin has edit permission for a module
+const checkModuleEditPermission = (moduleName) => {
+  return async (req, res, next) => {
+    try {
+      const subAdmin = req.subAdmin;
+      
+      if (!subAdmin) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized: SubAdmin not found in request",
+        });
+      }
+
+      // Check if subAdmin has permissions array
+      if (!Array.isArray(subAdmin.permissions) || subAdmin.permissions.length === 0) {
+        return res.status(403).json({
+          success: false,
+          message: `Access denied: You don't have permission to edit ${moduleName}`,
+        });
+      }
+
+      // Find the permission for the specific module
+      const normalizedTarget = normalizeModuleName(moduleName);
+      const modulePermission = subAdmin.permissions.find(
+        (perm) => normalizeModuleName(perm?.module || perm?.name || perm?.key) === normalizedTarget
+      );
+
+      // Check if module permission exists and edit is allowed
+      if (!modulePermission || !hasEditAccess(modulePermission)) {
+        console.warn(`[Permission] SubAdmin ${subAdmin._id} denied edit access to ${moduleName}`);
+        return res.status(403).json({
+          success: false,
+          message: `Access denied: You don't have edit permission for ${moduleName}`,
+        });
+      }
+
+      // Permission granted, continue
+      console.log(`[Permission] SubAdmin ${subAdmin._id} granted edit access to ${moduleName}`);
+      next();
+    } catch (error) {
+      console.error("Permission check error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Server error during permission check",
+        error: error.message,
+      });
+    }
+  };
+};
+
+export { verifySubAdminToken, verifySubAdminOtpToken, pendingRegistrations, checkModuleEditPermission };

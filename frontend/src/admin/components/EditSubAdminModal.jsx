@@ -205,9 +205,12 @@ function EditSubAdminModal({ isOpen, onClose, subAdmin, onSave }) {
           .map(([module, actions]) => ({
             module,
             actions: {
+              view: true,
               edit: actions.edit
             }
           }))
+        
+        console.log('Updating subadmin with permissions:', permissions)
 
         await onSave({
           ...subAdmin,

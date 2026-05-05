@@ -223,9 +223,12 @@ function Admin() {
           .map(([module, actions]) => ({
             module,
             actions: {
+              view: true,
               edit: actions.edit
             }
           }))
+        
+        console.log('Registering subadmin with permissions:', permissions)
 
         const response = await apiClient.post('/api/subadmin/registerSubAdmin', {
           name: form.name,

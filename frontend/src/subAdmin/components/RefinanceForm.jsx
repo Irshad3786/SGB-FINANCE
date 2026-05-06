@@ -86,6 +86,9 @@ const INITIAL_REFINANCE_FILES = {
   guarantorPhoto: null,
 };
 
+const sanitizeTextOnly = (value) => String(value || '').replace(/[^a-zA-Z\s./()\-]/g, '')
+const sanitizeNumberOnly = (value) => String(value || '').replace(/\D/g, '')
+
 function RefinanceForm({ inputBase, labelClass }) {
   const baseInput =
     inputBase ||
@@ -355,9 +358,21 @@ function RefinanceForm({ inputBase, labelClass }) {
     const { name, value, type, checked } = e.target;
     const phoneFields = ["phone", "alternatePhone", "referralPhone", "guarantorPhone", "guarantorAlternatePhone"];
     const aadhaarFields = ["aadhaar", "guarantorAadhaar"];
+    const textOnlyFields = ["fullName", "soWoCo", "guarantorName", "guarantorSoWoCo", "referralName"];
+    const numericOnlyFields = ["model", "financeAmount", "emiMonths", "emiAmount"];
 
     if (type === "checkbox") {
       setForm((prev) => ({ ...prev, [name]: checked }));
+      return;
+    }
+
+    if (textOnlyFields.includes(name)) {
+      setForm((prev) => ({ ...prev, [name]: sanitizeTextOnly(value) }));
+      return;
+    }
+
+    if (numericOnlyFields.includes(name)) {
+      setForm((prev) => ({ ...prev, [name]: sanitizeNumberOnly(value) }));
       return;
     }
 
@@ -453,8 +468,41 @@ function RefinanceForm({ inputBase, labelClass }) {
     }
 
     try {
+      const textOnlyFields = [
+        ["fullName", "Full name"],
+        ["soWoCo", "S/O C/O W/O"],
+        ["guarantorName", "Guarantor full name"],
+        ["guarantorSoWoCo", "Guarantor S/O C/O W/O"],
+        ["referralName", "Referral name"],
+      ];
+      const numericOnlyFields = [
+        ["model", "Model"],
+        ["financeAmount", "Finance amount"],
+        ["emiMonths", "Months"],
+        ["emiAmount", "EMI amount"],
+      ];
       const phoneFields = ["phone", "alternatePhone", "referralPhone", "guarantorPhone", "guarantorAlternatePhone"];
       const aadhaarFields = ["aadhaar", "guarantorAadhaar"];
+
+      const invalidTextField = textOnlyFields.find(([field]) => /\d/.test(form[field] || ""));
+      if (invalidTextField) {
+        showToast({
+          type: "error",
+          title: "Invalid Text",
+          message: `${invalidTextField[1]} should contain only letters`,
+        });
+        return;
+      }
+
+      const invalidNumericField = numericOnlyFields.find(([field]) => form[field] && !/^\d+$/.test(form[field]));
+      if (invalidNumericField) {
+        showToast({
+          type: "error",
+          title: "Invalid Number",
+          message: `${invalidNumericField[1]} should contain only numbers`,
+        });
+        return;
+      }
 
       const invalidPhoneField = phoneFields.find((field) => form[field] && form[field].length !== 10);
       if (invalidPhoneField) {

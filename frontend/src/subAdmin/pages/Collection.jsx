@@ -208,8 +208,7 @@ const withSno = (rows = []) => rows.map((row, index) => ({ ...row, sno: index + 
 function Collection() {
   const navigate = useNavigate()
   const { showToast } = useToast()
-  const storedProfile = readStoredSubAdminProfile()
-  const permissions = storedProfile?.permissions || []
+  const [permissions, setPermissions] = useState(() => readStoredSubAdminProfile().permissions || [])
   const canEditCollection = canEditModule(permissions, 'finance')
 
   // All state declarations first
@@ -234,6 +233,34 @@ function Collection() {
   const [savingEntry, setSavingEntry] = useState(false)
   const bookInputRef = useRef(null)
   const [editFieldsPrompt, setEditFieldsPrompt] = useState({ open: false, bookNo: '', pageNo: '', amount: '', date: '' })
+
+  useEffect(() => {
+    let isMounted = true
+
+    const syncPermissions = async () => {
+      try {
+        const response = await apiClient.get('/api/subadmin/me')
+        const currentPermissions = Array.isArray(response?.data?.data?.permissions)
+          ? response.data.data.permissions
+          : []
+
+        if (isMounted) {
+          setPermissions(currentPermissions)
+        }
+      } catch {
+        if (isMounted) {
+          const storedProfile = readStoredSubAdminProfile()
+          setPermissions(storedProfile?.permissions || [])
+        }
+      }
+    }
+
+    syncPermissions()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   // Print statement ref and handler (must be after financeModal state)
   const statementPrintRef = useRef(null)

@@ -39,6 +39,9 @@ const INITIAL_SELL_FILES = {
   profile: null,
 }
 
+const sanitizeTextOnly = (value) => String(value || '').replace(/[^a-zA-Z\s./()\-]/g, '')
+const sanitizeNumberOnly = (value) => String(value || '').replace(/\D/g, '')
+
 function Sell() {
   const [role, setRole] = useState('seller')
   const [permissions, setPermissions] = useState(() => readStoredSubAdminProfile().permissions || [])
@@ -162,6 +165,18 @@ function Sell() {
     const { name, value } = e.target
     const phoneFields = ['phone', 'alternatePhone', 'referralPhone']
     const aadhaarFields = ['aadhaar']
+    const textOnlyFields = ['fullName', 'soWoCo', 'referralName']
+    const numericOnlyFields = ['model', 'saleAmount']
+
+    if (textOnlyFields.includes(name)) {
+      setForm(prev => ({ ...prev, [name]: sanitizeTextOnly(value) }))
+      return
+    }
+
+    if (numericOnlyFields.includes(name)) {
+      setForm(prev => ({ ...prev, [name]: sanitizeNumberOnly(value) }))
+      return
+    }
 
     if (phoneFields.includes(name)) {
       const digitsOnly = value.replace(/\D/g, '').slice(0, 10)
@@ -215,8 +230,37 @@ function Sell() {
       return
     }
     try {
+      const textOnlyFields = [
+        ['fullName', 'Full name'],
+        ['soWoCo', 'S/O C/O W/O'],
+        ['referralName', 'Referral name'],
+      ]
+      const numericOnlyFields = [
+        ['model', 'Model'],
+        ['saleAmount', 'Sale amount'],
+      ]
       const phoneFields = ['phone', 'alternatePhone', 'referralPhone']
       const aadhaarFields = ['aadhaar']
+
+      const invalidTextField = textOnlyFields.find(([field]) => /\d/.test(form[field] || ''))
+      if (invalidTextField) {
+        showToast({
+          type: 'error',
+          title: 'Invalid Text',
+          message: `${invalidTextField[1]} should contain only letters`,
+        })
+        return
+      }
+
+      const invalidNumericField = numericOnlyFields.find(([field]) => form[field] && !/^\d+$/.test(form[field]))
+      if (invalidNumericField) {
+        showToast({
+          type: 'error',
+          title: 'Invalid Number',
+          message: `${invalidNumericField[1]} should contain only numbers`,
+        })
+        return
+      }
 
       const invalidPhoneField = phoneFields.find((field) => form[field] && form[field].length !== 10)
       if (invalidPhoneField) {

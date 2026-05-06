@@ -107,16 +107,7 @@ function Footer() {
                     <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/>
                   </svg>
                 </a>
-                {/* X (Twitter) */}
-                <a
-                  aria-label="X"
-                  href="#"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-md shrink-0"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M18.244 2H21l-7.5 8.09L22 22h-6.31l-4.95-6.71L5.1 22H2l8.04-9.01L2 2h6.31l4.52 6.02L18.244 2z"/>
-                  </svg>
-                </a>
+                {/* X (Twitter) removed per request */}
                 {/* WhatsApp */}
                 <a
                   aria-label="WhatsApp"

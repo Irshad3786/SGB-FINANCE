@@ -1,9 +1,30 @@
 import React from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 function Logo() {
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const isSubAdminRoute = location?.pathname?.startsWith('/subadmin')
+  const isClickable = !isSubAdminRoute
+
+  const handleNavigateHome = () => {
+    if (!isClickable) return
+    navigate('/')
+  }
+
   return (
     <>
-    <div className='flex gap-1'>
+    <div
+      className={`flex gap-1 ${isClickable ? 'cursor-pointer' : ''}`}
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : -1}
+      onClick={handleNavigateHome}
+      onKeyDown={(e) => {
+        if (!isClickable) return
+        if (e.key === 'Enter' || e.key === ' ') handleNavigateHome()
+      }}
+    >
     <div className='bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] w-12 h-11 border border-[#BFBFBF] rounded-md flex justify-center items-center'>
       <svg
     xmlns="http://www.w3.org/2000/svg"

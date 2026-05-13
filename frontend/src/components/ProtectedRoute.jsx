@@ -26,7 +26,14 @@ const ProtectedRoute = ({
         return;
       }
 
-      if (!isAuthenticated || userType !== 'user' || !accessToken) {
+      // Wait for AuthContext to hydrate from storage.
+      if (isLoading) {
+        return;
+      }
+
+      // For user routes: if we have a token but userType is missing (or stale),
+      // we can still verify via /api/user/me and then persist userType.
+      if (!accessToken) {
         if (isActive) {
           setIsVerified(false);
           setVerificationLoading(false);
@@ -35,14 +42,29 @@ const ProtectedRoute = ({
       }
 
       try {
+        if (isActive) {
+          setVerificationLoading(true);
+        }
         await apiClient.get('/api/user/me');
         if (isActive) {
           setIsVerified(true);
         }
-      } catch {
-        setAuthToken(null, null);
-        if (isActive) {
-          setIsVerified(false);
+        // Ensure userType is present for future refreshes.
+        if (userType !== 'user') {
+          setAuthToken(accessToken, 'user');
+        }
+      } catch (error) {
+        const status = error?.response?.status;
+        // Only clear auth on true auth failures. Network/5xx should not log the user out.
+        if (status === 401 || status === 403) {
+          setAuthToken(null, null);
+          if (isActive) {
+            setIsVerified(false);
+          }
+        } else {
+          if (isActive) {
+            setIsVerified(true);
+          }
         }
       } finally {
         if (isActive) {
@@ -56,7 +78,7 @@ const ProtectedRoute = ({
     return () => {
       isActive = false;
     };
-  }, [accessToken, isAuthenticated, requiredUserType, userType]);
+  }, [accessToken, isAuthenticated, isLoading, requiredUserType, userType]);
 
   // Show loader while checking auth state
   if (isLoading || verificationLoading) {

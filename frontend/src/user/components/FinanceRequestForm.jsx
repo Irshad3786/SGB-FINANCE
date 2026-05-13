@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useToast } from '../../components/ToastProvider'
 import apiClient from '../../api/axios'
 
@@ -10,23 +10,86 @@ const statusPillClass = {
   resolved: 'bg-blue-100 text-blue-800',
 }
 
-function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
+function FinanceRequestForm({ vehicleNumber, chassisNumber, userData }) {
   const { showToast } = useToast()
-  const userData = JSON.parse(sessionStorage.getItem('userData') || '{}')
-  const hasAuthSession = typeof window !== 'undefined' && Boolean(sessionStorage.getItem('authState'))
+  // Privacy: user auth isn't persisted in web storage.
+  // We'll optimistically try the authenticated endpoint and fallback on 401.
+  const hasAuthSession = true
+
+  const [resolvedUserData, setResolvedUserData] = useState(userData || null)
+
+  useEffect(() => {
+    if (userData) {
+      setResolvedUserData(userData)
+    }
+  }, [userData])
+
+  useEffect(() => {
+    let isActive = true
+
+    const loadProfile = async () => {
+      if (resolvedUserData) return
+      try {
+        const response = await apiClient.get('/api/user/me')
+        const profile = response?.data?.data || response?.data || null
+        if (isActive) setResolvedUserData(profile)
+      } catch {
+        // ignore, user might not be authenticated
+      }
+    }
+
+    loadProfile()
+    return () => {
+      isActive = false
+    }
+  }, [resolvedUserData])
+
+  const profile = resolvedUserData || {}
+  const resolvedPhoneNumber = profile?.phoneNumber || profile?.phone || ''
   
   const [formData, setFormData] = useState({
-    name: userData?.username || '',
-    email: userData?.email || '',
-    phoneNumber: userData?.phoneNumber || '',
-    vehicleNumber: vehicleNumber || userData?.vehicleNumber || '',
-    chassisNumber: chassisNumber || userData?.chassisNumber || '',
-    vehicleName: userData?.vehicleName || '',
-    vehicleManufactureYear: userData?.vehicleManufactureYear || '',
+    name: profile?.username || '',
+    email: profile?.email || '',
+    phoneNumber: resolvedPhoneNumber || '',
+    vehicleNumber: vehicleNumber || profile?.vehicleNumber || '',
+    chassisNumber: chassisNumber || profile?.chassisNumber || '',
+    vehicleName: profile?.vehicleName || '',
+    vehicleManufactureYear: profile?.vehicleManufactureYear || '',
     amount: '',
     purpose: 'refinance',
     comments: '',
   })
+
+  // When profile arrives async, prefill missing fields without overwriting user edits.
+  useEffect(() => {
+    if (!resolvedUserData) return
+
+    setFormData((prev) => ({
+      ...prev,
+      name: prev.name || profile?.username || '',
+      email: prev.email || profile?.email || '',
+      phoneNumber: prev.phoneNumber || resolvedPhoneNumber || '',
+      vehicleNumber: prev.vehicleNumber || vehicleNumber || profile?.vehicleNumber || '',
+      chassisNumber: prev.chassisNumber || chassisNumber || profile?.chassisNumber || '',
+      vehicleName: prev.vehicleName || profile?.vehicleName || '',
+      vehicleManufactureYear: prev.vehicleManufactureYear || profile?.vehicleManufactureYear || '',
+    }))
+  }, [resolvedUserData, profile?.username, profile?.email, resolvedPhoneNumber, profile?.vehicleNumber, profile?.chassisNumber, profile?.vehicleName, profile?.vehicleManufactureYear, vehicleNumber, chassisNumber])
+
+  const myPublicIdentifiers = useMemo(() => {
+    const email = formData.email || profile?.email || ''
+    const phoneNumber = formData.phoneNumber || resolvedPhoneNumber || ''
+    const vehicleNumberValue = formData.vehicleNumber || profile?.vehicleNumber || vehicleNumber || ''
+    const chassisNumberValue = formData.chassisNumber || profile?.chassisNumber || chassisNumber || ''
+
+    return {
+      email,
+      phoneNumber,
+      vehicleNumber: vehicleNumberValue,
+      chassisNumber: chassisNumberValue,
+      hasAny: Boolean(email || phoneNumber || vehicleNumberValue || chassisNumberValue),
+    }
+  }, [formData.email, formData.phoneNumber, formData.vehicleNumber, formData.chassisNumber, profile?.email, resolvedPhoneNumber, profile?.vehicleNumber, profile?.chassisNumber, vehicleNumber, chassisNumber])
 
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -47,14 +110,20 @@ function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
 
   const loadMyRequests = useCallback(async () => {
     try {
+      // Prevent 400: backend requires at least one identifier.
+      if (!myPublicIdentifiers.hasAny) {
+        setMyRequests([])
+        return
+      }
+
       const publicParams = {
         type: 'finance',
         page: 1,
         limit: 20,
-        email: formData.email || userData?.email || '',
-        phoneNumber: formData.phoneNumber || userData?.phoneNumber || '',
-        vehicleNumber: formData.vehicleNumber || userData?.vehicleNumber || vehicleNumber || '',
-        chassisNumber: formData.chassisNumber || userData?.chassisNumber || chassisNumber || '',
+        email: myPublicIdentifiers.email,
+        phoneNumber: myPublicIdentifiers.phoneNumber,
+        vehicleNumber: myPublicIdentifiers.vehicleNumber,
+        chassisNumber: myPublicIdentifiers.chassisNumber,
       }
 
       const publicResponse = await apiClient.get('/api/user/requests/my-public', { params: publicParams })
@@ -95,16 +164,7 @@ function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
   }, [
     showToast,
     hasAuthSession,
-    formData.email,
-    formData.phoneNumber,
-    formData.vehicleNumber,
-    formData.chassisNumber,
-    userData?.email,
-    userData?.phoneNumber,
-    userData?.vehicleNumber,
-    userData?.chassisNumber,
-    vehicleNumber,
-    chassisNumber,
+    myPublicIdentifiers,
   ])
 
   useEffect(() => {
@@ -177,13 +237,13 @@ function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
       setTimeout(() => {
         setSubmitted(false)
         setFormData({
-          name: userData?.username || '',
-          email: userData?.email || '',
-          phoneNumber: userData?.phoneNumber || '',
-          vehicleNumber: vehicleNumber || userData?.vehicleNumber || '',
-          chassisNumber: chassisNumber || userData?.chassisNumber || '',
-          vehicleName: userData?.vehicleName || '',
-          vehicleManufactureYear: userData?.vehicleManufactureYear || '',
+          name: profile?.username || '',
+          email: profile?.email || '',
+          phoneNumber: resolvedPhoneNumber || '',
+          vehicleNumber: vehicleNumber || profile?.vehicleNumber || '',
+          chassisNumber: chassisNumber || profile?.chassisNumber || '',
+          vehicleName: profile?.vehicleName || '',
+          vehicleManufactureYear: profile?.vehicleManufactureYear || '',
           amount: '',
           purpose: 'refinance',
           comments: '',

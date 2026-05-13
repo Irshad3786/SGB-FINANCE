@@ -3,6 +3,7 @@ import {
 	registerUser,
 	loginUser,
 	refreshUserToken,
+	logOutUser,
 	getCurrentUser,
 	forgotUserPassword,
 	resetUserPassword,
@@ -24,6 +25,7 @@ const router = express.Router();
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/refresh-User-Token", refreshUserToken);
+router.post("/logOutUser", logOutUser);
 router.post("/forgot-User-Password", forgotUserPassword);
 router.post("/reset-User-Password/:token", resetUserPassword);
 router.post("/finance-by-vehicle", getUserFinanceByVehicle);

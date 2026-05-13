@@ -291,6 +291,48 @@ const refreshUserToken = async (req, res) => {
 	}
 };
 
+const logOutUser = async (req, res) => {
+	try {
+		const incomingRefreshToken = req.cookies?.refreshToken;
+
+		// Best-effort: clear DB refresh token if we can identify the user.
+		if (incomingRefreshToken) {
+			try {
+				const decodedToken = jwt.verify(
+					incomingRefreshToken,
+					process.env.REFRESH_TOKEN_SECRET
+				);
+
+				const user = await User.findById(decodedToken?._id);
+				if (user) {
+					user.refreshToken = null;
+					await user.save({ validateBeforeSave: false });
+				}
+			} catch {
+				// If token is invalid/expired, still proceed to clear cookie.
+			}
+		}
+
+		const isProd = process.env.NODE_ENV === "production";
+		const options = {
+			httpOnly: true,
+			secure: isProd,
+			sameSite: isProd ? "None" : "Lax",
+		};
+
+		return res
+			.status(200)
+			.clearCookie("refreshToken", options)
+			.json({ success: true, message: "Logged out successfully" });
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			message: "Server error while logging out",
+			error: error.message,
+		});
+	}
+};
+
 const forgotUserPassword = async (req, res) => {
 	try {
 		const { email } = req.body;
@@ -837,4 +879,4 @@ const verifyUserOtp = async (req, res) => {
 	}
 };
 
-export { registerUser, loginUser, refreshUserToken, getCurrentUser, forgotUserPassword, resetUserPassword, getUserFinanceByVehicle, sendUserOtp, verifyUserOtp };
+export { registerUser, loginUser, refreshUserToken, logOutUser, getCurrentUser, forgotUserPassword, resetUserPassword, getUserFinanceByVehicle, sendUserOtp, verifyUserOtp };

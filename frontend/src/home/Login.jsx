@@ -60,20 +60,7 @@ function Login() {
         
         }
 
-        // Store user data only for this session
-        if (response.data.data) {
-          sessionStorage.setItem('userData', JSON.stringify(response.data.data));
-        }
-
-        if (role === 'user') {
-          if (response.data.otpSent && response.data.data?.email) {
-            sessionStorage.setItem('userOtpAutoSentAt', String(Date.now()))
-            sessionStorage.setItem('userOtpAutoSentEmail', response.data.data.email.toLowerCase())
-          } else {
-            sessionStorage.removeItem('userOtpAutoSentAt')
-            sessionStorage.removeItem('userOtpAutoSentEmail')
-          }
-        }
+        // Privacy: do not persist user data or OTP metadata in web storage.
 
         // Redirect based on role
         if (role === 'subadmin') {

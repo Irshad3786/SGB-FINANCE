@@ -9,13 +9,20 @@ function UserNavbar({ userData }) {
   const [showVerificationModal, setShowVerificationModal] = useState(false)
   const navigate = useNavigate()
 
-  const handleLogout = () => {
-    setAuthToken(null, null)
-    sessionStorage.removeItem('userType')
-    sessionStorage.removeItem('userData')
-    sessionStorage.removeItem('userOtpAutoSentAt')
-    sessionStorage.removeItem('userOtpAutoSentEmail')
-    navigate('/login')
+  const handleLogout = async () => {
+    try {
+      // Clear httpOnly refresh cookie on backend so /user can't auto-login after logout.
+      await fetch(`${import.meta.env.VITE_BACKEND_APP_API_URL}/api/user/logOutUser`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      })
+    } catch {
+      // Ignore network errors; still clear local in-memory token.
+    } finally {
+      setAuthToken(null, null)
+      navigate('/login')
+    }
   }
 
   return (

@@ -13,10 +13,11 @@ const getStoredAuthState = () => {
   }
 
   try {
-    const rawAuthState = sessionStorage.getItem(AUTH_STORAGE_KEY);
-    if (!rawAuthState) {
-      return { accessToken: null, userType: null };
-    }
+    // Prefer sessionStorage (tab-scoped), fallback to localStorage (persistent).
+    const rawAuthState =
+      sessionStorage.getItem(AUTH_STORAGE_KEY) ||
+      localStorage.getItem(AUTH_STORAGE_KEY);
+    if (!rawAuthState) return { accessToken: null, userType: null };
 
     const parsedAuthState = JSON.parse(rawAuthState);
     return {
@@ -33,15 +34,22 @@ const persistAuthState = (token, type) => {
     return;
   }
 
-  if (!token || !type) {
+  // Privacy: do not persist user sessions in web storage.
+  if (type === 'user') {
     sessionStorage.removeItem(AUTH_STORAGE_KEY);
+    localStorage.removeItem(AUTH_STORAGE_KEY);
     return;
   }
 
-  sessionStorage.setItem(
-    AUTH_STORAGE_KEY,
-    JSON.stringify({ accessToken: token, userType: type })
-  );
+  if (!token || !type) {
+    sessionStorage.removeItem(AUTH_STORAGE_KEY);
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    return;
+  }
+
+  const serialized = JSON.stringify({ accessToken: token, userType: type });
+  sessionStorage.setItem(AUTH_STORAGE_KEY, serialized);
+  localStorage.setItem(AUTH_STORAGE_KEY, serialized);
 };
 
 const initialAuthState = getStoredAuthState();

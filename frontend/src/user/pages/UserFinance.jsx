@@ -23,10 +23,26 @@ const getBalanceClass = (balance) => {
 
 function UserFinance() {
   const navigate = useNavigate()
-  const userData = JSON.parse(sessionStorage.getItem('userData') || '{}')
+  const [userData, setUserData] = useState(null)
 
   const [financeData, setFinanceData] = useState(null)
   const [loading, setLoading] = useState(true)
+
+  // Auto-fetch finance data on page load
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const response = await axiosInstance.get('/api/user/me')
+        const profile = response?.data?.data || response?.data || null
+        setUserData(profile)
+      } catch (error) {
+        console.error('Error loading user profile:', error)
+        setUserData(null)
+      }
+    }
+
+    loadProfile()
+  }, [])
 
   // Auto-fetch finance data on page load
   useEffect(() => {
@@ -223,6 +239,7 @@ function UserFinance() {
               <FinanceRequestForm 
                 vehicleNumber={userData?.vehicleNumber}
                 chassisNumber={userData?.chassisNumber}
+                userData={userData}
               />
             </div>
           )}

@@ -17,64 +17,28 @@ function UserDashboard() {
   const autoOtpSentRef = useRef({})
 
   useEffect(() => {
-    // Get user data from sessionStorage
-    const storedUserData = sessionStorage.getItem('userData')
-    console.log('📋 [Dashboard] Stored userData:', storedUserData)
-    
-    if (storedUserData) {
+    const loadProfile = async () => {
       try {
-        const parsedData = JSON.parse(storedUserData)
-        console.log('📋 [Dashboard] Parsed userData:', parsedData)
-        console.log('✉️ [Dashboard] isEmailVerified status:', parsedData.isEmailVerified)
-        
-        setUserData({
-          ...parsedData,
-          vehicleModel: 'Hero Splendor Plus 2020'
-        })
-        
-        // Check if email verification is needed
-        if (!parsedData.isEmailVerified) {
-          console.warn('⚠️ [Dashboard] Email not verified - showing OTP modal')
-          setShowEmailVerification(true)
-        } else {
-          console.log('✅ [Dashboard] Email already verified')
-          setShowEmailVerification(false)
+        const response = await axiosInstance.get('/api/user/me')
+        const profile = response?.data?.data || response?.data || null
+        if (!profile) {
+          setUserData(null)
+          setLoading(false)
+          return
         }
-        
-        // Auto-fetch finance data
-        fetchFinanceData(parsedData)
-      } catch (err) {
-        console.error('Failed to parse user data:', err)
-        const mockData = {
-          username: 'John Doe',
-          email: 'john@example.com',
-          phoneNumber: '9876543210',
-          vehicleNumber: 'KA-01-AB-1234',
-          chassisNumber: 'ABC123XYZ456',
-          vehicleName: 'Hero Splendor Plus',
-          vehicleManufactureYear: 2020,
-          isEmailVerified: false
-        }
-        setUserData(mockData)
-        setShowEmailVerification(true)
-        fetchFinanceData(mockData)
+
+        setUserData(profile)
+        setShowEmailVerification(!profile.isEmailVerified)
+        fetchFinanceData(profile)
+      } catch (error) {
+        console.error('Failed to load user profile:', error)
+        setUserData(null)
+      } finally {
+        setLoading(false)
       }
-    } else {
-      console.log('❌ [Dashboard] No stored userData found')
-      const mockData = {
-        username: 'John Doe',
-        email: 'john@example.com',
-        phoneNumber: '9876543210',
-        vehicleNumber: 'KA-01-AB-1234',
-        chassisNumber: 'ABC123XYZ456',
-        vehicleName: 'Hero Splendor Plus',
-        vehicleManufactureYear: 2020,
-        isEmailVerified: false
-      }
-      setUserData(mockData)
-      setShowEmailVerification(true)
-      fetchFinanceData(mockData)
     }
+
+    loadProfile()
   }, [])
 
   // Auto send OTP when email verification modal is shown
@@ -85,16 +49,12 @@ function UserDashboard() {
     if (autoOtpSentRef.current[email]) return
     autoOtpSentRef.current[email] = true
 
-    const autoSentEmail = sessionStorage.getItem('userOtpAutoSentEmail')
-    if (autoSentEmail === email) {
-      setOtpError('')
-      setOtpMessage('✅ OTP sent to your email. Please check your inbox.')
-      return
-    }
+    // Privacy: no OTP metadata stored in web storage.
+    setOtpError('')
 
     console.log('Auto-sending OTP to:', email)
     sendOtp(true)
-  }, [showEmailVerification, userData?.email])
+  }, [showEmailVerification, userData?.email, sendingOtp])
 
   useEffect(() => {
     if (!showEmailVerification) return
@@ -211,11 +171,7 @@ function UserDashboard() {
         console.log('📋 [Verify OTP] Updated userData:', updatedUserData)
         
         setUserData(updatedUserData)
-        sessionStorage.setItem('userData', JSON.stringify(updatedUserData))
-        sessionStorage.removeItem('userOtpAutoSentAt')
-        sessionStorage.removeItem('userOtpAutoSentEmail')
-        
-        console.log('💾 [Verify OTP] Saved to sessionStorage:', updatedUserData)
+        console.log('✅ [Verify OTP] Updated in memory:', updatedUserData)
 
         setOtpMessage('Email verified successfully!')
         console.log('✅ [Verify OTP] Email verification successful')

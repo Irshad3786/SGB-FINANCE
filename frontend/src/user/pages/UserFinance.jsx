@@ -23,7 +23,7 @@ const getBalanceClass = (balance) => {
 
 function UserFinance() {
   const navigate = useNavigate()
-  const userData = JSON.parse(localStorage.getItem('userData') || '{}')
+  const userData = JSON.parse(sessionStorage.getItem('userData') || '{}')
 
   const [financeData, setFinanceData] = useState(null)
   const [loading, setLoading] = useState(true)

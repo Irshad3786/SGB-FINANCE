@@ -201,6 +201,35 @@ const loginUser = async (req, res) => {
 	}
 };
 
+const getCurrentUser = async (req, res) => {
+	try {
+		const user = req.user;
+
+		return res.status(200).json({
+			success: true,
+			message: "User session is valid",
+			data: {
+				id: user._id,
+				username: user.username,
+				email: user.email,
+				phoneNumber: user.phoneNumber,
+				vehicleNumber: user.vehicleNumber,
+				vehicleName: user.vehicleName,
+				vehicleManufactureYear: user.vehicleManufactureYear,
+				chassisNumber: user.chassisNumber,
+				isEmailVerified: user.isEmailVerified,
+				role: user.role,
+			},
+		});
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			message: "Server error while fetching user profile",
+			error: error.message,
+		});
+	}
+};
+
 const refreshUserToken = async (req, res) => {
 	const incomingRefreshToken =
 		req.cookies?.refreshToken || req.body.refreshToken;
@@ -808,4 +837,4 @@ const verifyUserOtp = async (req, res) => {
 	}
 };
 
-export { registerUser, loginUser, refreshUserToken, forgotUserPassword, resetUserPassword, getUserFinanceByVehicle, sendUserOtp, verifyUserOtp };
+export { registerUser, loginUser, refreshUserToken, getCurrentUser, forgotUserPassword, resetUserPassword, getUserFinanceByVehicle, sendUserOtp, verifyUserOtp };

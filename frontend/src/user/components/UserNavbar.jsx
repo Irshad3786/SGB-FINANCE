@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import EmailVerificationModal from './EmailVerificationModal'
 import Logo from '../../home/components/Logo'
+import { setAuthToken } from '../../api/axios'
 
 function UserNavbar({ userData }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false)
@@ -9,8 +10,11 @@ function UserNavbar({ userData }) {
   const navigate = useNavigate()
 
   const handleLogout = () => {
-    localStorage.removeItem('userType')
-    localStorage.removeItem('userData')
+    setAuthToken(null, null)
+    sessionStorage.removeItem('userType')
+    sessionStorage.removeItem('userData')
+    sessionStorage.removeItem('userOtpAutoSentAt')
+    sessionStorage.removeItem('userOtpAutoSentEmail')
     navigate('/login')
   }
 

@@ -60,18 +60,18 @@ function Login() {
         
         }
 
-        // Store user data
+        // Store user data only for this session
         if (response.data.data) {
-          localStorage.setItem('userData', JSON.stringify(response.data.data));
+          sessionStorage.setItem('userData', JSON.stringify(response.data.data));
         }
 
         if (role === 'user') {
           if (response.data.otpSent && response.data.data?.email) {
-            localStorage.setItem('userOtpAutoSentAt', String(Date.now()))
-            localStorage.setItem('userOtpAutoSentEmail', response.data.data.email.toLowerCase())
+            sessionStorage.setItem('userOtpAutoSentAt', String(Date.now()))
+            sessionStorage.setItem('userOtpAutoSentEmail', response.data.data.email.toLowerCase())
           } else {
-            localStorage.removeItem('userOtpAutoSentAt')
-            localStorage.removeItem('userOtpAutoSentEmail')
+            sessionStorage.removeItem('userOtpAutoSentAt')
+            sessionStorage.removeItem('userOtpAutoSentEmail')
           }
         }
 

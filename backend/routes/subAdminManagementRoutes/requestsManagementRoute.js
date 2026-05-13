@@ -8,7 +8,10 @@ import { verifySubAdminToken, checkModuleEditPermission } from "../../middleware
 
 const router = express.Router();
 
+// 🔐 Protected read route - SubAdmin must be authenticated
 router.get("/requests", verifySubAdminToken, getAllRequestsForManagement);
+
+// 🔐 Protected write routes - Requires authentication + edit permission for 'requestCenter' module
 router.patch(
   "/requests/:id/status",
   verifySubAdminToken,

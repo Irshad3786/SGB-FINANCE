@@ -31,28 +31,25 @@ import { otpRateLimiter } from "../middlewares/rateLimitMiddleware.js";
 
 const router = express.Router();
 
-// register admin routes
+// 🔐 Public routes - No authentication required
 router.post("/registerAdmin", registerAdmin);
 router.post("/verifyAdminOtp", verifyOtpToken, verifyAdminOtp);
-
-// // login admin routes
-router.post("/loginAdmin",loginAdmin);
-router.post("/verifyAdmin", otpRateLimiter, verifyOtp, verifyAdmin); // 🧠 rate limiter added
-router.post("/resendOtp", otpRateLimiter, verifyOtp, resendAdminOtp); // 🧠 rate limiter added
-// // forgot and reset password routes
+router.post("/loginAdmin", loginAdmin);
+router.post("/verifyAdmin", otpRateLimiter, verifyOtp, verifyAdmin);
+router.post("/resendOtp", otpRateLimiter, verifyOtp, resendAdminOtp);
+router.post("/forgot-Admin-Password", forgotAdminPassword);
+router.post("/reset-Admin-Password/:token", resetAdminPassword);
 router.post("/refresh-Admin-Token", refreshAccessToken);
-router.post("/forgot-Admin-Password",forgotAdminPassword);
-router.post("/reset-Admin-Password/:token",resetAdminPassword);
-router.post("/change-admin-password",verifyAdminToken,changePassword);
 
-// // logout admin route
-router.post("/logOutAdmin",verifyAdminToken,logOutAdmin);
+// 🔐 Protected routes - Authentication required
+router.post("/change-admin-password", verifyAdminToken, changePassword);
+router.post("/logOutAdmin", verifyAdminToken, logOutAdmin);
 
-// created sub-admin management routes
+// 🔐 Protected SubAdmin Management routes
 router.get("/subadmins", verifyAdminToken, getCreatedSubAdmins);
 router.put("/subadmins/:id", verifyAdminToken, updateCreatedSubAdmin);
 
-// district / mandal management routes
+// 🔐 Protected District/Mandal Management routes
 router.get("/district-locations", verifyAdminToken, getDistrictLocations);
 router.get("/district-locations/:district/mandals", verifyAdminToken, getDistrictMandals);
 router.post("/district-locations", verifyAdminToken, createDistrictLocation);

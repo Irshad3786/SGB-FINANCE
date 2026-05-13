@@ -66,13 +66,21 @@ const processQueue = (error, token = null) => {
 
 export const setAuthToken = (token, type = null) => {
   accessToken = token || null;
-  userType = type || userType || null;
+  userType = accessToken ? (type || userType || null) : (type || null);
   if (accessToken) {
     apiClient.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
   } else {
     delete apiClient.defaults.headers.common.Authorization;
   }
   persistAuthState(accessToken, userType);
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("authStateChanged", {
+        detail: { accessToken, userType },
+      })
+    );
+  }
 };
 
 export const setRefreshToken = (token) => {

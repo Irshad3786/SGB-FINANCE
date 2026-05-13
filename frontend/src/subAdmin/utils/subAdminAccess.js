@@ -31,7 +31,7 @@ export function readStoredSubAdminProfile() {
   }
 
   try {
-    const rawUserData = localStorage.getItem(USER_DATA_KEY)
+    const rawUserData = sessionStorage.getItem(USER_DATA_KEY)
     if (!rawUserData) {
       return { name: 'Sub Admin', roleName: '', permissions: [] }
     }

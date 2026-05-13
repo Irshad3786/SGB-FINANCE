@@ -11,22 +11,14 @@ import {
 
 const router = express.Router();
 
-// Create a new ownership transfer
-router.post('/create', verifySubAdminToken, checkModuleEditPermission('ownershipTransfer'), createOwnershipTransfer);
-
-// Get all ownership transfers for the sub-admin
+// 🔐 Protected read routes - SubAdmin must be authenticated
 router.get('/all', verifySubAdminToken, getAllOwnershipTransfers);
-
-// Get ownership transfers by status
 router.get('/status/:status', verifySubAdminToken, getOwnershipTransfersByStatus);
-
-// Get a specific ownership transfer by ID
 router.get('/:id', verifySubAdminToken, getOwnershipTransferById);
 
-// Update an ownership transfer
+// 🔐 Protected write routes - Requires authentication + edit permission for 'ownershipTransfer' module
+router.post('/create', verifySubAdminToken, checkModuleEditPermission('ownershipTransfer'), createOwnershipTransfer);
 router.put('/update/:id', verifySubAdminToken, checkModuleEditPermission('ownershipTransfer'), updateOwnershipTransfer);
-
-// Delete an ownership transfer
 router.delete('/delete/:id', verifySubAdminToken, checkModuleEditPermission('ownershipTransfer'), deleteOwnershipTransfer);
 
 export default router;

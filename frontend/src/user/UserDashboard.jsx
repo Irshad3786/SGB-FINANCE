@@ -17,8 +17,8 @@ function UserDashboard() {
   const autoOtpSentRef = useRef({})
 
   useEffect(() => {
-    // Get user data from localStorage
-    const storedUserData = localStorage.getItem('userData')
+    // Get user data from sessionStorage
+    const storedUserData = sessionStorage.getItem('userData')
     console.log('📋 [Dashboard] Stored userData:', storedUserData)
     
     if (storedUserData) {
@@ -85,7 +85,7 @@ function UserDashboard() {
     if (autoOtpSentRef.current[email]) return
     autoOtpSentRef.current[email] = true
 
-    const autoSentEmail = localStorage.getItem('userOtpAutoSentEmail')
+    const autoSentEmail = sessionStorage.getItem('userOtpAutoSentEmail')
     if (autoSentEmail === email) {
       setOtpError('')
       setOtpMessage('✅ OTP sent to your email. Please check your inbox.')
@@ -211,17 +211,11 @@ function UserDashboard() {
         console.log('📋 [Verify OTP] Updated userData:', updatedUserData)
         
         setUserData(updatedUserData)
-        localStorage.setItem('userData', JSON.stringify(updatedUserData))
-        localStorage.removeItem('userOtpAutoSentAt')
-        localStorage.removeItem('userOtpAutoSentEmail')
+        sessionStorage.setItem('userData', JSON.stringify(updatedUserData))
+        sessionStorage.removeItem('userOtpAutoSentAt')
+        sessionStorage.removeItem('userOtpAutoSentEmail')
         
-        console.log('💾 [Verify OTP] Saved to localStorage:', updatedUserData)
-        
-        // Store tokens
-        if (response.data.accessToken) {
-          localStorage.setItem('accessToken', response.data.accessToken)
-          console.log('🔑 [Verify OTP] Saved access token')
-        }
+        console.log('💾 [Verify OTP] Saved to sessionStorage:', updatedUserData)
 
         setOtpMessage('Email verified successfully!')
         console.log('✅ [Verify OTP] Email verification successful')

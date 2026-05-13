@@ -31,6 +31,7 @@ import UserFinance from './user/pages/UserFinance';
 import EmiCalculator from './home/EmiCalculator';
 import PrivacyPolicy from './home/PrivacyPolicy';
 import Terms from './home/Terms';
+import ProtectedRoute from './components/ProtectedRoute';
 
 
 function App() {
@@ -39,7 +40,7 @@ function App() {
   return (
     <>
      <Routes>
-        {/* Public Pages */}
+        {/* 🔓 Public Pages - No authentication required */}
         <Route path="/" element={<Home/>} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/services" element={<Services />} />
@@ -52,21 +53,51 @@ function App() {
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
 
-        {/* User */}
-        <Route path="/user" element={<UserDashboard/>} />
-        <Route path="/user/finance" element={<UserFinance/>} />
-
-        {/* admin */}
-        <Route path="/admin" element={<Admin/>} /> 
+        {/* 🔓 Admin Public Routes - No authentication required */}
         <Route path="/admin-createaccount" element={<CreateAccountAdmin/>} />
         <Route path="/admin-signin" element={<AdminSignin/>} />
         <Route path="/admin-createaccount-otp" element={<AdminOtpCreateAccount/>} />
         <Route path="/admin-login-otp" element={<AdminOtpLogin/>} />
         <Route path="/admin-forgot-password" element={<AdminForgotPassword/>} />
-        <Route  path="/reset-admin-password/:token" element={<AdminResetPassword/>} />
+        <Route path="/reset-admin-password/:token" element={<AdminResetPassword/>} />
 
-        {/* Subadmin Layout */}
-        <Route path="/subadmin" element={<Subadmin />}>
+        {/* 🔐 Protected User Routes - Authentication required */}
+        <Route 
+          path="/user" 
+          element={
+            <ProtectedRoute requiredUserType="user">
+              <UserDashboard/>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/user/finance" 
+          element={
+            <ProtectedRoute requiredUserType="user">
+              <UserFinance/>
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* 🔐 Protected Admin Routes - Authentication required */}
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedRoute requiredUserType="admin">
+              <Admin/>
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* 🔐 Protected SubAdmin Layout - Authentication required */}
+        <Route 
+          path="/subadmin" 
+          element={
+            <ProtectedRoute requiredUserType="subadmin">
+              <Subadmin />
+            </ProtectedRoute>
+          }
+        >
 
           {/* Right Side Pages  */}
           <Route path="dashboard" element={<Dashboard />} />

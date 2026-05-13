@@ -14,23 +14,19 @@ import { otpRateLimiter } from "../middlewares/rateLimitMiddleware.js";
 
 const router = express.Router();
 
-// Register subAdmin routes (admin creates subAdmin)
+// 🔐 Protected routes - Only admin can create subadmins (requires admin token)
 router.post("/registerSubAdmin", verifyAdminToken, registerSubAdmin);
-router.post("/verifySubAdminOtp", verifySubAdminOtpToken, verifySubAdminOtp);
 
-// Resend OTP route
+// 🔐 Public routes - For subAdmin registration verification
+router.post("/verifySubAdminOtp", verifySubAdminOtpToken, verifySubAdminOtp);
 router.post("/resendOtp", otpRateLimiter, verifySubAdminOtpToken, resendSubAdminOtp);
 
-// Login subAdmin routes (No OTP required)
+// 🔐 Public routes - SubAdmin login
 router.post("/loginSubAdmin", loginSubAdmin);
-
-// Refresh token route
 router.post("/refresh-SubAdmin-Token", refreshSubAdminToken);
 
-// Current profile route
+// 🔐 Protected routes - SubAdmin authenticated operations
 router.get("/me", verifySubAdminToken, getCurrentSubAdmin);
-
-// Logout route
 router.post("/logOutSubAdmin", verifySubAdminToken, logOutSubAdmin);
 
 export default router;

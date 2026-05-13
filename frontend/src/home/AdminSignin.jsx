@@ -15,8 +15,8 @@ function AdminSignin() {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    const rememberedEmail = localStorage.getItem('adminRememberEmail') || ''
-    const remember = localStorage.getItem('adminRememberMe') === 'true'
+    const rememberedEmail = sessionStorage.getItem('adminRememberEmail') || ''
+    const remember = sessionStorage.getItem('adminRememberMe') === 'true'
 
     if (remember && rememberedEmail) {
       setForm(prev => ({ ...prev, email: rememberedEmail, remember: true }))
@@ -52,11 +52,11 @@ function AdminSignin() {
 
       if (typeof window !== 'undefined') {
         if (form.remember) {
-          localStorage.setItem('adminRememberMe', 'true')
-          localStorage.setItem('adminRememberEmail', form.email)
+          sessionStorage.setItem('adminRememberMe', 'true')
+          sessionStorage.setItem('adminRememberEmail', form.email)
         } else {
-          localStorage.removeItem('adminRememberMe')
-          localStorage.removeItem('adminRememberEmail')
+          sessionStorage.removeItem('adminRememberMe')
+          sessionStorage.removeItem('adminRememberEmail')
         }
 
         sessionStorage.setItem('adminPendingOtpToken', receivedOtpToken)

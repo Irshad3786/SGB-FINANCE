@@ -9,7 +9,10 @@ import { verifySubAdminToken, checkModuleEditPermission } from "../../middleware
 
 const router = express.Router();
 
+// 🔐 Protected read route - SubAdmin must be authenticated
 router.get("/pending-payments", verifySubAdminToken, getPendingPayments);
+
+// 🔐 Protected write routes - Requires authentication + edit permission for 'pendingPayments' module
 router.patch(
 	"/pending-payments/:buyerId/amount",
 	verifySubAdminToken,

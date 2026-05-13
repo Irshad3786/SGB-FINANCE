@@ -12,7 +12,7 @@ const statusPillClass = {
 
 function FinanceRequestForm({ vehicleNumber, chassisNumber }) {
   const { showToast } = useToast()
-  const userData = JSON.parse(localStorage.getItem('userData') || '{}')
+  const userData = JSON.parse(sessionStorage.getItem('userData') || '{}')
   const hasAuthSession = typeof window !== 'undefined' && Boolean(sessionStorage.getItem('authState'))
   
   const [formData, setFormData] = useState({

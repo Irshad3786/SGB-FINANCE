@@ -689,12 +689,7 @@ function Admin() {
           setRefreshToken(null)
           setIsLogoutConfirmOpen(false)
           
-          // Clear sessionStorage
-          if (typeof window !== 'undefined') {
-            sessionStorage.removeItem('accessToken')
-            sessionStorage.removeItem('adminOtpVerified')
-            sessionStorage.removeItem('adminPendingOtpToken')
-          }
+          // No client-side storage to clear (tokens are httpOnly cookies + in-memory)
           
           // Redirect to login
           navigate('/admin-signin', { replace: true })
@@ -704,10 +699,7 @@ function Admin() {
           setAuthToken(null)
           setRefreshToken(null)
           setIsLogoutConfirmOpen(false)
-          if (typeof window !== 'undefined') {
-            sessionStorage.removeItem('adminOtpVerified')
-            sessionStorage.removeItem('adminPendingOtpToken')
-          }
+          // No client-side storage to clear
           navigate('/admin-signin', { replace: true })
         }
       }}

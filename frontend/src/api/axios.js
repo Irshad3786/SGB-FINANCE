@@ -5,57 +5,17 @@ const apiClient = axios.create({
   withCredentials: true,
 });
 
-const AUTH_STORAGE_KEY = "authState";
-
-const getStoredAuthState = () => {
-  if (typeof window === "undefined") {
-    return { accessToken: null, userType: null };
-  }
-
-  try {
-    // Prefer sessionStorage (tab-scoped), fallback to localStorage (persistent).
-    const rawAuthState =
-      sessionStorage.getItem(AUTH_STORAGE_KEY) ||
-      localStorage.getItem(AUTH_STORAGE_KEY);
-    if (!rawAuthState) return { accessToken: null, userType: null };
-
-    const parsedAuthState = JSON.parse(rawAuthState);
-    return {
-      accessToken: parsedAuthState?.accessToken || null,
-      userType: parsedAuthState?.userType || null,
-    };
-  } catch {
-    return { accessToken: null, userType: null };
-  }
+// We no longer persist auth state to `localStorage` or `sessionStorage`.
+// Authentication relies on short-lived access tokens stored in-memory
+// and refresh tokens kept as httpOnly, secure cookies on the server.
+const persistAuthState = () => {
+  // intentionally no-op to avoid writing to web storage
 };
 
-const persistAuthState = (token, type) => {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  // Privacy: do not persist user sessions in web storage.
-  if (type === 'user') {
-    sessionStorage.removeItem(AUTH_STORAGE_KEY);
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-    return;
-  }
-
-  if (!token || !type) {
-    sessionStorage.removeItem(AUTH_STORAGE_KEY);
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-    return;
-  }
-
-  const serialized = JSON.stringify({ accessToken: token, userType: type });
-  sessionStorage.setItem(AUTH_STORAGE_KEY, serialized);
-  localStorage.setItem(AUTH_STORAGE_KEY, serialized);
-};
-
-const initialAuthState = getStoredAuthState();
-let accessToken = initialAuthState.accessToken;
+// Start with no persisted client-side state; tokens are in-memory only.
+let accessToken = null;
 let _refreshToken = null;
-let userType = initialAuthState.userType;
+let userType = null;
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -80,7 +40,8 @@ export const setAuthToken = (token, type = null) => {
   } else {
     delete apiClient.defaults.headers.common.Authorization;
   }
-  persistAuthState(accessToken, userType);
+  // don't persist to storage; keep tokens in-memory only
+  persistAuthState();
 
   if (typeof window !== "undefined") {
     window.dispatchEvent(

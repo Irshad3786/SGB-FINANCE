@@ -15,68 +15,58 @@ export const AuthProvider = ({ children }) => {
   });
 
   const syncAuthState = () => {
-    try {
-      // Prefer sessionStorage (tab-scoped), fallback to localStorage (persistent).
-      const storedAuthState =
-        sessionStorage.getItem('authState') || localStorage.getItem('authState');
-      if (storedAuthState) {
-        const parsed = JSON.parse(storedAuthState);
-
-        // Privacy: ignore any persisted user sessions.
-        if (parsed?.userType === 'user') {
-          setAuthState({ accessToken: null, userType: null, isLoading: false });
-          return;
-        }
-
-        setAuthState({
-          accessToken: parsed?.accessToken || null,
-          userType: parsed?.userType || null,
-          isLoading: false,
-        });
-      } else {
-        setAuthState({
-          accessToken: null,
-          userType: null,
-          isLoading: false,
-        });
-      }
-    } catch (error) {
-      console.error('Error parsing auth state:', error);
-      setAuthState({
-        accessToken: null,
-        userType: null,
-        isLoading: false,
-      });
-    }
+    // No-op: we bootstrap from server-side refresh cookie instead.
+    setAuthState((prev) => ({ ...prev, isLoading: true }));
   };
-
   const bootstrapUserSessionFromCookie = async () => {
-    // Only attempt this when on user routes.
+    // Attempt to bootstrap session for admin/subadmin/user based on path.
     if (typeof window === 'undefined') return;
     const path = location?.pathname || window.location.pathname || '/';
-    if (!path.startsWith('/user')) return;
 
-    // If we already have an access token in memory, don't refresh.
-    if (authState.accessToken && authState.userType === 'user') return;
+    // If we already have a token in-memory, don't re-bootstrap.
+    if (authState.accessToken) return;
 
-    try {
-      setAuthState((prev) => ({ ...prev, isLoading: true }));
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_APP_API_URL}/api/user/refresh-User-Token`,
-        {},
-        { withCredentials: true }
-      );
+    setAuthState((prev) => ({ ...prev, isLoading: true }));
 
-      const newAccessToken = response?.data?.accessToken;
-      if (newAccessToken) {
-        // Will update axios default header + dispatch authStateChanged.
-        // This is kept in-memory only for 'user' (no storage persistence).
-        setAuthToken(newAccessToken, 'user');
+    // Try refresh helper
+    const tryRefresh = async (endpoint, type) => {
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_BACKEND_APP_API_URL}${endpoint}`,
+          {},
+          { withCredentials: true }
+        );
+        const newAccessToken = response?.data?.accessToken;
+        if (newAccessToken) {
+          setAuthToken(newAccessToken, type);
+          setAuthState({ accessToken: newAccessToken, userType: type, isLoading: false });
+          return true;
+        }
+      } catch (e) {
+        // ignore and allow other attempts
       }
-    } catch {
-      // Ignore: user might not have a refresh cookie.
-      setAuthState((prev) => ({ ...prev, isLoading: false }));
+      return false;
+    };
+
+    // Try a targeted refresh first
+    if (path.startsWith('/admin')) {
+      const ok = await tryRefresh('/api/admin/refresh-Admin-Token', 'admin');
+      if (ok) return;
+    } else if (path.startsWith('/subadmin')) {
+      const ok = await tryRefresh('/api/subadmin/refresh-SubAdmin-Token', 'subadmin');
+      if (ok) return;
+    } else if (path.startsWith('/user')) {
+      const ok = await tryRefresh('/api/user/refresh-User-Token', 'user');
+      if (ok) return;
     }
+
+    // Fallback: try admin -> subadmin -> user to cover cross-routing cases
+    await tryRefresh('/api/admin/refresh-Admin-Token', 'admin');
+    await tryRefresh('/api/subadmin/refresh-SubAdmin-Token', 'subadmin');
+    await tryRefresh('/api/user/refresh-User-Token', 'user');
+
+    // Nothing succeeded
+    setAuthState({ accessToken: null, userType: null, isLoading: false });
   };
 
   // Initialize auth state from sessionStorage
@@ -101,9 +91,8 @@ export const AuthProvider = ({ children }) => {
         });
         return;
       }
-
-      // Otherwise, fall back to persisted state (admin/subadmin).
-      syncAuthState();
+      // Otherwise, re-bootstrap from server cookie
+      bootstrapUserSessionFromCookie();
     };
 
     window.addEventListener('authStateChanged', handleAuthStateChanged);

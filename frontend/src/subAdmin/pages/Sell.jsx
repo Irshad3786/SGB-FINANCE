@@ -7,6 +7,7 @@ import RefinanceForm from '../components/RefinanceForm'
 import InvoicePreviewModal from '../components/InvoicePreviewModal'
 import { apDistricts, apMandals, fetchLocationLookup, normalizeKey } from '../constants/apLocations'
 import apiClient from '../../api/axios'
+import { uploadApplicationDocument } from '../../api/applicationUploads'
 import { useToast } from '../../components/ToastProvider'
 import { readStoredSubAdminProfile, canEditModule } from '../utils/subAdminAccess'
 
@@ -39,7 +40,7 @@ const INITIAL_SELL_FILES = {
   profile: null,
 }
 
-const sanitizeTextOnly = (value) => String(value || '').replace(/[^a-zA-Z\s./()\-]/g, '')
+const sanitizeTextOnly = (value) => String(value || '').replace(/[^a-zA-Z\s./()-]/g, '')
 const sanitizeNumberOnly = (value) => String(value || '').replace(/\D/g, '')
 
 function Sell() {
@@ -223,6 +224,38 @@ function Sell() {
     setFiles(prev => ({ ...prev, [key]: file }))
   }
 
+  const uploadSelectedDocuments = async () => {
+    const hasAnyFile = Object.values(files).some(Boolean)
+    if (!hasAnyFile) return {}
+
+    const vehicleNumber = String(form.vehicleNo || '').trim()
+    if (!vehicleNumber) throw new Error('Vehicle number is required before uploading documents')
+
+    const uploadTasks = []
+
+    const pushUpload = (file, personType, documentName, payloadField) => {
+      if (!file) return
+      uploadTasks.push(
+        uploadApplicationDocument({
+          vehicleNumber,
+          personType,
+          documentName,
+          file,
+        }).then((result) => ({ payloadField, key: result?.data?.key }))
+      )
+    }
+
+    pushUpload(files.profile, 'seller', 'profile', 'profile')
+    pushUpload(files.aadhaarFront, 'seller', 'aadhaar-front', 'aadharFront')
+    pushUpload(files.aadhaarBack, 'seller', 'aadhaar-back', 'aadharBack')
+
+    const uploaded = await Promise.all(uploadTasks)
+    return uploaded.reduce((acc, item) => {
+      if (item?.key) acc[item.payloadField] = item.key
+      return acc
+    }, {})
+  }
+
   async function onSubmit(e) {
     e.preventDefault()
     if (!canEditAddEntry) {
@@ -282,9 +315,12 @@ function Sell() {
         return
       }
 
+      const uploadedKeys = await uploadSelectedDocuments()
+
       const payload = {
         role,
         ...form,
+        ...uploadedKeys,
       }
 
       const response = await apiClient.post('/api/subadmin/management/save-seller', payload)

@@ -3,6 +3,7 @@ import { useReactToPrint } from 'react-to-print'
 import EditUserModal from '../components/EditUserModal'
 import InvoicePreviewModal from '../components/InvoicePreviewModal'
 import apiClient from '../../api/axios'
+import { getApplicationDocumentSignedUrl } from '../../api/applicationUploads'
 import { useToast } from '../../components/ToastProvider'
 import { canEditModule, readStoredSubAdminProfile } from '../utils/subAdminAccess'
 
@@ -29,6 +30,7 @@ function Users () {
   const [permissions, setPermissions] = useState(() => readStoredSubAdminProfile().permissions || [])
   const canEditUsers = canEditModule(permissions, 'users')
   const [modalUser, setModalUser] = useState(null)
+  const [modalDocUrls, setModalDocUrls] = useState(null)
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -88,6 +90,53 @@ function Users () {
 
     return () => clearTimeout(timeoutId)
   }, [searchInput])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const resolveSignedUrl = async (key) => {
+      if (!key) return null
+      try {
+        const result = await getApplicationDocumentSignedUrl({ key })
+        return result?.data?.url || null
+      } catch {
+        return null
+      }
+    }
+
+    const loadModalDocUrls = async () => {
+      if (!modalUser) {
+        if (isMounted) setModalDocUrls(null)
+        return
+      }
+
+      const keys = {
+        sellerProfileUrl: modalUser.sellerProfileKey,
+        sellerAadhaarFrontUrl: modalUser.sellerAadhaarFrontKey,
+        sellerAadhaarBackUrl: modalUser.sellerAadhaarBackKey,
+        buyerProfileUrl: modalUser.buyerProfileKey,
+        buyerAadhaarFrontUrl: modalUser.buyerAadhaarFrontKey,
+        buyerAadhaarBackUrl: modalUser.buyerAadhaarBackKey,
+        guarantorProfileUrl: modalUser.guarantorProfileKey,
+        guarantorAadhaarFrontUrl: modalUser.guarantorAadhaarFrontKey,
+        guarantorAadhaarBackUrl: modalUser.guarantorAadhaarBackKey,
+      }
+
+      const resolved = await Promise.all(
+        Object.entries(keys).map(async ([field, key]) => [field, await resolveSignedUrl(key)])
+      )
+
+      if (isMounted) {
+        setModalDocUrls(Object.fromEntries(resolved))
+      }
+    }
+
+    loadModalDocUrls()
+
+    return () => {
+      isMounted = false
+    }
+  }, [modalUser])
 
   const fetchUsers = useCallback(async (targetPage) => {
     try {
@@ -680,7 +729,15 @@ function Users () {
                 <div>
                   <h4 className="text-center font-semibold mb-4">Seller</h4>
                   <div className="flex flex-col items-center gap-4">
-                    <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center">IMG</div>
+                    {modalDocUrls?.sellerProfileUrl ? (
+                      <img
+                        src={modalDocUrls.sellerProfileUrl}
+                        alt="Seller"
+                        className="w-28 h-28 rounded-lg object-cover border border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center">IMG</div>
+                    )}
                     <button
                       onClick={buildSellerInvoice}
                       className="w-full px-3 py-2 rounded-lg bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
@@ -702,7 +759,32 @@ function Users () {
                         <div><strong>DOB:</strong> {formatDisplayDate(modalUser.sellerDob)}</div>
                         <div><strong>Phone:</strong> {modalUser.sellerPhone || '-'}</div>
                         <div><strong>Alternative Phone:</strong> {modalUser.sellerAlternatePhone || '-'}</div>
-                        <div className="flex items-center gap-2"><strong>Aadhar No:</strong> <span>{modalUser.sellerAadhaar || '-'}</span> <span className="ml-2 text-xs bg-yellow-100 px-2 py-0.5 rounded">view</span></div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <strong>Aadhar No:</strong>
+                          <span>{modalUser.sellerAadhaar || '-'}</span>
+                          <div className="flex items-center gap-2">
+                            {modalDocUrls?.sellerAadhaarFrontUrl ? (
+                              <a
+                                href={modalDocUrls.sellerAadhaarFrontUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs bg-yellow-100 px-2 py-0.5 rounded"
+                              >
+                                front
+                              </a>
+                            ) : null}
+                            {modalDocUrls?.sellerAadhaarBackUrl ? (
+                              <a
+                                href={modalDocUrls.sellerAadhaarBackUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs bg-yellow-100 px-2 py-0.5 rounded"
+                              >
+                                back
+                              </a>
+                            ) : null}
+                          </div>
+                        </div>
                         <div><strong>Address:</strong> <div className="text-xs text-gray-600">{modalUser.sellerAddress || '-'}</div></div>
                         <div><strong>Buy Amount:</strong> {modalUser.soldAmount}</div>
                       </div>
@@ -717,7 +799,15 @@ function Users () {
                 <div>
                   <h4 className="text-center font-semibold mb-4">Buyer</h4>
                   <div className="flex flex-col items-center gap-4">
-                    <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center">IMG</div>
+                    {modalDocUrls?.buyerProfileUrl ? (
+                      <img
+                        src={modalDocUrls.buyerProfileUrl}
+                        alt="Buyer"
+                        className="w-28 h-28 rounded-lg object-cover border border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center">IMG</div>
+                    )}
                     <button
                       onClick={buildBuyerInvoice}
                       className="w-full px-3 py-2 rounded-lg bg-green-500 text-white text-sm font-medium hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
@@ -739,7 +829,32 @@ function Users () {
                         <div><strong>DOB:</strong> {formatDisplayDate(modalUser.buyerDob)}</div>
                         <div><strong>Phone:</strong> {modalUser.buyerPhone || '-'}</div>
                         <div><strong>Alternative Phone:</strong> {modalUser.buyerAlternatePhone || '-'}</div>
-                        <div className="flex items-center gap-2"><strong>Aadhar No:</strong> <span>{modalUser.buyerAadhaar || '-'}</span> <span className="ml-2 text-xs bg-yellow-100 px-2 py-0.5 rounded">view</span></div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <strong>Aadhar No:</strong>
+                          <span>{modalUser.buyerAadhaar || '-'}</span>
+                          <div className="flex items-center gap-2">
+                            {modalDocUrls?.buyerAadhaarFrontUrl ? (
+                              <a
+                                href={modalDocUrls.buyerAadhaarFrontUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs bg-yellow-100 px-2 py-0.5 rounded"
+                              >
+                                front
+                              </a>
+                            ) : null}
+                            {modalDocUrls?.buyerAadhaarBackUrl ? (
+                              <a
+                                href={modalDocUrls.buyerAadhaarBackUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs bg-yellow-100 px-2 py-0.5 rounded"
+                              >
+                                back
+                              </a>
+                            ) : null}
+                          </div>
+                        </div>
                         <div><strong>Address:</strong> <div className="text-xs text-gray-600">{modalUser.buyerAddress || '-'}</div></div>
                         <div><strong>Sold Amount:</strong> {modalUser.buyAmount || '-'}</div>
                         {/* vehicle details shown above in Vehicle Details */}
@@ -764,7 +879,32 @@ function Users () {
                       <div className="text-sm text-gray-700 space-y-1">
                         <div><strong>Name:</strong> {modalUser.guarantorName || '-'}</div>
                         <div><strong>Phone:</strong> {modalUser.guarantorPhone || '-'}</div>
-                        <div className="flex items-center gap-2"><strong>Aadhar No:</strong> <span>{modalUser.guarantorAadhaar || '-'}</span> <span className="ml-2 text-xs bg-yellow-100 px-2 py-0.5 rounded">view</span></div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <strong>Aadhar No:</strong>
+                          <span>{modalUser.guarantorAadhaar || '-'}</span>
+                          <div className="flex items-center gap-2">
+                            {modalDocUrls?.guarantorAadhaarFrontUrl ? (
+                              <a
+                                href={modalDocUrls.guarantorAadhaarFrontUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs bg-yellow-100 px-2 py-0.5 rounded"
+                              >
+                                front
+                              </a>
+                            ) : null}
+                            {modalDocUrls?.guarantorAadhaarBackUrl ? (
+                              <a
+                                href={modalDocUrls.guarantorAadhaarBackUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs bg-yellow-100 px-2 py-0.5 rounded"
+                              >
+                                back
+                              </a>
+                            ) : null}
+                          </div>
+                        </div>
                         <div><strong>Address:</strong> <div className="text-xs text-gray-600">{modalUser.guarantorAddress || '-'}</div></div>
                       </div>
                     </div>
@@ -785,7 +925,7 @@ function Users () {
           {/* scroll wrapper: top-aligned, no visible scrollbar, allows natural scrolling */}
           <div className="absolute inset-0 flex items-start justify-center overflow-auto no-scrollbar py-8">
             <EditUserModal
-              user={modalUser}
+              user={{ ...modalUser, ...(modalDocUrls || {}) }}
               onSave={handleSave}
               onClose={() => setEditOpen(false)}
             />

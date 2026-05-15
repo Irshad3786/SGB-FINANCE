@@ -68,6 +68,8 @@ const buyerSchema = new mongoose.Schema({
         alternatePhoneNo: String,
         dateOfBirth: Date,
         aadharNo: String,
+        aadharFront: String,
+        aadharBack: String,
         district: String,
         mandal: String,
         address: String,

@@ -5,6 +5,7 @@ import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import WhatsAppConfirmModal from '../components/WhatsAppConfirmModal'
 import apiClient from '../../api/axios'
+import { getApplicationDocumentSignedUrl } from '../../api/applicationUploads'
 import { useToast } from '../../components/ToastProvider'
 import { readStoredSubAdminProfile, canEditModule } from '../utils/subAdminAccess'
 
@@ -224,6 +225,7 @@ function Collection() {
   const [confirmDeleteModal, setConfirmDeleteModal] = useState({ open: false, type: '', row: null })
   const [whatsAppModal, setWhatsAppModal] = useState({ isOpen: false, userName: '' })
   const [financeModal, setFinanceModal] = useState(null)
+  const [financeDocUrls, setFinanceDocUrls] = useState(null)
   const [editableData, setEditableData] = useState([])
   const [loading, setLoading] = useState(false)
   const [selectedRowIndex, setSelectedRowIndex] = useState(0)
@@ -261,6 +263,40 @@ function Collection() {
       isMounted = false
     }
   }, [])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const resolveSignedUrl = async (key) => {
+      if (!key) return null
+      try {
+        const result = await getApplicationDocumentSignedUrl({ key })
+        return result?.data?.url || null
+      } catch {
+        return null
+      }
+    }
+
+    const loadFinanceDocUrls = async () => {
+      if (!financeModal) {
+        if (isMounted) setFinanceDocUrls(null)
+        return
+      }
+
+      const partyPhotoUrl = await resolveSignedUrl(financeModal.partyPhoto)
+      const guarantorPhotoUrl = await resolveSignedUrl(financeModal.guarantorPhoto)
+
+      if (isMounted) {
+        setFinanceDocUrls({ partyPhotoUrl, guarantorPhotoUrl })
+      }
+    }
+
+    loadFinanceDocUrls()
+
+    return () => {
+      isMounted = false
+    }
+  }, [financeModal])
 
   // Print statement ref and handler (must be after financeModal state)
   const statementPrintRef = useRef(null)
@@ -1303,8 +1339,8 @@ function Collection() {
                     </div>
                     <div className="shrink-0 statement-print-hide">
                       <div className="bg-white border-2 border-gray-300 rounded-lg p-3 flex flex-col items-center">
-                        {financeModal.partyPhoto ? (
-                          <img src={financeModal.partyPhoto} alt="Party" className="w-28 h-28 rounded-lg object-cover mb-2" />
+                        {financeDocUrls?.partyPhotoUrl ? (
+                          <img src={financeDocUrls.partyPhotoUrl} alt="Party" className="w-28 h-28 rounded-lg object-cover mb-2" />
                         ) : (
                           <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-2">
                             <span className="text-xs text-gray-500 text-center">Party<br/>Img</span>
@@ -1332,8 +1368,8 @@ function Collection() {
                     </div>
                     <div className="shrink-0 statement-print-hide">
                       <div className="bg-white border-2 border-gray-300 rounded-lg p-3 flex flex-col items-center">
-                        {financeModal.guarantorPhoto ? (
-                          <img src={financeModal.guarantorPhoto} alt="Guarantor" className="w-28 h-28 rounded-lg object-cover mb-2" />
+                        {financeDocUrls?.guarantorPhotoUrl ? (
+                          <img src={financeDocUrls.guarantorPhotoUrl} alt="Guarantor" className="w-28 h-28 rounded-lg object-cover mb-2" />
                         ) : (
                           <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-2">
                             <span className="text-xs text-gray-500 text-center">Guarantor<br/>Img</span>

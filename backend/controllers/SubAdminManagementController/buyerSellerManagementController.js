@@ -1,6 +1,7 @@
 import Buyer from "../../models/buyerModel.js";
 import Seller from "../../models/sellerModel.js";
 import mongoose from "mongoose";
+import { isValidApplicationObjectKey } from "../../utils/s3Keys.js";
 
 const toNumber = (value) => {
   if (value === undefined || value === null || value === "") return undefined;
@@ -132,9 +133,37 @@ const saveBuyerOrSeller = async (req, res) => {
       aadharBack,
       profile,
       guarantorPhoto,
+      guarantorAadharFront,
+      guarantorAadharBack,
+      guarantorAadhaarFront,
+      guarantorAadhaarBack,
       isFinanced,
       mode,
     } = req.body;
+
+    const documentKeyFields = [
+      ["aadharFront", aadharFront],
+      ["aadharBack", aadharBack],
+      ["profile", profile],
+      ["guarantorPhoto", guarantorPhoto],
+      ["guarantorAadharFront", guarantorAadharFront || guarantorAadhaarFront],
+      ["guarantorAadharBack", guarantorAadharBack || guarantorAadhaarBack],
+    ];
+
+    const invalidDocumentKey = documentKeyFields.find(([, value]) => {
+      if (!value) return false;
+      const normalized = String(value).trim();
+      if (!normalized) return false;
+      return !isValidApplicationObjectKey(normalized);
+    });
+
+    if (invalidDocumentKey) {
+      return res.status(400).json({
+        success: false,
+        message: `${invalidDocumentKey[0]} must be a valid S3 object key (applications/{vehicleNumber}/{personType}/{documentName}-{timestamp}.webp)` ,
+        code: "INVALID_DOCUMENT_KEY",
+      });
+    }
 
     if (!role || !["buyer", "seller"].includes(String(role).toLowerCase())) {
       return res.status(400).json({
@@ -404,6 +433,8 @@ const saveBuyerOrSeller = async (req, res) => {
           alternatePhoneNo: guarantorAlternatePhone,
           dateOfBirth: guarantorDob || undefined,
           aadharNo: guarantorAadhaar,
+          aadharFront: guarantorAadharFront || guarantorAadhaarFront,
+          aadharBack: guarantorAadharBack || guarantorAadhaarBack,
           district: resolvedGuarantorDistrict,
           mandal: resolvedGuarantorMandal,
           address: guarantorAddress,

@@ -8,6 +8,7 @@ import RefinanceForm from '../components/RefinanceForm'
 import InvoicePreviewModal from '../components/InvoicePreviewModal'
 import { apDistricts, apMandals, fetchLocationLookup, normalizeKey } from '../constants/apLocations'
 import apiClient from '../../api/axios'
+import { uploadApplicationDocument } from '../../api/applicationUploads'
 import { useToast } from '../../components/ToastProvider'
 import { readStoredSubAdminProfile, canEditModule } from '../utils/subAdminAccess'
 
@@ -59,9 +60,11 @@ const INITIAL_BUY_FILES = {
   aadhaarBack: null,
   profile: null,
   guarantorPhoto: null,
+  guarantorAadharFront: null,
+  guarantorAadharBack: null,
 }
 
-const sanitizeTextOnly = (value) => String(value || '').replace(/[^a-zA-Z\s./()\-]/g, '')
+const sanitizeTextOnly = (value) => String(value || '').replace(/[^a-zA-Z\s./()-]/g, '')
 const sanitizeNumberOnly = (value) => String(value || '').replace(/\D/g, '')
 
 function Buy() {
@@ -359,6 +362,41 @@ function Buy() {
         const file = e.target.files[0] || null
         setFiles(prev => ({ ...prev, [key]: file }))
       }
+
+      const uploadSelectedDocuments = async () => {
+        const hasAnyFile = Object.values(files).some(Boolean)
+        if (!hasAnyFile) return {}
+
+        const vehicleNumber = String(form.vehicleNo || '').trim()
+        if (!vehicleNumber) throw new Error('Vehicle number is required before uploading documents')
+
+        const uploadTasks = []
+
+        const pushUpload = (file, personType, documentName, payloadField) => {
+          if (!file) return
+          uploadTasks.push(
+            uploadApplicationDocument({
+              vehicleNumber,
+              personType,
+              documentName,
+              file,
+            }).then((result) => ({ payloadField, key: result?.data?.key }))
+          )
+        }
+
+        pushUpload(files.profile, 'buyer', 'profile', 'profile')
+        pushUpload(files.aadhaarFront, 'buyer', 'aadhaar-front', 'aadharFront')
+        pushUpload(files.aadhaarBack, 'buyer', 'aadhaar-back', 'aadharBack')
+        pushUpload(files.guarantorPhoto, 'guarantor', 'profile', 'guarantorPhoto')
+        pushUpload(files.guarantorAadharFront, 'guarantor', 'aadhaar-front', 'guarantorAadharFront')
+        pushUpload(files.guarantorAadharBack, 'guarantor', 'aadhaar-back', 'guarantorAadharBack')
+
+        const uploaded = await Promise.all(uploadTasks)
+        return uploaded.reduce((acc, item) => {
+          if (item?.key) acc[item.payloadField] = item.key
+          return acc
+        }, {})
+      }
     
       async function onSubmit(e) {
         e.preventDefault()
@@ -425,10 +463,13 @@ function Buy() {
             return
           }
 
+          const uploadedKeys = await uploadSelectedDocuments()
+
           const payload = {
             role,
             mode: 'buy',
             ...form,
+            ...uploadedKeys,
           }
 
           const response = await apiClient.post('/api/subadmin/management/save-buyer', payload)
@@ -1145,6 +1186,66 @@ function Buy() {
                   onChange={(e) => onFileChange(e, 'guarantorPhoto')}
                 />
               </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                <div>
+                  <label className={labelClass}>Guarantor Aadhaar (Front)</label>
+                  <label className="mt-1 flex items-center gap-3 h-10 px-3 bg-white rounded-full border border-dashed text-sm cursor-pointer">
+                    <span className="flex items-center justify-center w-7 h-7">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="w-5 h-5" fill="none">
+                        <g fill="none" stroke="#a6a6a6" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2">
+                          <path fill="#a6a6a6" fillOpacity="0" strokeDasharray="20" strokeDashoffset="20" d="M12 15h2v-6h2.5l-4.5 -4.5M12 15h-2v-6h-2.5l4.5 -4.5">
+                            <animate attributeName="d" begin="0.5s" dur="1.5s" repeatCount="indefinite" values="M12 15h2v-6h2.5l-4.5 -4.5M12 15h-2v-6h-2.5l4.5 -4.5;M12 15h2v-3h2.5l-4.5 -4.5M12 15h-2v-3h-2.5l4.5 -4.5;M12 15h2v-6h2.5l-4.5 -4.5M12 15h-2v-6h-2.5l4.5 -4.5"/>
+                            <animate fill="freeze" attributeName="fill-opacity" begin="0.7s" dur="0.5s" values="0;1"/>
+                            <animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="20;0"/>
+                          </path>
+                          <path strokeDasharray="14" strokeDashoffset="14" d="M6 19h12">
+                            <animate fill="freeze" attributeName="stroke-dashoffset" begin="0.5s" dur="0.2s" values="14;0"/>
+                          </path>
+                        </g>
+                      </svg>
+                    </span>
+                    <span className="text-gray-500 truncate flex-1">
+                      {files.guarantorAadharFront ? files.guarantorAadharFront.name : 'Upload guarantor aadhaar front'}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      className="hidden"
+                      onChange={(e) => onFileChange(e, 'guarantorAadharFront')}
+                    />
+                  </label>
+                </div>
+
+                <div>
+                  <label className={labelClass}>Guarantor Aadhaar (Back)</label>
+                  <label className="mt-1 flex items-center gap-3 h-10 px-3 bg-white rounded-full border border-dashed text-sm cursor-pointer">
+                    <span className="flex items-center justify-center w-7 h-7">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="w-5 h-5" fill="none">
+                        <g fill="none" stroke="#a6a6a6" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2">
+                          <path fill="#a6a6a6" fillOpacity="0" strokeDasharray="20" strokeDashoffset="20" d="M12 15h2v-6h2.5l-4.5 -4.5M12 15h-2v-6h-2.5l4.5 -4.5">
+                            <animate attributeName="d" begin="0.5s" dur="1.5s" repeatCount="indefinite" values="M12 15h2v-6h2.5l-4.5 -4.5M12 15h-2v-6h-2.5l4.5 -4.5;M12 15h2v-3h2.5l-4.5 -4.5M12 15h-2v-3h-2.5l4.5 -4.5;M12 15h2v-6h2.5l-4.5 -4.5M12 15h-2v-6h-2.5l4.5 -4.5"/>
+                            <animate fill="freeze" attributeName="fill-opacity" begin="0.7s" dur="0.5s" values="0;1"/>
+                            <animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="20;0"/>
+                          </path>
+                          <path strokeDasharray="14" strokeDashoffset="14" d="M6 19h12">
+                            <animate fill="freeze" attributeName="stroke-dashoffset" begin="0.5s" dur="0.2s" values="14;0"/>
+                          </path>
+                        </g>
+                      </svg>
+                    </span>
+                    <span className="text-gray-500 truncate flex-1">
+                      {files.guarantorAadharBack ? files.guarantorAadharBack.name : 'Upload guarantor aadhaar back'}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      className="hidden"
+                      onChange={(e) => onFileChange(e, 'guarantorAadharBack')}
+                    />
+                  </label>
+                </div>
+              </div>
             </>
           )}
 

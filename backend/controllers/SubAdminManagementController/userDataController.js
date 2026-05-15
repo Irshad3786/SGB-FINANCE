@@ -84,11 +84,11 @@ const getUserData = async (req, res) => {
     const shouldApplyDateRange = Boolean(fromDate && toDate);
 
     const sellers = await Seller.find({})
-      .select("fullName sowoco occupation phoneNo alternatePhoneNo aadharNo dateOfBirth district mandal fullAddress vehicle referralName referralPhoneNo")
+      .select("fullName sowoco occupation phoneNo alternatePhoneNo aadharNo dateOfBirth district mandal fullAddress vehicle referralName referralPhoneNo aadharFront aadharBack profile")
       .lean();
 
     const buyers = await Buyer.find({})
-      .select("name sowoco occupation agreementNo phoneNo alternatePhoneNo aadharNo dateOfBirth district mandal fullAddress soldamount oldHAnumber vehicle finance guarantor referralName referralPhoneNo")
+      .select("name sowoco occupation agreementNo phoneNo alternatePhoneNo aadharNo dateOfBirth district mandal fullAddress soldamount oldHAnumber vehicle finance guarantor referralName referralPhoneNo aadharFront aadharBack profile")
       .lean();
 
     const buyerByVehicleOrChassis = new Map();
@@ -162,6 +162,15 @@ const getUserData = async (req, res) => {
           sellerReferencePhone: seller?.referralPhoneNo || "",
           buyerReferenceName: matchedBuyer?.referralName || "",
           buyerReferencePhone: matchedBuyer?.referralPhoneNo || "",
+          sellerProfileKey: seller?.profile || "",
+          sellerAadhaarFrontKey: seller?.aadharFront || "",
+          sellerAadhaarBackKey: seller?.aadharBack || "",
+          buyerProfileKey: matchedBuyer?.profile || "",
+          buyerAadhaarFrontKey: matchedBuyer?.aadharFront || "",
+          buyerAadhaarBackKey: matchedBuyer?.aadharBack || "",
+          guarantorProfileKey: matchedBuyer?.guarantor?.guarantorPhoto || "",
+          guarantorAadhaarFrontKey: matchedBuyer?.guarantor?.aadharFront || "",
+          guarantorAadhaarBackKey: matchedBuyer?.guarantor?.aadharBack || "",
           dob: seller?.dateOfBirth || matchedBuyer?.dateOfBirth || null,
           phone: seller?.phoneNo || matchedBuyer?.phoneNo || "",
           alternatePhone: seller?.alternatePhoneNo || matchedBuyer?.alternatePhoneNo || "",
@@ -230,6 +239,15 @@ const getUserData = async (req, res) => {
           sellerReferencePhone: "",
           buyerReferenceName: buyer?.referralName || "",
           buyerReferencePhone: buyer?.referralPhoneNo || "",
+          sellerProfileKey: "",
+          sellerAadhaarFrontKey: "",
+          sellerAadhaarBackKey: "",
+          buyerProfileKey: buyer?.profile || "",
+          buyerAadhaarFrontKey: buyer?.aadharFront || "",
+          buyerAadhaarBackKey: buyer?.aadharBack || "",
+          guarantorProfileKey: buyer?.guarantor?.guarantorPhoto || "",
+          guarantorAadhaarFrontKey: buyer?.guarantor?.aadharFront || "",
+          guarantorAadhaarBackKey: buyer?.guarantor?.aadharBack || "",
           dob: buyer?.dateOfBirth || null,
           phone: buyer?.phoneNo || "",
           alternatePhone: buyer?.alternatePhoneNo || "",

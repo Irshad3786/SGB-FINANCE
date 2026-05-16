@@ -1,6 +1,7 @@
 import Buyer from "../../models/buyerModel.js";
 import SubAdmin from "../../models/subAdminModel.js";
 import CollectionEntry from "../../models/collectionEntryModel.js";
+import { getSignedImageUrl } from "../../utils/s3Upload.js";
 
 const formatDisplayDate = (value) => {
 	if (!value) return "";
@@ -153,7 +154,7 @@ const resolveTargetEmiIndex = (emiDates = [], paymentDate) => {
 	return emiProgress.findIndex((progressItem) => Number(progressItem?.pendingAmount || 0) > 0);
 };
 
-const mapBuyerToFinanceStatement = (buyer) => {
+const mapBuyerToFinanceStatement = async (buyer) => {
 	const finance = buyer?.finance || {};
 	const vehicle = buyer?.vehicle || {};
 	const guarantor = buyer?.guarantor || {};
@@ -186,6 +187,10 @@ const mapBuyerToFinanceStatement = (buyer) => {
 	const emiMonths = Number(finance?.months || emiSchedule.length || 0);
 	const charges = Math.abs(financeAmount - emiAmount * emiMonths);
 	const totalAmount = financeAmount + charges;
+
+	// Generate signed URLs for images
+	const partyPhotoUrl = await getSignedImageUrl({ key: buyer?.profile });
+	const guarantorPhotoUrl = await getSignedImageUrl({ key: guarantor?.guarantorPhoto });
 
 	return {
 		id: String(buyer?._id),
@@ -224,8 +229,8 @@ const mapBuyerToFinanceStatement = (buyer) => {
 		guarantorAddress: resolvedGuarantorAddress,
 		guarantorDistrict: resolvedGuarantorDistrict,
 		guarantorMandal: resolvedGuarantorMandal,
-		partyPhoto: buyer?.profile || "",
-		guarantorPhoto: guarantor?.guarantorPhoto || "",
+		partyPhoto: partyPhotoUrl,
+		guarantorPhoto: guarantorPhotoUrl,
 		status: finance?.status || "pending",
 	};
 };
@@ -290,7 +295,7 @@ export const getFinanceList = async (req, res) => {
 			.limit(parsedLimit)
 			.lean();
 
-		const data = buyers.map(mapBuyerToFinanceStatement);
+		const data = await Promise.all(buyers.map(mapBuyerToFinanceStatement));
 
 		return res.status(200).json({
 			success: true,
@@ -329,7 +334,7 @@ export const getFinanceStatement = async (req, res) => {
 			});
 		}
 
-		const statement = mapBuyerToFinanceStatement(buyer);
+		const statement = await mapBuyerToFinanceStatement(buyer);
 
 		return res.status(200).json({
 			success: true,

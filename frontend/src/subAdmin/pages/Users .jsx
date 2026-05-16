@@ -3,7 +3,7 @@ import { useReactToPrint } from 'react-to-print'
 import EditUserModal from '../components/EditUserModal'
 import InvoicePreviewModal from '../components/InvoicePreviewModal'
 import apiClient from '../../api/axios'
-import { getApplicationDocumentSignedUrl } from '../../api/applicationUploads'
+import { getApplicationDocumentSignedUrl, uploadApplicationDocument } from '../../api/applicationUploads'
 import { useToast } from '../../components/ToastProvider'
 import { canEditModule, readStoredSubAdminProfile } from '../utils/subAdminAccess'
 
@@ -244,6 +244,9 @@ function Users () {
       buyerProfile: _buyerProfile,
       buyerAadhaarFront: _buyerAadhaarFront,
       buyerAadhaarBack: _buyerAadhaarBack,
+      guarantorPhoto: _guarantorPhoto,
+      guarantorAadhaarFront: _guarantorAadhaarFront,
+      guarantorAadhaarBack: _guarantorAadhaarBack,
       ...editablePayload
     } = updated
 
@@ -253,8 +256,134 @@ function Users () {
       buyerId: modalUser.buyerId || null,
     }
 
+    const preserveCurrentKeys = () => {
+      if (payload.sellerProfileUrl === undefined) payload.sellerProfileUrl = modalUser.sellerProfileKey || undefined
+      if (payload.sellerAadhaarFrontUrl === undefined) payload.sellerAadhaarFrontUrl = modalUser.sellerAadhaarFrontKey || undefined
+      if (payload.sellerAadhaarBackUrl === undefined) payload.sellerAadhaarBackUrl = modalUser.sellerAadhaarBackKey || undefined
+      if (payload.buyerProfileUrl === undefined) payload.buyerProfileUrl = modalUser.buyerProfileKey || undefined
+      if (payload.buyerAadhaarFrontUrl === undefined) payload.buyerAadhaarFrontUrl = modalUser.buyerAadhaarFrontKey || undefined
+      if (payload.buyerAadhaarBackUrl === undefined) payload.buyerAadhaarBackUrl = modalUser.buyerAadhaarBackKey || undefined
+      if (payload.guarantorPhotoUrl === undefined) payload.guarantorPhotoUrl = modalUser.guarantorProfileKey || undefined
+      if (payload.guarantorAadhaarFrontUrl === undefined) payload.guarantorAadhaarFrontUrl = modalUser.guarantorAadhaarFrontKey || undefined
+      if (payload.guarantorAadhaarBackUrl === undefined) payload.guarantorAadhaarBackUrl = modalUser.guarantorAadhaarBackKey || undefined
+    }
+
     try {
       setError(null)
+
+      // Handle file uploads for seller
+      if (_sellerProfile instanceof File) {
+        const uploadResult = await uploadApplicationDocument({
+          vehicleNumber: updated.vehicleNumber || modalUser.vehicleNumber,
+          personType: 'seller',
+          documentName: 'profile',
+          file: _sellerProfile,
+        })
+        if (uploadResult?.data?.key) {
+          payload.sellerProfileUrl = uploadResult.data.key
+        }
+      }
+
+      if (_sellerAadhaarFront instanceof File) {
+        const uploadResult = await uploadApplicationDocument({
+          vehicleNumber: updated.vehicleNumber || modalUser.vehicleNumber,
+          personType: 'seller',
+          documentName: 'aadhar-front',
+          file: _sellerAadhaarFront,
+        })
+        if (uploadResult?.data?.key) {
+          payload.sellerAadhaarFrontUrl = uploadResult.data.key
+        }
+      }
+
+      if (_sellerAadhaarBack instanceof File) {
+        const uploadResult = await uploadApplicationDocument({
+          vehicleNumber: updated.vehicleNumber || modalUser.vehicleNumber,
+          personType: 'seller',
+          documentName: 'aadhar-back',
+          file: _sellerAadhaarBack,
+        })
+        if (uploadResult?.data?.key) {
+          payload.sellerAadhaarBackUrl = uploadResult.data.key
+        }
+      }
+
+      // Handle file uploads for buyer
+      if (_buyerProfile instanceof File) {
+        const uploadResult = await uploadApplicationDocument({
+          vehicleNumber: updated.vehicleNumber || modalUser.vehicleNumber,
+          personType: 'buyer',
+          documentName: 'profile',
+          file: _buyerProfile,
+        })
+        if (uploadResult?.data?.key) {
+          payload.buyerProfileUrl = uploadResult.data.key
+        }
+      }
+
+      if (_buyerAadhaarFront instanceof File) {
+        const uploadResult = await uploadApplicationDocument({
+          vehicleNumber: updated.vehicleNumber || modalUser.vehicleNumber,
+          personType: 'buyer',
+          documentName: 'aadhar-front',
+          file: _buyerAadhaarFront,
+        })
+        if (uploadResult?.data?.key) {
+          payload.buyerAadhaarFrontUrl = uploadResult.data.key
+        }
+      }
+
+      if (_buyerAadhaarBack instanceof File) {
+        const uploadResult = await uploadApplicationDocument({
+          vehicleNumber: updated.vehicleNumber || modalUser.vehicleNumber,
+          personType: 'buyer',
+          documentName: 'aadhar-back',
+          file: _buyerAadhaarBack,
+        })
+        if (uploadResult?.data?.key) {
+          payload.buyerAadhaarBackUrl = uploadResult.data.key
+        }
+      }
+
+      // Handle file uploads for guarantor
+      if (_guarantorPhoto instanceof File) {
+        const uploadResult = await uploadApplicationDocument({
+          vehicleNumber: updated.vehicleNumber || modalUser.vehicleNumber,
+          personType: 'guarantor',
+          documentName: 'profile',
+          file: _guarantorPhoto,
+        })
+        if (uploadResult?.data?.key) {
+          payload.guarantorPhotoUrl = uploadResult.data.key
+        }
+      }
+
+      if (_guarantorAadhaarFront instanceof File) {
+        const uploadResult = await uploadApplicationDocument({
+          vehicleNumber: updated.vehicleNumber || modalUser.vehicleNumber,
+          personType: 'guarantor',
+          documentName: 'aadhar-front',
+          file: _guarantorAadhaarFront,
+        })
+        if (uploadResult?.data?.key) {
+          payload.guarantorAadhaarFrontUrl = uploadResult.data.key
+        }
+      }
+
+      if (_guarantorAadhaarBack instanceof File) {
+        const uploadResult = await uploadApplicationDocument({
+          vehicleNumber: updated.vehicleNumber || modalUser.vehicleNumber,
+          personType: 'guarantor',
+          documentName: 'aadhar-back',
+          file: _guarantorAadhaarBack,
+        })
+        if (uploadResult?.data?.key) {
+          payload.guarantorAadhaarBackUrl = uploadResult.data.key
+        }
+      }
+
+      preserveCurrentKeys()
+
       const response = await apiClient.put('/api/subadmin/management/users', payload)
       setEditOpen(false)
 
@@ -264,6 +393,20 @@ function Users () {
         vehicle: editablePayload.vehicleNumber ?? modalUser.vehicle,
       }
       setModalUser(mergedModalUser)
+        // If files were uploaded, merge their returned keys so modal re-resolves signed URLs
+        const modalWithFiles = {
+          ...mergedModalUser,
+          sellerProfileKey: payload.sellerProfileUrl || mergedModalUser.sellerProfileKey,
+          sellerAadhaarFrontKey: payload.sellerAadhaarFrontUrl || mergedModalUser.sellerAadhaarFrontKey,
+          sellerAadhaarBackKey: payload.sellerAadhaarBackUrl || mergedModalUser.sellerAadhaarBackKey,
+          buyerProfileKey: payload.buyerProfileUrl || mergedModalUser.buyerProfileKey,
+          buyerAadhaarFrontKey: payload.buyerAadhaarFrontUrl || mergedModalUser.buyerAadhaarFrontKey,
+          buyerAadhaarBackKey: payload.buyerAadhaarBackUrl || mergedModalUser.buyerAadhaarBackKey,
+          guarantorProfileKey: payload.guarantorPhotoUrl || mergedModalUser.guarantorProfileKey,
+          guarantorAadhaarFrontKey: payload.guarantorAadhaarFrontUrl || mergedModalUser.guarantorAadhaarFrontKey,
+          guarantorAadhaarBackKey: payload.guarantorAadhaarBackUrl || mergedModalUser.guarantorAadhaarBackKey,
+        }
+        setModalUser(modalWithFiles)
 
       await fetchUsers(page)
       showToast({

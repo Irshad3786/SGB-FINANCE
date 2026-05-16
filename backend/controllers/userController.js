@@ -3,6 +3,7 @@ import User from "../models/userModel.js";
 import Buyer from "../models/buyerModel.js";
 import UserPasswordResetEmail from "../utils/authEmails/sendUserResetPasswordEmail.js";
 import UserOtpVerifyEmail from "../utils/authEmails/userOtpVerification.js";
+import { getSignedImageUrl } from "../utils/s3Upload.js";
 
 const generateAccessAndRefreshToken = async (userId) => {
 	try {
@@ -515,7 +516,7 @@ const mapPaymentEntries = (paymentEntries = []) => {
 	}));
 };
 
-const mapBuyerToFinanceStatement = (buyer) => {
+const mapBuyerToFinanceStatement = async (buyer) => {
 	const finance = buyer?.finance || {};
 	const vehicle = buyer?.vehicle || {};
 	const guarantor = buyer?.guarantor || {};
@@ -532,6 +533,10 @@ const mapBuyerToFinanceStatement = (buyer) => {
 	const emiMonths = Number(finance?.months || emiSchedule.length || 0);
 	const charges = Math.abs(financeAmount - emiAmount * emiMonths);
 	const totalAmount = financeAmount + charges;
+
+	// Generate signed URLs for images
+	const partyPhotoUrl = await getSignedImageUrl({ key: buyer?.profile });
+	const guarantorPhotoUrl = await getSignedImageUrl({ key: guarantor?.guarantorPhoto });
 
 	return {
 		id: String(buyer?._id),
@@ -560,8 +565,8 @@ const mapBuyerToFinanceStatement = (buyer) => {
 		guarantorAge: calculateAge(guarantor?.dateOfBirth),
 		guarantorPhoneNo: guarantor?.phoneNo || "",
 		guarantorAddress: guarantor?.address || "",
-		partyPhoto: buyer?.profile || "",
-		guarantorPhoto: guarantor?.guarantorPhoto || "",
+		partyPhoto: partyPhotoUrl,
+		guarantorPhoto: guarantorPhotoUrl,
 		status: finance?.status || "pending",
 	};
 };
@@ -639,7 +644,7 @@ const getUserFinanceByVehicle = async (req, res) => {
 			});
 		}
 
-		const financeStatement = mapBuyerToFinanceStatement(buyer);
+		const financeStatement = await mapBuyerToFinanceStatement(buyer);
 
 		return res.status(200).json({
 			success: true,

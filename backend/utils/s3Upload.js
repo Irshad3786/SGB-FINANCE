@@ -41,3 +41,23 @@ export const createSignedGetUrl = async ({ key, expiresInSeconds = 300 }) => {
   const url = await getSignedUrl(s3Client, command, { expiresIn: ttl });
   return { url, expiresInSeconds: ttl };
 };
+
+/**
+ * Generates a signed URL for an S3 image key if the key is valid.
+ * Returns the signed URL if key exists, otherwise returns empty string.
+ * @param {string} key - S3 object key
+ * @param {number} expiresInSeconds - URL expiration time (default: 3600 = 1 hour)
+ * @returns {Promise<string>} - Signed URL or empty string
+ */
+export const getSignedImageUrl = async ({ key, expiresInSeconds = 3600 }) => {
+  const normalizedKey = String(key || "").trim();
+  if (!normalizedKey) return "";
+
+  try {
+    const { url } = await createSignedGetUrl({ key: normalizedKey, expiresInSeconds });
+    return url;
+  } catch (error) {
+    console.error(`Failed to generate signed URL for S3 key "${normalizedKey}":`, error.message);
+    return "";
+  }
+};

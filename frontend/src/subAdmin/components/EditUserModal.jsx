@@ -29,57 +29,62 @@ const toDateInputValue = (value) => {
 }
 
 export default function EditUserModal({ user, onSave, onClose }) {
+  const getEmptyForm = (source = null) => ({
+    id: source?.id ?? '',
+    // vehicle
+    vehicleName: source?.vehicleName ?? '',
+    vehicleNumber: source?.vehicle ?? source?.vehicleNumber ?? '',
+    model: source?.model ?? '',
+    chassis: source?.chassis ?? '',
+    // seller
+    seller: source?.seller ?? '',
+    sellerSoWoCo: source?.sellerSoWoCo ?? '',
+    sellerOccupation: source?.sellerOccupation ?? '',
+    sellerPhone: source?.phone ?? source?.sellerPhone ?? '',
+    sellerAlternatePhone: source?.sellerAlternatePhone ?? '',
+    sellerAadhaar: source?.aadhaar ?? source?.sellerAadhaar ?? '',
+    sellerDob: toDateInputValue(source?.sellerDob ?? source?.dob ?? ''),
+    sellerAddress: source?.address ?? source?.sellerAddress ?? '',
+    sellerReferenceName: source?.referenceName ?? source?.sellerReferenceName ?? '',
+    sellerReferencePhone: source?.referencePhone ?? source?.sellerReferencePhone ?? '',
+    soldAmount: source?.soldAmount ?? '',
+    // buyer
+    buyerName: source?.buyerName ?? '',
+    buyerSoWoCo: source?.buyerSoWoCo ?? '',
+    buyerOccupation: source?.buyerOccupation ?? '',
+    buyerPhone: source?.buyerPhone ?? source?.phone ?? '',
+    buyerAlternatePhone: source?.buyerAlternatePhone ?? '',
+    buyerAadhaar: source?.buyerAadhaar ?? source?.aadhaar ?? '',
+    buyerDob: toDateInputValue(source?.buyerDob ?? source?.dob ?? ''),
+    buyerAddress: source?.buyerAddress ?? source?.address ?? '',
+    buyerReferenceName: source?.buyerReferenceName ?? '',
+    buyerReferencePhone: source?.buyerReferencePhone ?? '',
+    buyAmount: source?.buyAmount ?? '',
+    // buyer finance
+    financeAmount: source?.financeAmount ?? '',
+    emiAmount: source?.emiAmount ?? '',
+    emiMonths: source?.emiMonths ?? '',
+    emiDate: toDateInputValue(source?.emiDate ?? ''),
+    agreementNo: source?.agreementNo ?? '',
+    // guarantor
+    guarantorName: source?.guarantorName ?? '',
+    guarantorPhone: source?.guarantorPhone ?? '',
+    guarantorAadhaar: source?.guarantorAadhaar ?? '',
+    guarantorAddress: source?.guarantorAddress ?? '',
+    // files always reset; previews come from URLs below
+    sellerProfile: null,
+    sellerAadhaarFront: null,
+    sellerAadhaarBack: null,
+    buyerProfile: null,
+    buyerAadhaarFront: null,
+    buyerAadhaarBack: null,
+    guarantorPhoto: null,
+    guarantorAadhaarFront: null,
+    guarantorAadhaarBack: null,
+  })
+
   const [form, setForm] = useState(
-    user || {
-      id: '',
-      // vehicle
-      vehicleName: '',
-      vehicleNumber: '',
-      model: '',
-      chassis: '',
-      // seller
-      seller: '',
-      sellerSoWoCo: '',
-      sellerOccupation: '',
-      sellerPhone: '',
-      sellerAlternatePhone: '',
-      sellerAadhaar: '',
-      sellerDob: '',
-      sellerAddress: '',
-      sellerReferenceName: '',
-      sellerReferencePhone: '',
-      soldAmount: '',
-      // buyer
-      buyerName: '',
-      buyerSoWoCo: '',
-      buyerOccupation: '',
-      buyerPhone: '',
-      buyerAlternatePhone: '',
-      buyerAadhaar: '',
-      buyerDob: '',
-      buyerAddress: '',
-      buyerReferenceName: '',
-      buyerReferencePhone: '',
-      buyAmount: '',
-      // buyer finance
-      financeAmount: '',
-      emiAmount: '',
-      emiMonths: '',
-      emiDate: '',
-      agreementNo: '',
-      // guarantor
-      guarantorName: '',
-      guarantorPhone: '',
-      guarantorAadhaar: '',
-      guarantorAddress: '',
-      // files (profile + aadhar)
-      sellerProfile: null,
-      sellerAadhaarFront: null,
-      sellerAadhaarBack: null,
-      buyerProfile: null,
-      buyerAadhaarFront: null,
-      buyerAadhaarBack: null,
-    }
+    getEmptyForm(user)
   )
 
   const [previews, setPreviews] = useState({
@@ -89,60 +94,41 @@ export default function EditUserModal({ user, onSave, onClose }) {
     buyerProfile: null,
     buyerAadhaarFront: null,
     buyerAadhaarBack: null,
+    guarantorPhoto: null,
+    guarantorAadhaarFront: null,
+    guarantorAadhaarBack: null,
+  })
+
+  // File input refs for resetting
+  const fileInputRefs = React.useRef({
+    sellerProfile: null,
+    sellerAadhaarFront: null,
+    sellerAadhaarBack: null,
+    buyerProfile: null,
+    buyerAadhaarFront: null,
+    buyerAadhaarBack: null,
+    guarantorPhoto: null,
+    guarantorAadhaarFront: null,
+    guarantorAadhaarBack: null,
   })
 
   // populate form and previews from incoming user
   useEffect(() => {
     if (user) {
-      setForm(prev => ({
-        ...prev,
-        id: user.id ?? prev.id,
-        vehicleName: user.vehicleName ?? prev.vehicleName,
-        vehicleNumber: user.vehicle ?? prev.vehicleNumber,
-        model: user.model ?? prev.model,
-        chassis: user.chassis ?? prev.chassis,
-        seller: user.seller ?? prev.seller,
-        sellerSoWoCo: user.sellerSoWoCo ?? prev.sellerSoWoCo,
-        sellerOccupation: user.sellerOccupation ?? prev.sellerOccupation,
-        sellerPhone: user.phone ?? prev.sellerPhone,
-        sellerAlternatePhone: user.sellerAlternatePhone ?? user.alternatePhone ?? prev.sellerAlternatePhone,
-        sellerAadhaar: user.aadhaar ?? prev.sellerAadhaar,
-        sellerDob: toDateInputValue(user.sellerDob ?? user.dob ?? prev.sellerDob),
-        sellerAddress: user.address ?? prev.sellerAddress,
-        sellerReferenceName: user.referenceName ?? prev.sellerReferenceName,
-        sellerReferencePhone: user.referencePhone ?? prev.sellerReferencePhone,
-        soldAmount: user.soldAmount ?? prev.soldAmount,
-        buyerName: user.buyerName ?? prev.buyerName,
-        buyerSoWoCo: user.buyerSoWoCo ?? prev.buyerSoWoCo,
-        buyerOccupation: user.buyerOccupation ?? prev.buyerOccupation,
-        buyerPhone: user.buyerPhone ?? user.phone ?? prev.buyerPhone,
-        buyerAlternatePhone: user.buyerAlternatePhone ?? user.alternatePhone ?? prev.buyerAlternatePhone,
-        buyerAadhaar: user.buyerAadhaar ?? user.aadhaar ?? prev.buyerAadhaar,
-        buyerDob: toDateInputValue(user.buyerDob ?? user.dob ?? prev.buyerDob),
-        buyerAddress: user.buyerAddress ?? user.address ?? prev.buyerAddress,
-        buyerReferenceName: user.buyerReferenceName ?? prev.buyerReferenceName,
-        buyerReferencePhone: user.buyerReferencePhone ?? prev.buyerReferencePhone,
-        buyAmount: user.buyAmount ?? prev.buyAmount,
-        financeAmount: user.financeAmount ?? prev.financeAmount,
-        emiAmount: user.emiAmount ?? prev.emiAmount,
-        emiMonths: user.emiMonths ?? prev.emiMonths,
-        emiDate: toDateInputValue(user.emiDate ?? prev.emiDate),
-        agreementNo: user.agreementNo ?? prev.agreementNo,
-        guarantorName: user.guarantorName ?? prev.guarantorName,
-        guarantorPhone: user.guarantorPhone ?? prev.guarantorPhone,
-        guarantorAadhaar: user.guarantorAadhaar ?? prev.guarantorAadhaar,
-        guarantorAddress: user.guarantorAddress ?? prev.guarantorAddress,
-      }))
+      setForm(getEmptyForm(user))
 
       // set previews from urls if available on user object (common keys: profileUrl, sellerProfileUrl, aadhar urls...)
       setPreviews({
-        sellerProfile: user.sellerProfileUrl ?? user.profileUrl ?? null,
-        sellerAadhaarFront: user.sellerAadhaarFrontUrl ?? user.aadhaarFrontUrl ?? null,
-        sellerAadhaarBack: user.sellerAadhaarBackUrl ?? user.aadhaarBackUrl ?? null,
-        buyerProfile: user.buyerProfileUrl ?? null,
-        buyerAadhaarFront: user.buyerAadhaarFrontUrl ?? null,
-        buyerAadhaarBack: user.buyerAadhaarBackUrl ?? null,
-      })
+          sellerProfile: user.sellerProfileUrl ?? user.profileUrl ?? null,
+          sellerAadhaarFront: user.sellerAadhaarFrontUrl ?? user.aadhaarFrontUrl ?? null,
+          sellerAadhaarBack: user.sellerAadhaarBackUrl ?? user.aadhaarBackUrl ?? null,
+          buyerProfile: user.buyerProfileUrl ?? null,
+          buyerAadhaarFront: user.buyerAadhaarFrontUrl ?? null,
+          buyerAadhaarBack: user.buyerAadhaarBackUrl ?? null,
+          guarantorPhoto: user.guarantorProfileUrl ?? user.guarantorPhotoUrl ?? null,
+          guarantorAadhaarFront: user.guarantorAadhaarFrontUrl ?? null,
+          guarantorAadhaarBack: user.guarantorAadhaarBackUrl ?? null,
+        })
     }
     // cleanup not needed here
   }, [user])
@@ -170,7 +156,7 @@ export default function EditUserModal({ user, onSave, onClose }) {
       toRevoke.forEach(u => URL.revokeObjectURL(u))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.sellerProfile, form.sellerAadhaarFront, form.sellerAadhaarBack, form.buyerProfile, form.buyerAadhaarFront, form.buyerAadhaarBack])
+  }, [form.sellerProfile, form.sellerAadhaarFront, form.sellerAadhaarBack, form.buyerProfile, form.buyerAadhaarFront, form.buyerAadhaarBack, form.guarantorPhoto, form.guarantorAadhaarFront, form.guarantorAadhaarBack])
 
   function onChange(e) {
     const { name, value } = e.target
@@ -180,23 +166,45 @@ export default function EditUserModal({ user, onSave, onClose }) {
   function onFileChange(key, e) {
     const file = e.target.files && e.target.files[0] ? e.target.files[0] : null
     setForm(prev => ({ ...prev, [key]: file }))
+    // Reset the input value so the same file can be selected again
+    if (fileInputRefs.current[key]) {
+      fileInputRefs.current[key].value = ''
+    }
     // preview handled in effect
   }
 
   function removeFile(key) {
     setForm(prev => ({ ...prev, [key]: null }))
     setPreviews(prev => ({ ...prev, [key]: null }))
+    // Reset the input value
+    if (fileInputRefs.current[key]) {
+      fileInputRefs.current[key].value = ''
+    }
   }
 
   function save(e) {
     e.preventDefault()
-    const out = { ...form, id: form.id ?? user?.id }
+    // Prepare payload: include only meaningful fields so backend doesn't clear
+    // unchanged values. Keep File instances for uploads; drop empty strings and nulls.
+    const raw = { ...form, id: form.id ?? user?.id }
+    const out = {}
+    Object.keys(raw).forEach((k) => {
+      const v = raw[k]
+      // keep File objects
+      if (v instanceof File) {
+        out[k] = v
+        return
+      }
+      // include non-empty primitives only
+      if (v !== '' && v !== null && v !== undefined) {
+        out[k] = v
+      }
+    })
+
     onSave && onSave(out)
   }
 
   if (!user) return null
-
-  const fileInputClass = 'text-xs text-gray-600'
 
   return (
     // parent renders overlay + scroll wrapper; this is the form container
@@ -206,66 +214,128 @@ export default function EditUserModal({ user, onSave, onClose }) {
         <button type="button" onClick={onClose} className="text-sm px-3 py-1 rounded bg-gray-100">Close</button>
       </div>
 
-      {/* Profile & Aadhar Uploads (Seller + Buyer) */}
+      {/* Profile & Aadhar Uploads (Seller + Buyer + Guarantor) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         {/* Seller uploads */}
         <div className="bg-white rounded-xl p-3 shadow">
           <h5 className="text-sm font-semibold mb-2">Seller Files</h5>
 
-          <div className="flex items-start gap-3">
-            <div className="w-20 h-20 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
-              {previews.sellerProfile ? (
-                <img src={previews.sellerProfile} alt="seller profile" className="object-cover w-full h-full" />
-              ) : (
-                <div className="text-xs text-gray-500">No profile</div>
+          {/* Seller Profile */}
+          <div className="mb-4 pb-4 border-b">
+            <div className="flex items-start gap-3">
+              <div className="w-20 h-20 bg-gray-100 rounded overflow-hidden flex items-center justify-center flex-shrink-0">
+                {previews.sellerProfile ? (
+                  <img src={previews.sellerProfile} alt="seller profile" className="object-cover w-full h-full" />
+                ) : (
+                  <div className="text-xs text-gray-500 text-center">No profile</div>
+                )}
+              </div>
+              <div className="flex-1">
+                <label className="text-xs text-gray-600 font-semibold">Profile Image</label>
+                <div className="flex items-center gap-2 mt-2">
+                  <label className="px-3 py-1 rounded bg-blue-50 border border-blue-200 text-xs cursor-pointer hover:bg-blue-100 transition">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      ref={el => fileInputRefs.current['sellerProfile'] = el}
+                      onChange={(e) => onFileChange('sellerProfile', e)} 
+                    />
+                    📝 Edit
+                  </label>
+                  {previews.sellerProfile && (
+                    <a 
+                      href={previews.sellerProfile} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="px-3 py-1 rounded bg-green-50 border border-green-200 text-xs hover:bg-green-100 transition"
+                    >
+                      ⬇️ Download
+                    </a>
+                  )}
+                  {(form.sellerProfile || previews.sellerProfile) && (
+                    <button 
+                      type="button" 
+                      onClick={() => removeFile('sellerProfile')} 
+                      className="px-3 py-1 rounded bg-red-50 border border-red-200 text-xs hover:bg-red-100 transition"
+                    >
+                      ✕ Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Seller Aadhaar Front */}
+          <div className="mb-4 pb-4 border-b">
+            <label className="text-xs text-gray-600 font-semibold">Aadhaar Front</label>
+            <div className="flex items-center gap-2 mt-2">
+              <label className="px-3 py-1 rounded bg-blue-50 border border-blue-200 text-xs cursor-pointer hover:bg-blue-100 transition">
+                <input 
+                  type="file" 
+                  accept="image/*,.pdf" 
+                  className="hidden" 
+                  ref={el => fileInputRefs.current['sellerAadhaarFront'] = el}
+                  onChange={(e) => onFileChange('sellerAadhaarFront', e)} 
+                />
+                📝 Edit
+              </label>
+              {previews.sellerAadhaarFront && (
+                <a 
+                  href={previews.sellerAadhaarFront} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="px-3 py-1 rounded bg-green-50 border border-green-200 text-xs hover:bg-green-100 transition"
+                >
+                  ⬇️ Download
+                </a>
+              )}
+              {(form.sellerAadhaarFront || previews.sellerAadhaarFront) && (
+                <button 
+                  type="button" 
+                  onClick={() => removeFile('sellerAadhaarFront')} 
+                  className="px-3 py-1 rounded bg-red-50 border border-red-200 text-xs hover:bg-red-100 transition"
+                >
+                  ✕ Remove
+                </button>
               )}
             </div>
-            <div className="flex-1">
-              <label className={fileInputClass}>Profile Image</label>
-              <div className="flex items-center gap-2 mt-1">
-                <label className="px-3 py-1 rounded bg-gray-50 border text-xs cursor-pointer">
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => onFileChange('sellerProfile', e)} />
-                  Choose
-                </label>
-                {form.sellerProfile && <button type="button" onClick={() => removeFile('sellerProfile')} className="text-xs text-red-500">Remove</button>}
-                {!form.sellerProfile && previews.sellerProfile && <button type="button" onClick={() => removeFile('sellerProfile')} className="text-xs text-red-500">Clear</button>}
-              </div>
+          </div>
 
-              <div className="mt-3">
-                <label className={fileInputClass}>Aadhaar Front</label>
-                <div className="flex items-center gap-2 mt-1">
-                  <label className="px-3 py-1 rounded bg-gray-50 border text-xs cursor-pointer">
-                    <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => onFileChange('sellerAadhaarFront', e)} />
-                    Upload
-                  </label>
-                  { (form.sellerAadhaarFront || previews.sellerAadhaarFront) && (
-                    <button type="button" onClick={() => removeFile('sellerAadhaarFront')} className="text-xs text-red-500">Remove</button>
-                  )}
-                </div>
-                {previews.sellerAadhaarFront && (
-                  <div className="mt-2 text-xs text-gray-600">
-                    <a href={previews.sellerAadhaarFront} target="_blank" rel="noreferrer" className="underline">View</a>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-3">
-                <label className={fileInputClass}>Aadhaar Back</label>
-                <div className="flex items-center gap-2 mt-1">
-                  <label className="px-3 py-1 rounded bg-gray-50 border text-xs cursor-pointer">
-                    <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => onFileChange('sellerAadhaarBack', e)} />
-                    Upload
-                  </label>
-                  { (form.sellerAadhaarBack || previews.sellerAadhaarBack) && (
-                    <button type="button" onClick={() => removeFile('sellerAadhaarBack')} className="text-xs text-red-500">Remove</button>
-                  )}
-                </div>
-                {previews.sellerAadhaarBack && (
-                  <div className="mt-2 text-xs text-gray-600">
-                    <a href={previews.sellerAadhaarBack} target="_blank" rel="noreferrer" className="underline">View</a>
-                  </div>
-                )}
-              </div>
+          {/* Seller Aadhaar Back */}
+          <div>
+            <label className="text-xs text-gray-600 font-semibold">Aadhaar Back</label>
+            <div className="flex items-center gap-2 mt-2">
+              <label className="px-3 py-1 rounded bg-blue-50 border border-blue-200 text-xs cursor-pointer hover:bg-blue-100 transition">
+                <input 
+                  type="file" 
+                  accept="image/*,.pdf" 
+                  className="hidden" 
+                  ref={el => fileInputRefs.current['sellerAadhaarBack'] = el}
+                  onChange={(e) => onFileChange('sellerAadhaarBack', e)} 
+                />
+                📝 Edit
+              </label>
+              {previews.sellerAadhaarBack && (
+                <a 
+                  href={previews.sellerAadhaarBack} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="px-3 py-1 rounded bg-green-50 border border-green-200 text-xs hover:bg-green-100 transition"
+                >
+                  ⬇️ Download
+                </a>
+              )}
+              {(form.sellerAadhaarBack || previews.sellerAadhaarBack) && (
+                <button 
+                  type="button" 
+                  onClick={() => removeFile('sellerAadhaarBack')} 
+                  className="px-3 py-1 rounded bg-red-50 border border-red-200 text-xs hover:bg-red-100 transition"
+                >
+                  ✕ Remove
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -274,62 +344,173 @@ export default function EditUserModal({ user, onSave, onClose }) {
         <div className="bg-white rounded-xl p-3 shadow">
           <h5 className="text-sm font-semibold mb-2">Buyer Files</h5>
 
-          <div className="flex items-start gap-3">
-            <div className="w-20 h-20 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
-              {previews.buyerProfile ? (
-                <img src={previews.buyerProfile} alt="buyer profile" className="object-cover w-full h-full" />
-              ) : (
-                <div className="text-xs text-gray-500">No profile</div>
-              )}
-            </div>
-            <div className="flex-1">
-              <label className={fileInputClass}>Profile Image</label>
-              <div className="flex items-center gap-2 mt-1">
-                <label className="px-3 py-1 rounded bg-gray-50 border text-xs cursor-pointer">
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => onFileChange('buyerProfile', e)} />
-                  Choose
-                </label>
-                {form.buyerProfile && <button type="button" onClick={() => removeFile('buyerProfile')} className="text-xs text-red-500">Remove</button>}
-                {!form.buyerProfile && previews.buyerProfile && <button type="button" onClick={() => removeFile('buyerProfile')} className="text-xs text-red-500">Clear</button>}
-              </div>
-
-              <div className="mt-3">
-                <label className={fileInputClass}>Aadhaar Front</label>
-                <div className="flex items-center gap-2 mt-1">
-                  <label className="px-3 py-1 rounded bg-gray-50 border text-xs cursor-pointer">
-                    <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => onFileChange('buyerAadhaarFront', e)} />
-                    Upload
-                  </label>
-                  { (form.buyerAadhaarFront || previews.buyerAadhaarFront) && (
-                    <button type="button" onClick={() => removeFile('buyerAadhaarFront')} className="text-xs text-red-500">Remove</button>
-                  )}
-                </div>
-                {previews.buyerAadhaarFront && (
-                  <div className="mt-2 text-xs text-gray-600">
-                    <a href={previews.buyerAadhaarFront} target="_blank" rel="noreferrer" className="underline">View</a>
-                  </div>
+          {/* Buyer Profile */}
+          <div className="mb-4 pb-4 border-b">
+            <div className="flex items-start gap-3">
+              <div className="w-20 h-20 bg-gray-100 rounded overflow-hidden flex items-center justify-center flex-shrink-0">
+                {previews.buyerProfile ? (
+                  <img src={previews.buyerProfile} alt="buyer profile" className="object-cover w-full h-full" />
+                ) : (
+                  <div className="text-xs text-gray-500 text-center">No profile</div>
                 )}
               </div>
-
-              <div className="mt-3">
-                <label className={fileInputClass}>Aadhaar Back</label>
-                <div className="flex items-center gap-2 mt-1">
-                  <label className="px-3 py-1 rounded bg-gray-50 border text-xs cursor-pointer">
-                    <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => onFileChange('buyerAadhaarBack', e)} />
-                    Upload
+              <div className="flex-1">
+                <label className="text-xs text-gray-600 font-semibold">Profile Image</label>
+                <div className="flex items-center gap-2 mt-2">
+                  <label className="px-3 py-1 rounded bg-blue-50 border border-blue-200 text-xs cursor-pointer hover:bg-blue-100 transition">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      ref={el => fileInputRefs.current['buyerProfile'] = el}
+                      onChange={(e) => onFileChange('buyerProfile', e)} 
+                    />
+                    📝 Edit
                   </label>
-                  { (form.buyerAadhaarBack || previews.buyerAadhaarBack) && (
-                    <button type="button" onClick={() => removeFile('buyerAadhaarBack')} className="text-xs text-red-500">Remove</button>
+                  {previews.buyerProfile && (
+                    <a 
+                      href={previews.buyerProfile} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="px-3 py-1 rounded bg-green-50 border border-green-200 text-xs hover:bg-green-100 transition"
+                    >
+                      ⬇️ Download
+                    </a>
+                  )}
+                  {(form.buyerProfile || previews.buyerProfile) && (
+                    <button 
+                      type="button" 
+                      onClick={() => removeFile('buyerProfile')} 
+                      className="px-3 py-1 rounded bg-red-50 border border-red-200 text-xs hover:bg-red-100 transition"
+                    >
+                      ✕ Remove
+                    </button>
                   )}
                 </div>
-                {previews.buyerAadhaarBack && (
-                  <div className="mt-2 text-xs text-gray-600">
-                    <a href={previews.buyerAadhaarBack} target="_blank" rel="noreferrer" className="underline">View</a>
-                  </div>
-                )}
               </div>
             </div>
           </div>
+
+          {/* Buyer Aadhaar Front */}
+          <div className="mb-4 pb-4 border-b">
+            <label className="text-xs text-gray-600 font-semibold">Aadhaar Front</label>
+            <div className="flex items-center gap-2 mt-2">
+              <label className="px-3 py-1 rounded bg-blue-50 border border-blue-200 text-xs cursor-pointer hover:bg-blue-100 transition">
+                <input 
+                  type="file" 
+                  accept="image/*,.pdf" 
+                  className="hidden" 
+                  ref={el => fileInputRefs.current['buyerAadhaarFront'] = el}
+                  onChange={(e) => onFileChange('buyerAadhaarFront', e)} 
+                />
+                📝 Edit
+              </label>
+              {previews.buyerAadhaarFront && (
+                <a 
+                  href={previews.buyerAadhaarFront} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="px-3 py-1 rounded bg-green-50 border border-green-200 text-xs hover:bg-green-100 transition"
+                >
+                  ⬇️ Download
+                </a>
+              )}
+              {(form.buyerAadhaarFront || previews.buyerAadhaarFront) && (
+                <button 
+                  type="button" 
+                  onClick={() => removeFile('buyerAadhaarFront')} 
+                  className="px-3 py-1 rounded bg-red-50 border border-red-200 text-xs hover:bg-red-100 transition"
+                >
+                  ✕ Remove
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Buyer Aadhaar Back */}
+          <div>
+            <label className="text-xs text-gray-600 font-semibold">Aadhaar Back</label>
+            <div className="flex items-center gap-2 mt-2">
+              <label className="px-3 py-1 rounded bg-blue-50 border border-blue-200 text-xs cursor-pointer hover:bg-blue-100 transition">
+                <input 
+                  type="file" 
+                  accept="image/*,.pdf" 
+                  className="hidden" 
+                  ref={el => fileInputRefs.current['buyerAadhaarBack'] = el}
+                  onChange={(e) => onFileChange('buyerAadhaarBack', e)} 
+                />
+                📝 Edit
+              </label>
+              {previews.buyerAadhaarBack && (
+                <a 
+                  href={previews.buyerAadhaarBack} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="px-3 py-1 rounded bg-green-50 border border-green-200 text-xs hover:bg-green-100 transition"
+                >
+                  ⬇️ Download
+                </a>
+              )}
+              {(form.buyerAadhaarBack || previews.buyerAadhaarBack) && (
+                <button 
+                  type="button" 
+                  onClick={() => removeFile('buyerAadhaarBack')} 
+                  className="px-3 py-1 rounded bg-red-50 border border-red-200 text-xs hover:bg-red-100 transition"
+                >
+                  ✕ Remove
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Guarantor Documents - combined UI */}
+      <div className="mb-4 bg-white rounded-xl p-4 shadow">
+        <h5 className="text-sm font-semibold mb-3">Guarantor Documents</h5>
+        <div className="grid grid-cols-3 gap-4 items-start">
+          {[{
+            key: 'guarantorPhoto',
+            label: 'Photo',
+            preview: previews.guarantorPhoto,
+          }, {
+            key: 'guarantorAadhaarFront',
+            label: 'Aadhar Front',
+            preview: previews.guarantorAadhaarFront,
+          }, {
+            key: 'guarantorAadhaarBack',
+            label: 'Aadhar Back',
+            preview: previews.guarantorAadhaarBack,
+          }].map(item => (
+            <div key={item.key} className="flex flex-col items-center bg-gray-50 p-3 rounded-lg">
+              <div className="w-28 h-28 bg-white rounded overflow-hidden flex items-center justify-center border">
+                {item.preview ? (
+                  <img src={item.preview} alt={item.label} className="object-cover w-full h-full" />
+                ) : (
+                  <div className="text-xs text-gray-500 text-center">No {item.label.toLowerCase()}</div>
+                )}
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <label className="px-3 py-1 rounded bg-blue-50 border border-blue-200 text-xs cursor-pointer hover:bg-blue-100 transition font-semibold">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    ref={el => fileInputRefs.current[item.key] = el}
+                    onChange={(e) => onFileChange(item.key, e)}
+                  />
+                  📝 Edit
+                </label>
+                {item.preview && (
+                  <a href={item.preview} target="_blank" rel="noreferrer" className="px-3 py-1 rounded bg-green-50 border border-green-200 text-xs hover:bg-green-100 transition font-semibold">⬇️</a>
+                )}
+                {(form[item.key] || item.preview) && (
+                  <button type="button" onClick={() => removeFile(item.key)} className="px-3 py-1 rounded bg-red-50 border border-red-200 text-xs hover:bg-red-100 transition font-semibold">✕</button>
+                )}
+              </div>
+              <div className="mt-1 text-xs text-gray-600">{item.label}</div>
+            </div>
+          ))}
         </div>
       </div>
 

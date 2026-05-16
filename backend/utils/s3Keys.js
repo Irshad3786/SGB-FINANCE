@@ -1,8 +1,6 @@
 const PERSON_TYPES = new Set(["buyer", "seller", "guarantor"]);
-const DOCUMENT_NAMES = new Set(["profile", "aadhaar-front", "aadhaar-back"]);
 
 export const isSupportedPersonType = (value) => PERSON_TYPES.has(String(value || "").toLowerCase());
-export const isSupportedDocumentName = (value) => DOCUMENT_NAMES.has(String(value || "").toLowerCase());
 
 export const normalizeVehicleNumber = (value) => {
   const trimmed = String(value || "").trim().toUpperCase();
@@ -18,7 +16,10 @@ export const buildApplicationObjectKey = ({
 }) => {
   const normalizedVehicle = normalizeVehicleNumber(vehicleNumber);
   const normalizedPerson = String(personType || "").toLowerCase();
-  const normalizedDoc = String(documentName || "").toLowerCase();
+  // Allow any documentName but sanitize to a safe token (lowercase, alnum, hyphen, underscore)
+  const normalizedDoc = String(documentName || "").toLowerCase().trim()
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
   if (!normalizedVehicle) {
     throw new Error("vehicleNumber is required");
@@ -26,19 +27,18 @@ export const buildApplicationObjectKey = ({
   if (!isSupportedPersonType(normalizedPerson)) {
     throw new Error("Invalid personType. Allowed: buyer, seller, guarantor");
   }
-  if (!isSupportedDocumentName(normalizedDoc)) {
-    throw new Error("Invalid documentName. Allowed: profile, aadhaar-front, aadhaar-back");
-  }
 
   const safeTimestamp = Number(timestamp);
   if (!Number.isFinite(safeTimestamp) || safeTimestamp <= 0) {
     throw new Error("Invalid timestamp");
   }
 
-  return `applications/${normalizedVehicle}/${normalizedPerson}/${normalizedDoc}-${safeTimestamp}.webp`;
+  const docToken = normalizedDoc || "document";
+  return `applications/${normalizedVehicle}/${normalizedPerson}/${docToken}-${safeTimestamp}.webp`;
 };
 
 export const isValidApplicationObjectKey = (key) => {
   const candidate = String(key || "");
-  return /^applications\/[A-Z0-9]+\/(buyer|seller|guarantor)\/(profile|aadhaar-front|aadhaar-back)-\d+\.webp$/.test(candidate);
+  // Accept sanitized document tokens (lowercase alnum, hyphen, underscore)
+  return /^applications\/[A-Za-z0-9_-]+\/(buyer|seller|guarantor)\/[a-z0-9_-]+-\d+\.webp$/.test(candidate);
 };

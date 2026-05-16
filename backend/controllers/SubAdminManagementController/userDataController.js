@@ -370,7 +370,9 @@ const getUserData = async (req, res) => {
 };
 
 const setIfProvided = (target, key, value, transform) => {
+  // Treat undefined and empty-string as not provided to avoid accidental clearing
   if (value === undefined) return;
+  if (typeof value === 'string' && value.trim() === '') return;
   target[key] = typeof transform === "function" ? transform(value) : value;
 };
 
@@ -451,6 +453,9 @@ const updateUserData = async (req, res) => {
       sellerReferenceName,
       sellerReferencePhone,
       soldAmount,
+      sellerProfileUrl,
+      sellerAadhaarFrontUrl,
+      sellerAadhaarBackUrl,
       buyerName,
       buyerOccupation,
       buyerPhone,
@@ -461,6 +466,9 @@ const updateUserData = async (req, res) => {
       buyerReferenceName,
       buyerReferencePhone,
       buyAmount,
+      buyerProfileUrl,
+      buyerAadhaarFrontUrl,
+      buyerAadhaarBackUrl,
       financeAmount,
       emiAmount,
       emiMonths,
@@ -470,6 +478,9 @@ const updateUserData = async (req, res) => {
       guarantorPhone,
       guarantorAadhaar,
       guarantorAddress,
+      guarantorPhotoUrl,
+      guarantorAadhaarFrontUrl,
+      guarantorAadhaarBackUrl,
     } = req.body || {};
 
     if (!sellerId && !buyerId) {
@@ -519,6 +530,11 @@ const updateUserData = async (req, res) => {
     setIfProvided(sellerSet, "vehicle.chassisNo", chassis);
     setIfProvided(sellerSet, "vehicle.bikePrice", soldAmount, toNullableNumber);
 
+    // File key updates for seller
+    setIfProvided(sellerSet, "profile", sellerProfileUrl);
+    setIfProvided(sellerSet, "aadharFront", sellerAadhaarFrontUrl);
+    setIfProvided(sellerSet, "aadharBack", sellerAadhaarBackUrl);
+
     setIfProvided(buyerSet, "name", buyerName);
     setIfProvided(buyerSet, "occupation", buyerOccupation);
     setIfProvided(buyerSet, "phoneNo", buyerPhone);
@@ -533,6 +549,10 @@ const updateUserData = async (req, res) => {
     setIfProvided(buyerSet, "vehicle.vehicleNumber", normalizedVehicleNumber);
     setIfProvided(buyerSet, "vehicle.model", model);
     setIfProvided(buyerSet, "vehicle.chassisNo", chassis);
+    // File key updates for buyer
+    setIfProvided(buyerSet, "profile", buyerProfileUrl);
+    setIfProvided(buyerSet, "aadharFront", buyerAadhaarFrontUrl);
+    setIfProvided(buyerSet, "aadharBack", buyerAadhaarBackUrl);
     setIfProvided(buyerSet, "finance.financeAmount", financeAmount, toNullableNumber);
     setIfProvided(buyerSet, "finance.emiAmount", emiAmount, toNullableNumber);
     setIfProvided(buyerSet, "finance.months", emiMonths, toNullableNumber);
@@ -543,6 +563,9 @@ const updateUserData = async (req, res) => {
     setIfProvided(buyerSet, "guarantor.phoneNo", guarantorPhone);
     setIfProvided(buyerSet, "guarantor.aadharNo", guarantorAadhaar);
     setIfProvided(buyerSet, "guarantor.address", guarantorAddress);
+    setIfProvided(buyerSet, "guarantor.guarantorPhoto", guarantorPhotoUrl);
+    setIfProvided(buyerSet, "guarantor.aadharFront", guarantorAadhaarFrontUrl);
+    setIfProvided(buyerSet, "guarantor.aadharBack", guarantorAadhaarBackUrl);
 
     const operations = [];
 

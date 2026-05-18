@@ -9,6 +9,7 @@ import { apDistricts, apMandals, fetchLocationLookup, normalizeKey } from '../co
 import apiClient from '../../api/axios'
 import { uploadApplicationDocument } from '../../api/applicationUploads'
 import { useToast } from '../../components/ToastProvider'
+import Loader from '../../components/Loader'
 import { readStoredSubAdminProfile, canEditModule } from '../utils/subAdminAccess'
 
 const INITIAL_SELL_FORM = {
@@ -58,6 +59,8 @@ function Sell() {
   const [districtOptions, setDistrictOptions] = useState(apDistricts)
   const [allMandalOptions, setAllMandalOptions] = useState(apMandals)
   const [mandalsByDistrict, setMandalsByDistrict] = useState({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [uploadingLabel, setUploadingLabel] = useState('')
   const invoiceRef = useRef(null)
 
   const inputBase = 'w-full pl-10 px-3 py-2 rounded-xl border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a] pr-4 text-sm'
@@ -233,21 +236,29 @@ function Sell() {
 
     const uploadTasks = []
 
-    const pushUpload = (file, personType, documentName, payloadField) => {
+    const pushUpload = (file, personType, documentName, payloadField, label) => {
       if (!file) return
       uploadTasks.push(
-        uploadApplicationDocument({
-          vehicleNumber,
-          personType,
-          documentName,
-          file,
-        }).then((result) => ({ payloadField, key: result?.data?.key }))
+        (async () => {
+          setUploadingLabel(label)
+          try {
+            const result = await uploadApplicationDocument({
+              vehicleNumber,
+              personType,
+              documentName,
+              file,
+            })
+            return { payloadField, key: result?.data?.key }
+          } finally {
+            setUploadingLabel('')
+          }
+        })()
       )
     }
 
-    pushUpload(files.profile, 'seller', 'profile', 'profile')
-    pushUpload(files.aadhaarFront, 'seller', 'aadhaar-front', 'aadharFront')
-    pushUpload(files.aadhaarBack, 'seller', 'aadhaar-back', 'aadharBack')
+    pushUpload(files.profile, 'seller', 'profile', 'profile', 'Uploading profile photo...')
+    pushUpload(files.aadhaarFront, 'seller', 'aadhaar-front', 'aadharFront', 'Uploading Aadhaar front...')
+    pushUpload(files.aadhaarBack, 'seller', 'aadhaar-back', 'aadharBack', 'Uploading Aadhaar back...')
 
     const uploaded = await Promise.all(uploadTasks)
     return uploaded.reduce((acc, item) => {
@@ -263,6 +274,7 @@ function Sell() {
       return
     }
     try {
+      setIsSubmitting(true)
       const textOnlyFields = [
         ['fullName', 'Full name'],
         ['soWoCo', 'S/O C/O W/O'],
@@ -341,6 +353,9 @@ function Sell() {
         title: 'Error',
         message: error?.response?.data?.message || 'Failed to save seller'
       })
+    } finally {
+      setIsSubmitting(false)
+      setUploadingLabel('')
     }
   }
 
@@ -349,9 +364,10 @@ function Sell() {
 
   return (
     <div className="min-h-screen flex items-start justify-center py-8 ">
+      {(isSubmitting || uploadingLabel) && <Loader message={isSubmitting ? 'Submitting seller form...' : uploadingLabel} />}
       <form
         onSubmit={onSubmit}
-        className="w-[100%]  max-w-lg bg-[#E0FCED] rounded-2xl p-6  sm:p-8 shadow-lg"
+        className="relative w-[100%]  max-w-lg bg-[#E0FCED] rounded-2xl p-6  sm:p-8 shadow-lg"
       >
         <h2 className="text-center text-2xl font-bold text-[#27563C] mb-6">Add User Details</h2>
 
@@ -820,10 +836,11 @@ function Sell() {
           <div className="mt-6 flex justify-center">
             <button
               type="submit"
-              disabled={!canEditAddEntry}
-              className="px-6 py-2 rounded-full bg-gradient-to-b from-[#bfff3a] to-[#40ff00] font-semibold shadow disabled:opacity-50"
+              disabled={!canEditAddEntry || isSubmitting}
+              className="px-6 py-2 rounded-full bg-gradient-to-b from-[#bfff3a] to-[#40ff00] font-semibold shadow disabled:opacity-50 flex items-center gap-2"
             >
-              Submit
+              {isSubmitting && <span className="h-4 w-4 rounded-full border-2 border-black/30 border-t-black animate-spin" />}
+              {isSubmitting ? 'Submitting...' : 'Submit'}
             </button>
           </div>
         )}

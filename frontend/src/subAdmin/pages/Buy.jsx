@@ -10,6 +10,7 @@ import { apDistricts, apMandals, fetchLocationLookup, normalizeKey } from '../co
 import apiClient from '../../api/axios'
 import { uploadApplicationDocument } from '../../api/applicationUploads'
 import { useToast } from '../../components/ToastProvider'
+import Loader from '../../components/Loader'
 import { readStoredSubAdminProfile, canEditModule } from '../utils/subAdminAccess'
 
 const INITIAL_BUY_FORM = {
@@ -82,6 +83,8 @@ function Buy() {
       const [showInvoicePreview, setShowInvoicePreview] = useState(false)
       const [invoice, setInvoice] = useState(null)
       const [isVehiclePrefillLoading, setIsVehiclePrefillLoading] = useState(false)
+      const [isSubmitting, setIsSubmitting] = useState(false)
+      const [uploadingLabel, setUploadingLabel] = useState('')
       const [districtOptions, setDistrictOptions] = useState(apDistricts)
       const [allMandalOptions, setAllMandalOptions] = useState(apMandals)
       const [mandalsByDistrict, setMandalsByDistrict] = useState({})
@@ -372,24 +375,32 @@ function Buy() {
 
         const uploadTasks = []
 
-        const pushUpload = (file, personType, documentName, payloadField) => {
+        const pushUpload = (file, personType, documentName, payloadField, label) => {
           if (!file) return
           uploadTasks.push(
-            uploadApplicationDocument({
-              vehicleNumber,
-              personType,
-              documentName,
-              file,
-            }).then((result) => ({ payloadField, key: result?.data?.key }))
+            (async () => {
+              setUploadingLabel(label)
+              try {
+                const result = await uploadApplicationDocument({
+                  vehicleNumber,
+                  personType,
+                  documentName,
+                  file,
+                })
+                return { payloadField, key: result?.data?.key }
+              } finally {
+                setUploadingLabel('')
+              }
+            })()
           )
         }
 
-        pushUpload(files.profile, 'buyer', 'profile', 'profile')
-        pushUpload(files.aadhaarFront, 'buyer', 'aadhaar-front', 'aadharFront')
-        pushUpload(files.aadhaarBack, 'buyer', 'aadhaar-back', 'aadharBack')
-        pushUpload(files.guarantorPhoto, 'guarantor', 'profile', 'guarantorPhoto')
-        pushUpload(files.guarantorAadharFront, 'guarantor', 'aadhaar-front', 'guarantorAadharFront')
-        pushUpload(files.guarantorAadharBack, 'guarantor', 'aadhaar-back', 'guarantorAadharBack')
+        pushUpload(files.profile, 'buyer', 'profile', 'profile', 'Uploading buyer profile...')
+        pushUpload(files.aadhaarFront, 'buyer', 'aadhaar-front', 'aadharFront', 'Uploading buyer Aadhaar front...')
+        pushUpload(files.aadhaarBack, 'buyer', 'aadhaar-back', 'aadharBack', 'Uploading buyer Aadhaar back...')
+        pushUpload(files.guarantorPhoto, 'guarantor', 'profile', 'guarantorPhoto', 'Uploading guarantor photo...')
+        pushUpload(files.guarantorAadharFront, 'guarantor', 'aadhaar-front', 'guarantorAadharFront', 'Uploading guarantor Aadhaar front...')
+        pushUpload(files.guarantorAadharBack, 'guarantor', 'aadhaar-back', 'guarantorAadharBack', 'Uploading guarantor Aadhaar back...')
 
         const uploaded = await Promise.all(uploadTasks)
         return uploaded.reduce((acc, item) => {
@@ -405,6 +416,7 @@ function Buy() {
           return
         }
         try {
+          setIsSubmitting(true)
           const textOnlyFields = [
             ['fullName', 'Full name'],
             ['soWoCo', 'S/O C/O W/O'],
@@ -494,6 +506,9 @@ function Buy() {
             title: 'Error',
             message: errorData?.message || 'Failed to save buyer'
           })
+        } finally {
+          setIsSubmitting(false)
+          setUploadingLabel('')
         }
       }
     
@@ -501,9 +516,10 @@ function Buy() {
       const labelClass = "text-sm text-[#27563C] font-semibold"
   return (
     <div className="min-h-screen flex items-start justify-center py-8 ">
+      {(isSubmitting || uploadingLabel) && <Loader message={isSubmitting ? 'Submitting buyer form...' : uploadingLabel} />}
       <form
         onSubmit={onSubmit}
-        className="w-[100%]  max-w-lg bg-[#E0FCED] rounded-2xl p-6  sm:p-8 shadow-lg"
+        className="relative w-[100%]  max-w-lg bg-[#E0FCED] rounded-2xl p-6  sm:p-8 shadow-lg"
       >
         <h2 className="text-center text-2xl font-bold text-[#27563C] mb-6">Add User Details</h2>
 
@@ -1257,10 +1273,11 @@ function Buy() {
           <div className="mt-6 flex justify-center">
             <button
               type="submit"
-              disabled={!canEditAddEntry}
-              className="px-6 py-2 rounded-full bg-gradient-to-b from-[#bfff3a] to-[#40ff00] font-semibold shadow disabled:opacity-50"
+              disabled={!canEditAddEntry || isSubmitting}
+              className="px-6 py-2 rounded-full bg-gradient-to-b from-[#bfff3a] to-[#40ff00] font-semibold shadow disabled:opacity-50 flex items-center gap-2"
             >
-              Submit
+              {isSubmitting && <span className="h-4 w-4 rounded-full border-2 border-black/30 border-t-black animate-spin" />}
+              {isSubmitting ? 'Submitting...' : 'Submit'}
             </button>
           </div>
         )}

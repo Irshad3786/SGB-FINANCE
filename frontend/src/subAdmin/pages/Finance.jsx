@@ -586,7 +586,9 @@ function Finance() {
                   <div className="shrink-0 statement-print-hide">
                     <div className="bg-white border-2 border-gray-300 rounded-lg p-2 sm:p-3 flex flex-col items-center">
                       {modalData.partyPhoto ? (
-                        <img src={modalData.partyPhoto} alt="Party" className="w-20 sm:w-28 h-20 sm:h-28 rounded-lg object-cover mb-2" />
+                        <a href={modalData.partyPhoto} target="_blank" rel="noreferrer" className="mb-2 block">
+                          <img src={modalData.partyPhoto} alt="Party" className="w-20 sm:w-28 h-20 sm:h-28 rounded-lg object-cover cursor-pointer" />
+                        </a>
                       ) : (
                         <div className="w-20 sm:w-28 h-20 sm:h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-2">
                           <span className="text-xs text-gray-500 text-center">Party<br/>Img</span>
@@ -617,7 +619,9 @@ function Finance() {
                   <div className="shrink-0 statement-print-hide">
                     <div className="bg-white border-2 border-gray-300 rounded-lg p-2 sm:p-3 flex flex-col items-center">
                       {modalData.guarantorPhoto ? (
-                        <img src={modalData.guarantorPhoto} alt="Guarantor" className="w-20 sm:w-28 h-20 sm:h-28 rounded-lg object-cover mb-2" />
+                        <a href={modalData.guarantorPhoto} target="_blank" rel="noreferrer" className="mb-2 block">
+                          <img src={modalData.guarantorPhoto} alt="Guarantor" className="w-20 sm:w-28 h-20 sm:h-28 rounded-lg object-cover cursor-pointer" />
+                        </a>
                       ) : (
                         <div className="w-20 sm:w-28 h-20 sm:h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-2">
                           <span className="text-xs text-gray-500 text-center">Guarantor<br/>Img</span>

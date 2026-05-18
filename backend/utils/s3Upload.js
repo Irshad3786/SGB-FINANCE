@@ -1,4 +1,4 @@
-import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { AWS_REGION, S3_BUCKET, s3Client } from "../config/s3.js";
 
@@ -40,6 +40,18 @@ export const createSignedGetUrl = async ({ key, expiresInSeconds = 300 }) => {
 
   const url = await getSignedUrl(s3Client, command, { expiresIn: ttl });
   return { url, expiresInSeconds: ttl };
+};
+
+export const deleteObjectFromS3 = async ({ key }) => {
+  const normalizedKey = String(key || "").trim();
+  if (!normalizedKey) return;
+
+  const command = new DeleteObjectCommand({
+    Bucket: S3_BUCKET,
+    Key: normalizedKey,
+  });
+
+  await s3Client.send(command);
 };
 
 /**

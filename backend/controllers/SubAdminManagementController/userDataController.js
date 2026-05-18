@@ -1,6 +1,8 @@
 import Buyer from "../../models/buyerModel.js";
 import Seller from "../../models/sellerModel.js";
 import mongoose from "mongoose";
+import { isValidApplicationObjectKey } from "../../utils/s3Keys.js";
+import { deleteObjectFromS3 } from "../../utils/s3Upload.js";
 
 const normalizeKey = (value) => {
   if (value === undefined || value === null) return "";
@@ -426,6 +428,54 @@ const buildEmiSchedule = ({ startDate, months, emiAmount, existingSchedule = [] 
   });
 };
 
+const REMOVABLE_IMAGE_FIELDS = [
+  {
+    requestKey: "sellerProfileUrl",
+    owner: "seller",
+    readKey: (doc) => doc?.profile,
+  },
+  {
+    requestKey: "sellerAadhaarFrontUrl",
+    owner: "seller",
+    readKey: (doc) => doc?.aadharFront,
+  },
+  {
+    requestKey: "sellerAadhaarBackUrl",
+    owner: "seller",
+    readKey: (doc) => doc?.aadharBack,
+  },
+  {
+    requestKey: "buyerProfileUrl",
+    owner: "buyer",
+    readKey: (doc) => doc?.profile,
+  },
+  {
+    requestKey: "buyerAadhaarFrontUrl",
+    owner: "buyer",
+    readKey: (doc) => doc?.aadharFront,
+  },
+  {
+    requestKey: "buyerAadhaarBackUrl",
+    owner: "buyer",
+    readKey: (doc) => doc?.aadharBack,
+  },
+  {
+    requestKey: "guarantorPhotoUrl",
+    owner: "buyer",
+    readKey: (doc) => doc?.guarantor?.guarantorPhoto,
+  },
+  {
+    requestKey: "guarantorAadhaarFrontUrl",
+    owner: "buyer",
+    readKey: (doc) => doc?.guarantor?.aadharFront,
+  },
+  {
+    requestKey: "guarantorAadhaarBackUrl",
+    owner: "buyer",
+    readKey: (doc) => doc?.guarantor?.aadharBack,
+  },
+];
+
 const updateUserData = async (req, res) => {
   try {
     if (!canEditModule(req?.subAdmin?.permissions, "users")) {
@@ -493,6 +543,44 @@ const updateUserData = async (req, res) => {
     const normalizedVehicleNumber = vehicleNumber ?? vehicle;
     const normalizedAgreementNo =
       typeof agreementNo === "string" ? agreementNo.trim() : agreementNo;
+
+    const removedImageConfigs = REMOVABLE_IMAGE_FIELDS.filter(({ requestKey }) => {
+      return Object.prototype.hasOwnProperty.call(req.body || {}, requestKey) && req.body[requestKey] === null;
+    });
+
+    if (removedImageConfigs.length > 0) {
+      const needsSellerDoc = removedImageConfigs.some((item) => item.owner === "seller") && sellerId;
+      const needsBuyerDoc = removedImageConfigs.some((item) => item.owner === "buyer") && buyerId;
+
+      const [sellerDoc, buyerDoc] = await Promise.all([
+        needsSellerDoc
+          ? Seller.findById(sellerId).select("profile aadharFront aadharBack").lean()
+          : Promise.resolve(null),
+        needsBuyerDoc
+          ? Buyer.findById(buyerId)
+              .select("profile aadharFront aadharBack guarantor.guarantorPhoto guarantor.aadharFront guarantor.aadharBack")
+              .lean()
+          : Promise.resolve(null),
+      ]);
+
+      const keysToDelete = Array.from(
+        new Set(
+          removedImageConfigs
+            .map((item) => {
+              const sourceDoc = item.owner === "seller" ? sellerDoc : buyerDoc;
+              return item.readKey(sourceDoc);
+            })
+            .filter((value) => {
+              const normalized = String(value || "").trim();
+              return normalized && isValidApplicationObjectKey(normalized);
+            })
+        )
+      );
+
+      if (keysToDelete.length > 0) {
+        await Promise.all(keysToDelete.map((key) => deleteObjectFromS3({ key })));
+      }
+    }
 
     if (buyerId && normalizedAgreementNo) {
       const existingAgreementBuyer = await Buyer.findOne({

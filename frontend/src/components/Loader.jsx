@@ -9,7 +9,7 @@ function Loader({
     <div
       className={
         fullScreen
-          ? 'fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-b from-[#E0FCED]/90 via-white/80 to-white/95 backdrop-blur-sm'
+          ? 'fixed inset-0 z-[10000] flex items-center justify-center bg-gradient-to-b from-[#E0FCED]/90 via-white/80 to-white/95 backdrop-blur-sm'
           : 'flex items-center justify-center'
       }
       role="status"

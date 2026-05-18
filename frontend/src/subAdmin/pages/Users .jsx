@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import EditUserModal from '../components/EditUserModal'
 import InvoicePreviewModal from '../components/InvoicePreviewModal'
+import Loader from '../../components/Loader'
 import apiClient from '../../api/axios'
 import { getApplicationDocumentSignedUrl, uploadApplicationDocument } from '../../api/applicationUploads'
 import { useToast } from '../../components/ToastProvider'
@@ -45,6 +46,8 @@ function Users () {
   const [invoice, setInvoice] = useState(null)
   const [, setInvoiceMode] = useState(null)
   const printInvoiceRef = useRef(null)
+  const [isSavingUser, setIsSavingUser] = useState(false)
+  const [uploadingField, setUploadingField] = useState('')
   const [pagination, setPagination] = useState({
     page: 1,
     limit: PAGE_SIZE,
@@ -247,6 +250,7 @@ function Users () {
       guarantorPhoto: _guarantorPhoto,
       guarantorAadhaarFront: _guarantorAadhaarFront,
       guarantorAadhaarBack: _guarantorAadhaarBack,
+      removedImageFields = [],
       ...editablePayload
     } = updated
 
@@ -254,6 +258,41 @@ function Users () {
       ...editablePayload,
       sellerId: modalUser.sellerId || null,
       buyerId: modalUser.buyerId || null,
+    }
+
+    const uploadDocumentWithState = async ({ field, vehicleNumber, personType, documentName, file }) => {
+      setUploadingField(field)
+      try {
+        return await uploadApplicationDocument({
+          vehicleNumber,
+          personType,
+          documentName,
+          file,
+        })
+      } finally {
+        setUploadingField(currentField => (currentField === field ? '' : currentField))
+      }
+    }
+
+    const removalFieldMap = {
+      sellerProfile: 'sellerProfileUrl',
+      sellerAadhaarFront: 'sellerAadhaarFrontUrl',
+      sellerAadhaarBack: 'sellerAadhaarBackUrl',
+      buyerProfile: 'buyerProfileUrl',
+      buyerAadhaarFront: 'buyerAadhaarFrontUrl',
+      buyerAadhaarBack: 'buyerAadhaarBackUrl',
+      guarantorPhoto: 'guarantorPhotoUrl',
+      guarantorAadhaarFront: 'guarantorAadhaarFrontUrl',
+      guarantorAadhaarBack: 'guarantorAadhaarBackUrl',
+    }
+
+    if (Array.isArray(removedImageFields)) {
+      removedImageFields.forEach((field) => {
+        const payloadKey = removalFieldMap[field]
+        if (payloadKey) {
+          payload[payloadKey] = null
+        }
+      })
     }
 
     const preserveCurrentKeys = () => {
@@ -269,11 +308,13 @@ function Users () {
     }
 
     try {
+      setIsSavingUser(true)
       setError(null)
 
       // Handle file uploads for seller
       if (_sellerProfile instanceof File) {
-        const uploadResult = await uploadApplicationDocument({
+        const uploadResult = await uploadDocumentWithState({
+          field: 'sellerProfile',
           vehicleNumber: updated.vehicleNumber || modalUser.vehicleNumber,
           personType: 'seller',
           documentName: 'profile',
@@ -285,7 +326,8 @@ function Users () {
       }
 
       if (_sellerAadhaarFront instanceof File) {
-        const uploadResult = await uploadApplicationDocument({
+        const uploadResult = await uploadDocumentWithState({
+          field: 'sellerAadhaarFront',
           vehicleNumber: updated.vehicleNumber || modalUser.vehicleNumber,
           personType: 'seller',
           documentName: 'aadhar-front',
@@ -297,7 +339,8 @@ function Users () {
       }
 
       if (_sellerAadhaarBack instanceof File) {
-        const uploadResult = await uploadApplicationDocument({
+        const uploadResult = await uploadDocumentWithState({
+          field: 'sellerAadhaarBack',
           vehicleNumber: updated.vehicleNumber || modalUser.vehicleNumber,
           personType: 'seller',
           documentName: 'aadhar-back',
@@ -310,7 +353,8 @@ function Users () {
 
       // Handle file uploads for buyer
       if (_buyerProfile instanceof File) {
-        const uploadResult = await uploadApplicationDocument({
+        const uploadResult = await uploadDocumentWithState({
+          field: 'buyerProfile',
           vehicleNumber: updated.vehicleNumber || modalUser.vehicleNumber,
           personType: 'buyer',
           documentName: 'profile',
@@ -322,7 +366,8 @@ function Users () {
       }
 
       if (_buyerAadhaarFront instanceof File) {
-        const uploadResult = await uploadApplicationDocument({
+        const uploadResult = await uploadDocumentWithState({
+          field: 'buyerAadhaarFront',
           vehicleNumber: updated.vehicleNumber || modalUser.vehicleNumber,
           personType: 'buyer',
           documentName: 'aadhar-front',
@@ -334,7 +379,8 @@ function Users () {
       }
 
       if (_buyerAadhaarBack instanceof File) {
-        const uploadResult = await uploadApplicationDocument({
+        const uploadResult = await uploadDocumentWithState({
+          field: 'buyerAadhaarBack',
           vehicleNumber: updated.vehicleNumber || modalUser.vehicleNumber,
           personType: 'buyer',
           documentName: 'aadhar-back',
@@ -347,7 +393,8 @@ function Users () {
 
       // Handle file uploads for guarantor
       if (_guarantorPhoto instanceof File) {
-        const uploadResult = await uploadApplicationDocument({
+        const uploadResult = await uploadDocumentWithState({
+          field: 'guarantorPhoto',
           vehicleNumber: updated.vehicleNumber || modalUser.vehicleNumber,
           personType: 'guarantor',
           documentName: 'profile',
@@ -359,7 +406,8 @@ function Users () {
       }
 
       if (_guarantorAadhaarFront instanceof File) {
-        const uploadResult = await uploadApplicationDocument({
+        const uploadResult = await uploadDocumentWithState({
+          field: 'guarantorAadhaarFront',
           vehicleNumber: updated.vehicleNumber || modalUser.vehicleNumber,
           personType: 'guarantor',
           documentName: 'aadhar-front',
@@ -371,7 +419,8 @@ function Users () {
       }
 
       if (_guarantorAadhaarBack instanceof File) {
-        const uploadResult = await uploadApplicationDocument({
+        const uploadResult = await uploadDocumentWithState({
+          field: 'guarantorAadhaarBack',
           vehicleNumber: updated.vehicleNumber || modalUser.vehicleNumber,
           personType: 'guarantor',
           documentName: 'aadhar-back',
@@ -396,15 +445,15 @@ function Users () {
         // If files were uploaded, merge their returned keys so modal re-resolves signed URLs
         const modalWithFiles = {
           ...mergedModalUser,
-          sellerProfileKey: payload.sellerProfileUrl || mergedModalUser.sellerProfileKey,
-          sellerAadhaarFrontKey: payload.sellerAadhaarFrontUrl || mergedModalUser.sellerAadhaarFrontKey,
-          sellerAadhaarBackKey: payload.sellerAadhaarBackUrl || mergedModalUser.sellerAadhaarBackKey,
-          buyerProfileKey: payload.buyerProfileUrl || mergedModalUser.buyerProfileKey,
-          buyerAadhaarFrontKey: payload.buyerAadhaarFrontUrl || mergedModalUser.buyerAadhaarFrontKey,
-          buyerAadhaarBackKey: payload.buyerAadhaarBackUrl || mergedModalUser.buyerAadhaarBackKey,
-          guarantorProfileKey: payload.guarantorPhotoUrl || mergedModalUser.guarantorProfileKey,
-          guarantorAadhaarFrontKey: payload.guarantorAadhaarFrontUrl || mergedModalUser.guarantorAadhaarFrontKey,
-          guarantorAadhaarBackKey: payload.guarantorAadhaarBackUrl || mergedModalUser.guarantorAadhaarBackKey,
+          sellerProfileKey: payload.sellerProfileUrl !== undefined ? payload.sellerProfileUrl : mergedModalUser.sellerProfileKey,
+          sellerAadhaarFrontKey: payload.sellerAadhaarFrontUrl !== undefined ? payload.sellerAadhaarFrontUrl : mergedModalUser.sellerAadhaarFrontKey,
+          sellerAadhaarBackKey: payload.sellerAadhaarBackUrl !== undefined ? payload.sellerAadhaarBackUrl : mergedModalUser.sellerAadhaarBackKey,
+          buyerProfileKey: payload.buyerProfileUrl !== undefined ? payload.buyerProfileUrl : mergedModalUser.buyerProfileKey,
+          buyerAadhaarFrontKey: payload.buyerAadhaarFrontUrl !== undefined ? payload.buyerAadhaarFrontUrl : mergedModalUser.buyerAadhaarFrontKey,
+          buyerAadhaarBackKey: payload.buyerAadhaarBackUrl !== undefined ? payload.buyerAadhaarBackUrl : mergedModalUser.buyerAadhaarBackKey,
+          guarantorProfileKey: payload.guarantorPhotoUrl !== undefined ? payload.guarantorPhotoUrl : mergedModalUser.guarantorProfileKey,
+          guarantorAadhaarFrontKey: payload.guarantorAadhaarFrontUrl !== undefined ? payload.guarantorAadhaarFrontUrl : mergedModalUser.guarantorAadhaarFrontKey,
+          guarantorAadhaarBackKey: payload.guarantorAadhaarBackUrl !== undefined ? payload.guarantorAadhaarBackUrl : mergedModalUser.guarantorAadhaarBackKey,
         }
         setModalUser(modalWithFiles)
 
@@ -423,6 +472,9 @@ function Users () {
         title: 'Update Failed',
         message,
       })
+    } finally {
+      setUploadingField('')
+      setIsSavingUser(false)
     }
   }
 
@@ -555,6 +607,9 @@ function Users () {
 
   return (
     <div className="px-4 sm:px-6 py-4 max-w-full overflow-x-hidden">
+      {(isSavingUser || uploadingField) && (
+        <Loader message={isSavingUser ? 'Saving user details...' : `Uploading ${uploadingField.replace(/([A-Z])/g, ' $1').replace(/^./, (char) => char.toUpperCase())}...`} />
+      )}
       {/* hide scrollbar but keep scrolling */}
       <style>{`
         .no-scrollbar::-webkit-scrollbar{display:none;}
@@ -873,11 +928,13 @@ function Users () {
                   <h4 className="text-center font-semibold mb-4">Seller</h4>
                   <div className="flex flex-col items-center gap-4">
                     {modalDocUrls?.sellerProfileUrl ? (
-                      <img
-                        src={modalDocUrls.sellerProfileUrl}
-                        alt="Seller"
-                        className="w-28 h-28 rounded-lg object-cover border border-gray-200"
-                      />
+                      <a href={modalDocUrls.sellerProfileUrl} target="_blank" rel="noreferrer" className="block">
+                        <img
+                          src={modalDocUrls.sellerProfileUrl}
+                          alt="Seller"
+                          className="w-28 h-28 rounded-lg object-cover border border-gray-200 cursor-pointer"
+                        />
+                      </a>
                     ) : (
                       <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center">IMG</div>
                     )}
@@ -943,11 +1000,13 @@ function Users () {
                   <h4 className="text-center font-semibold mb-4">Buyer</h4>
                   <div className="flex flex-col items-center gap-4">
                     {modalDocUrls?.buyerProfileUrl ? (
-                      <img
-                        src={modalDocUrls.buyerProfileUrl}
-                        alt="Buyer"
-                        className="w-28 h-28 rounded-lg object-cover border border-gray-200"
-                      />
+                      <a href={modalDocUrls.buyerProfileUrl} target="_blank" rel="noreferrer" className="block">
+                        <img
+                          src={modalDocUrls.buyerProfileUrl}
+                          alt="Buyer"
+                          className="w-28 h-28 rounded-lg object-cover border border-gray-200 cursor-pointer"
+                        />
+                      </a>
                     ) : (
                       <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center">IMG</div>
                     )}
@@ -1071,6 +1130,8 @@ function Users () {
               user={{ ...modalUser, ...(modalDocUrls || {}) }}
               onSave={handleSave}
               onClose={() => setEditOpen(false)}
+              isSubmitting={isSavingUser}
+              uploadingField={uploadingField}
             />
           </div>
         </div>

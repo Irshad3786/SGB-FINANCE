@@ -28,7 +28,7 @@ const toDateInputValue = (value) => {
   return `${year}-${month}-${day}`
 }
 
-export default function EditUserModal({ user, onSave, onClose }) {
+export default function EditUserModal({ user, onSave, onClose, isSubmitting = false, uploadingField = '' }) {
   const getEmptyForm = (source = null) => ({
     id: source?.id ?? '',
     // vehicle
@@ -99,6 +99,8 @@ export default function EditUserModal({ user, onSave, onClose }) {
     guarantorAadhaarBack: null,
   })
 
+  const [removedImageFields, setRemovedImageFields] = useState([])
+
   // File input refs for resetting
   const fileInputRefs = React.useRef({
     sellerProfile: null,
@@ -116,6 +118,7 @@ export default function EditUserModal({ user, onSave, onClose }) {
   useEffect(() => {
     if (user) {
       setForm(getEmptyForm(user))
+      setRemovedImageFields([])
 
       // set previews from urls if available on user object (common keys: profileUrl, sellerProfileUrl, aadhar urls...)
       setPreviews({
@@ -166,6 +169,7 @@ export default function EditUserModal({ user, onSave, onClose }) {
   function onFileChange(key, e) {
     const file = e.target.files && e.target.files[0] ? e.target.files[0] : null
     setForm(prev => ({ ...prev, [key]: file }))
+    setRemovedImageFields(prev => prev.filter((field) => field !== key))
     // Reset the input value so the same file can be selected again
     if (fileInputRefs.current[key]) {
       fileInputRefs.current[key].value = ''
@@ -176,13 +180,14 @@ export default function EditUserModal({ user, onSave, onClose }) {
   function removeFile(key) {
     setForm(prev => ({ ...prev, [key]: null }))
     setPreviews(prev => ({ ...prev, [key]: null }))
+    setRemovedImageFields(prev => (prev.includes(key) ? prev : [...prev, key]))
     // Reset the input value
     if (fileInputRefs.current[key]) {
       fileInputRefs.current[key].value = ''
     }
   }
 
-  function save(e) {
+  async function save(e) {
     e.preventDefault()
     // Prepare payload: include only meaningful fields so backend doesn't clear
     // unchanged values. Keep File instances for uploads; drop empty strings and nulls.
@@ -201,17 +206,38 @@ export default function EditUserModal({ user, onSave, onClose }) {
       }
     })
 
-    onSave && onSave(out)
+    if (removedImageFields.length > 0) {
+      out.removedImageFields = removedImageFields
+    }
+
+    if (onSave) {
+      await onSave(out)
+    }
   }
 
   if (!user) return null
 
+  const isBusy = Boolean(isSubmitting || uploadingField)
+  const busyMessage = isSubmitting
+    ? 'Saving user details...'
+    : uploadingField
+      ? `Uploading ${uploadingField.replace(/([A-Z])/g, ' $1').replace(/^./, (char) => char.toUpperCase())}...`
+      : ''
+
   return (
     // parent renders overlay + scroll wrapper; this is the form container
     <form onSubmit={save} className="relative w-[95%] md:w-2/3 lg:w-1/2 bg-white rounded-xl p-6 shadow-2xl z-50">
+      {isBusy && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center rounded-xl bg-white/75 backdrop-blur-[2px]">
+          <div className="flex flex-col items-center gap-3 rounded-2xl bg-white px-5 py-4 shadow-xl border border-gray-100">
+            <div className="h-12 w-12 rounded-full border-4 border-[#e5f8d3] border-t-[#40ff00] animate-spin" />
+            <div className="text-sm font-semibold text-[#27563C] text-center">{busyMessage}</div>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-4">
         <h4 className="text-lg font-semibold">Edit User</h4>
-        <button type="button" onClick={onClose} className="text-sm px-3 py-1 rounded bg-gray-100">Close</button>
+        <button type="button" onClick={onClose} disabled={isBusy} className="text-sm px-3 py-1 rounded bg-gray-100 disabled:opacity-60">Close</button>
       </div>
 
       {/* Profile & Aadhar Uploads (Seller + Buyer + Guarantor) */}
@@ -698,8 +724,11 @@ export default function EditUserModal({ user, onSave, onClose }) {
       </div>
 
       <div className="mt-6 flex justify-end gap-3">
-        <button type="button" onClick={onClose} className="px-4 py-2 rounded bg-gray-100 text-sm">Cancel</button>
-        <button type="submit" className="px-4 py-2 rounded bg-gradient-to-b from-[#bfff3a] to-[#40ff00] text-sm">Save</button>
+        <button type="button" onClick={onClose} disabled={isBusy} className="px-4 py-2 rounded bg-gray-100 text-sm disabled:opacity-60">Cancel</button>
+        <button type="submit" disabled={isBusy} className="px-4 py-2 rounded bg-gradient-to-b from-[#bfff3a] to-[#40ff00] text-sm disabled:opacity-60 flex items-center gap-2">
+          {isSubmitting && <span className="h-4 w-4 rounded-full border-2 border-white/60 border-t-white animate-spin" />}
+          {isSubmitting ? 'Saving...' : 'Save'}
+        </button>
       </div>
     </form>
   )

@@ -226,7 +226,7 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
 
   return (
     // parent renders overlay + scroll wrapper; this is the form container
-    <form onSubmit={save} className="relative w-[95%] md:w-2/3 lg:w-1/2 bg-white rounded-xl p-6 shadow-2xl z-50">
+    <form onSubmit={save} className="relative w-[95%] md:w-4/5 lg:w-3/4 xl:w-2/3 max-w-5xl bg-white rounded-xl p-4 sm:p-6 shadow-2xl z-50">
       {isBusy && (
         <div className="absolute inset-0 z-50 flex items-center justify-center rounded-xl bg-white/75 backdrop-blur-[2px]">
           <div className="flex flex-col items-center gap-3 rounded-2xl bg-white px-5 py-4 shadow-xl border border-gray-100">
@@ -241,7 +241,7 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
       </div>
 
       {/* Profile & Aadhar Uploads (Seller + Buyer + Guarantor) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         {/* Seller uploads */}
         <div className="bg-white rounded-xl p-3 shadow">
           <h5 className="text-sm font-semibold mb-2">Seller Files</h5>
@@ -258,7 +258,7 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
               </div>
               <div className="flex-1">
                 <label className="text-xs text-gray-600 font-semibold">Profile Image</label>
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex flex-wrap items-center gap-2 mt-2">
                   <label className="px-3 py-1 rounded bg-blue-50 border border-blue-200 text-xs cursor-pointer hover:bg-blue-100 transition">
                     <input 
                       type="file" 
@@ -296,7 +296,7 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
           {/* Seller Aadhaar Front */}
           <div className="mb-4 pb-4 border-b">
             <label className="text-xs text-gray-600 font-semibold">Aadhaar Front</label>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex flex-wrap items-center gap-2 mt-2">
               <label className="px-3 py-1 rounded bg-blue-50 border border-blue-200 text-xs cursor-pointer hover:bg-blue-100 transition">
                 <input 
                   type="file" 
@@ -332,7 +332,7 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
           {/* Seller Aadhaar Back */}
           <div>
             <label className="text-xs text-gray-600 font-semibold">Aadhaar Back</label>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex flex-wrap items-center gap-2 mt-2">
               <label className="px-3 py-1 rounded bg-blue-50 border border-blue-200 text-xs cursor-pointer hover:bg-blue-100 transition">
                 <input 
                   type="file" 
@@ -382,7 +382,7 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
               </div>
               <div className="flex-1">
                 <label className="text-xs text-gray-600 font-semibold">Profile Image</label>
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex flex-wrap items-center gap-2 mt-2">
                   <label className="px-3 py-1 rounded bg-blue-50 border border-blue-200 text-xs cursor-pointer hover:bg-blue-100 transition">
                     <input 
                       type="file" 
@@ -420,7 +420,7 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
           {/* Buyer Aadhaar Front */}
           <div className="mb-4 pb-4 border-b">
             <label className="text-xs text-gray-600 font-semibold">Aadhaar Front</label>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex flex-wrap items-center gap-2 mt-2">
               <label className="px-3 py-1 rounded bg-blue-50 border border-blue-200 text-xs cursor-pointer hover:bg-blue-100 transition">
                 <input 
                   type="file" 
@@ -456,7 +456,7 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
           {/* Buyer Aadhaar Back */}
           <div>
             <label className="text-xs text-gray-600 font-semibold">Aadhaar Back</label>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex flex-wrap items-center gap-2 mt-2">
               <label className="px-3 py-1 rounded bg-blue-50 border border-blue-200 text-xs cursor-pointer hover:bg-blue-100 transition">
                 <input 
                   type="file" 
@@ -494,7 +494,7 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
       {/* Guarantor Documents - combined UI */}
       <div className="mb-4 bg-white rounded-xl p-4 shadow">
         <h5 className="text-sm font-semibold mb-3">Guarantor Documents</h5>
-        <div className="grid grid-cols-3 gap-4 items-start">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
           {[{
             key: 'guarantorPhoto',
             label: 'Photo',
@@ -516,7 +516,7 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
                   <div className="text-xs text-gray-500 text-center">No {item.label.toLowerCase()}</div>
                 )}
               </div>
-              <div className="mt-2 flex items-center gap-2">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 <label className="px-3 py-1 rounded bg-blue-50 border border-blue-200 text-xs cursor-pointer hover:bg-blue-100 transition font-semibold">
                   <input
                     type="file"
@@ -544,7 +544,7 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
       {/* Vehicle Details */}
       <div className="mb-4">
         <h5 className="text-sm font-semibold mb-2">Vehicle Details</h5>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <div>
             <label className="text-xs text-gray-600">Name</label>
             <input name="vehicleName" value={form.vehicleName || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
@@ -564,7 +564,7 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Seller Details */}
         <div>
           <h5 className="text-sm font-semibold mb-2">Seller Details</h5>
@@ -601,7 +601,7 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
               <label className="text-xs text-gray-600">Address</label>
               <textarea name="sellerAddress" value={form.sellerAddress || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm h-20" />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <label className="text-xs text-gray-600">Referral Name</label>
                 <input name="sellerReferenceName" value={form.sellerReferenceName || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
@@ -654,7 +654,7 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
               <label className="text-xs text-gray-600">Address</label>
               <textarea name="buyerAddress" value={form.buyerAddress || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm h-20" />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <label className="text-xs text-gray-600">Referral Name</label>
                 <input name="buyerReferenceName" value={form.buyerReferenceName || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
@@ -676,7 +676,7 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
       <div className="mt-4 bg-white rounded-xl p-4 shadow">
         <h5 className="text-sm font-semibold mb-2">Buyer Finance Details</h5>
 
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <div>
             <label className="text-xs text-gray-600">Agreement No</label>
             <input name="agreementNo" value={form.agreementNo || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" placeholder="e.g., AG-001" />
@@ -703,7 +703,7 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
       {/* Guarantor */}
       <div className="mt-4 bg-white rounded-xl p-4 shadow">
         <h5 className="text-sm font-semibold mb-2">Guarantor Details</h5>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="text-xs text-gray-600">Name</label>
             <input name="guarantorName" value={form.guarantorName || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
@@ -723,7 +723,7 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
         </div>
       </div>
 
-      <div className="mt-6 flex justify-end gap-3">
+      <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
         <button type="button" onClick={onClose} disabled={isBusy} className="px-4 py-2 rounded bg-gray-100 text-sm disabled:opacity-60">Cancel</button>
         <button type="submit" disabled={isBusy} className="px-4 py-2 rounded bg-gradient-to-b from-[#bfff3a] to-[#40ff00] text-sm disabled:opacity-60 flex items-center gap-2">
           {isSubmitting && <span className="h-4 w-4 rounded-full border-2 border-white/60 border-t-white animate-spin" />}

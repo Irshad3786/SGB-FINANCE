@@ -245,7 +245,9 @@ function Subadmin() {
       
 
       {/* RIGHT SECTION */}
-      <div className={`flex-1 flex flex-col overflow-hidden ${sidebarOpen ? 'ml-48 md:ml-64' : ''}`}>
+      <div
+        className={`flex-1 flex flex-col overflow-hidden ${sidebarOpen ? 'ml-48 md:ml-64' : ''} ${sidebarOpen ? 'blur-sm md:blur-none' : ''} transition-[filter] duration-200`}
+      >
 
         {/* TOP BAR */}
         <TopBar

@@ -42,6 +42,11 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/subadmin", subAdminRoutes);
 app.use("/api/user", userRoute);
 
+// Health check endpoint for Docker
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "UP", timestamp: new Date().toISOString() });
+});
+
 //subadmin-management routes
 app.use("/api/subadmin/management", buyerSellerManagementRoutes);
 app.use("/api/subadmin/management", userDataRoutes);

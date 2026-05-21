@@ -6,7 +6,7 @@ const { default: connectDB } = await import("./config/db.js");
 // ✅ Configure CORS after .env is loaded
 configureCORS();
 
-const PORT = process.env.PORT || 5100;
+const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB, then start Express server
 connectDB()

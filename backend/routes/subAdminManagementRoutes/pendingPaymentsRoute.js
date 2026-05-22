@@ -5,12 +5,12 @@ import {
 	updatePendingPaymentCommitmentDate,
 	updatePendingPaymentStatus,
 } from "../../controllers/SubAdminManagementController/pendingPaymentsController.js";
-import { verifySubAdminToken, checkModuleEditPermission } from "../../middlewares/subAdminMiddleware.js";
+import { verifySubAdminToken, checkModuleEditPermission, checkModuleAccess } from "../../middlewares/subAdminMiddleware.js";
 
 const router = express.Router();
 
-// 🔐 Protected read route - SubAdmin must be authenticated
-router.get("/pending-payments", verifySubAdminToken, getPendingPayments);
+// 🔐 Protected read route - SubAdmin must be authenticated + have access to 'pendingPayments' module
+router.get("/pending-payments", verifySubAdminToken, checkModuleAccess("pendingPayments"), getPendingPayments);
 
 // 🔐 Protected write routes - Requires authentication + edit permission for 'pendingPayments' module
 router.patch(

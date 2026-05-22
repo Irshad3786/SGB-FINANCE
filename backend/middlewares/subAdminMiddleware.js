@@ -180,4 +180,53 @@ const checkModuleEditPermission = (moduleName) => {
   };
 };
 
-export { verifySubAdminToken, verifySubAdminOtpToken, pendingRegistrations, checkModuleEditPermission };
+// Middleware to check if SubAdmin has access to a module (any action)
+const checkModuleAccess = (moduleName) => {
+  return async (req, res, next) => {
+    try {
+      const subAdmin = req.subAdmin;
+      
+      if (!subAdmin) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized: SubAdmin not found in request",
+        });
+      }
+
+      // Check if subAdmin has permissions array
+      if (!Array.isArray(subAdmin.permissions) || subAdmin.permissions.length === 0) {
+        return res.status(403).json({
+          success: false,
+          message: `Access denied: You don't have access to ${moduleName}`,
+        });
+      }
+
+      // Find the permission for the specific module
+      const normalizedTarget = normalizeModuleName(moduleName);
+      const modulePermission = subAdmin.permissions.find(
+        (perm) => normalizeModuleName(perm?.module || perm?.name || perm?.key) === normalizedTarget
+      );
+
+      // Check if module permission exists
+      if (!modulePermission) {
+        console.warn(`[Permission] SubAdmin ${subAdmin._id} denied access to ${moduleName}`);
+        return res.status(403).json({
+          success: false,
+          message: `Access denied: You don't have access to ${moduleName}`,
+        });
+      }
+
+      // Permission granted, continue
+      next();
+    } catch (error) {
+      console.error("Permission check error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Server error during permission check",
+        error: error.message,
+      });
+    }
+  };
+};
+
+export { verifySubAdminToken, verifySubAdminOtpToken, pendingRegistrations, checkModuleEditPermission, checkModuleAccess };

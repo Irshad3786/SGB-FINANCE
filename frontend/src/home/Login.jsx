@@ -64,7 +64,41 @@ function Login() {
 
         // Redirect based on role
         if (role === 'subadmin') {
-          navigate('/subadmin/dashboard')
+          const permissions = response.data?.permissions || response.data?.data?.permissions || [];
+          
+          const PATH_TO_MODULE = {
+            'dashboard': '/subadmin/dashboard',
+            'users': '/subadmin/users',
+            'addEntry': '/subadmin/sell',
+            'finance': '/subadmin/finance',
+            'vehicleStock': '/subadmin/vehicle-stock',
+            'pendingPayments': '/subadmin/pending-downpayment',
+            'requestCenter': '/subadmin/requests-management',
+            'ownershipTransfer': '/subadmin/ownership-transfer'
+          };
+
+          const orderedModules = [
+            'dashboard', 'vehicleStock', 'users', 'addEntry', 
+            'finance', 'pendingPayments', 'requestCenter', 'ownershipTransfer'
+          ];
+
+          let targetPath = '/subadmin/dashboard';
+          const userPermissions = Array.isArray(permissions) ? permissions : [];
+          
+          if (userPermissions.length > 0) {
+            const firstAvailableModule = orderedModules.find(moduleName => 
+              userPermissions.some(p => {
+                const pName = (p?.module || p?.name || p?.key || '').toLowerCase().replace(/[^a-z]/g, '');
+                const mName = moduleName.toLowerCase().replace(/[^a-z]/g, '');
+                return pName === mName;
+              })
+            );
+            if (firstAvailableModule) {
+              targetPath = PATH_TO_MODULE[firstAvailableModule];
+            }
+          }
+
+          navigate(targetPath);
         } else {
           navigate('/user')
         }

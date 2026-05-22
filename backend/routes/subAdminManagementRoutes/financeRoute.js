@@ -10,15 +10,15 @@ import {
 	deleteCollectionEntry,
 	clearCollectionEntries,
 } from "../../controllers/SubAdminManagementController/financeController.js";
-import { verifySubAdminToken, checkModuleEditPermission } from "../../middlewares/subAdminMiddleware.js";
+import { verifySubAdminToken, checkModuleEditPermission, checkModuleAccess } from "../../middlewares/subAdminMiddleware.js";
 
 const router = express.Router();
 
-// 🔐 Protected read routes - SubAdmin must be authenticated
-router.get("/finance", verifySubAdminToken, getFinanceList);
-router.get("/finance/collection-agents", verifySubAdminToken, getCollectionAgents);
-router.get("/finance/collection-entries", verifySubAdminToken, getCollectionEntries);
-router.get("/finance/:buyerId", verifySubAdminToken, getFinanceStatement);
+// 🔐 Protected read routes - SubAdmin must be authenticated + have access to 'finance' module
+router.get("/finance", verifySubAdminToken, checkModuleAccess("finance"), getFinanceList);
+router.get("/finance/collection-agents", verifySubAdminToken, checkModuleAccess("finance"), getCollectionAgents);
+router.get("/finance/collection-entries", verifySubAdminToken, checkModuleAccess("finance"), getCollectionEntries);
+router.get("/finance/:buyerId", verifySubAdminToken, checkModuleAccess("finance"), getFinanceStatement);
 
 // 🔐 Protected write routes - Requires authentication + edit permission for 'finance' module
 router.post("/finance/collection-entry", verifySubAdminToken, checkModuleEditPermission("finance"), saveCollectionEntry);

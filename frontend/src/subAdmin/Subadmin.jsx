@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from 'react'
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation, Navigate, useNavigate } from "react-router-dom";
 import apiClient from '../api/axios';
 import Sidebar from "./Sidebar";
 import TopBar from './Topbar';
 import Footer from '../home/components/Footer';
-import { readStoredSubAdminProfile } from './utils/subAdminAccess';
+import Loader from '../components/Loader';
+import { readStoredSubAdminProfile, canAccessModule } from './utils/subAdminAccess';
 
 
 function Subadmin() {
 
+  const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [topTitle, setTopTitle] = useState('Dashboard');
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [subAdminProfile, setSubAdminProfile] = useState(() => readStoredSubAdminProfile());
   const [isDarkMode, setIsDarkMode] = useState(() => {
     try {
@@ -19,6 +23,69 @@ function Subadmin() {
       return false
     }
   })
+
+  // Module protection mapping
+  const PATH_TO_MODULE = {
+    'dashboard': 'dashboard',
+    'users': 'users',
+    'sell': 'addEntry',
+    'buy': 'addEntry',
+    'finance': 'finance',
+    'collection': 'finance',
+    'vehicle-stock': 'vehicleStock',
+    'pending-downpayment': 'pendingPayments',
+    'requests-management': 'requestCenter',
+    'ownership-transfer': 'ownershipTransfer'
+  };
+
+  // Determine if user has access to current sub-route
+  const getRequiredModule = (path) => {
+    const segments = path.split('/').filter(Boolean);
+    // Path structure: /subadmin/module-name
+    if (segments[0] === 'subadmin' && segments[1]) {
+      return PATH_TO_MODULE[segments[1]];
+    }
+    return null;
+  };
+
+  const requiredModule = getRequiredModule(location.pathname);
+  
+  const hasAccess = isLoadingProfile || !requiredModule || 
+    (subAdminProfile.permissions && subAdminProfile.permissions.length === 0 && !requiredModule) || 
+    canAccessModule(subAdminProfile.permissions, requiredModule);
+
+  useEffect(() => {
+    // If we are at the dashboard and don't have access, or at the base path
+    const isAtDashboard = location.pathname === '/subadmin/dashboard';
+    const isAtBase = location.pathname === '/subadmin' || location.pathname === '/subadmin/';
+    
+    if (isAtBase || (isAtDashboard && !canAccessModule(subAdminProfile.permissions, 'dashboard'))) {
+      const PATH_TO_MODULE = {
+        'dashboard': '/subadmin/dashboard',
+        'users': '/subadmin/users',
+        'addEntry': '/subadmin/sell',
+        'finance': '/subadmin/finance',
+        'vehicleStock': '/subadmin/vehicle-stock',
+        'pendingPayments': '/subadmin/pending-downpayment',
+        'requestCenter': '/subadmin/requests-management',
+        'ownershipTransfer': '/subadmin/ownership-transfer'
+      };
+
+      const orderedModules = [
+        'dashboard', 'vehicleStock', 'users', 'addEntry', 
+        'finance', 'pendingPayments', 'requestCenter', 'ownershipTransfer'
+      ];
+
+      if (subAdminProfile.permissions && subAdminProfile.permissions.length > 0) {
+        const firstAvailableModule = orderedModules.find(moduleName => 
+          canAccessModule(subAdminProfile.permissions, moduleName)
+        );
+        if (firstAvailableModule && PATH_TO_MODULE[firstAvailableModule] !== location.pathname) {
+          navigate(PATH_TO_MODULE[firstAvailableModule], { replace: true });
+        }
+      }
+    }
+  }, [location.pathname, subAdminProfile.permissions, navigate]);
 
   useEffect(() => {
     try {
@@ -31,6 +98,7 @@ function Subadmin() {
   useEffect(() => {
     const fetchSubAdminProfile = async () => {
       try {
+        setIsLoadingProfile(true)
         const response = await apiClient.get('/api/subadmin/me')
         const profile = response?.data?.data || {}
 
@@ -41,6 +109,8 @@ function Subadmin() {
         })
       } catch {
         // Keep the stored profile if the API call fails.
+      } finally {
+        setIsLoadingProfile(false)
       }
     }
 
@@ -261,7 +331,33 @@ function Subadmin() {
 
         {/* MAIN CONTENT BELOW TOP BAR - SCROLLABLE */}
         <main className="p-6 flex-1 overflow-y-auto">
-          <Outlet />
+          {isLoadingProfile ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader message="Loading access permissions..." />
+            </div>
+          ) : hasAccess ? (
+            <Outlet />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full min-h-[400px]">
+              <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 text-center max-w-md">
+                <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <h1 className="text-2xl font-bold text-gray-800 mb-2">Access Denied</h1>
+                <p className="text-gray-600 mb-8">
+                  You don't have permission to access the <span className="font-semibold text-gray-900">{requiredModule}</span> module.
+                </p>
+                <button
+                  onClick={() => window.location.href = '/subadmin/dashboard'}
+                  className="w-full py-3 px-6 bg-gradient-to-r from-[#B0FF1C] to-[#40FF00] text-black font-bold rounded-xl shadow-md hover:shadow-lg transition-all"
+                >
+                  Back to Dashboard
+                </button>
+              </div>
+            </div>
+          )}
         </main>
 
        

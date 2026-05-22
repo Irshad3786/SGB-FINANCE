@@ -1,5 +1,5 @@
 import express from 'express';
-import { verifySubAdminToken, checkModuleEditPermission } from '../../middlewares/subAdminMiddleware.js';
+import { verifySubAdminToken, checkModuleEditPermission, checkModuleAccess } from '../../middlewares/subAdminMiddleware.js';
 import {
     createOwnershipTransfer,
     getAllOwnershipTransfers,
@@ -11,10 +11,10 @@ import {
 
 const router = express.Router();
 
-// 🔐 Protected read routes - SubAdmin must be authenticated
-router.get('/all', verifySubAdminToken, getAllOwnershipTransfers);
-router.get('/status/:status', verifySubAdminToken, getOwnershipTransfersByStatus);
-router.get('/:id', verifySubAdminToken, getOwnershipTransferById);
+// 🔐 Protected read routes - SubAdmin must be authenticated + have access to 'ownershipTransfer' module
+router.get('/all', verifySubAdminToken, checkModuleAccess('ownershipTransfer'), getAllOwnershipTransfers);
+router.get('/status/:status', verifySubAdminToken, checkModuleAccess('ownershipTransfer'), getOwnershipTransfersByStatus);
+router.get('/:id', verifySubAdminToken, checkModuleAccess('ownershipTransfer'), getOwnershipTransferById);
 
 // 🔐 Protected write routes - Requires authentication + edit permission for 'ownershipTransfer' module
 router.post('/create', verifySubAdminToken, checkModuleEditPermission('ownershipTransfer'), createOwnershipTransfer);

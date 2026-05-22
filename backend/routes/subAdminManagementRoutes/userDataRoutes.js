@@ -4,15 +4,15 @@ import {
 	updateUserData,
 	deleteUserData,
 } from "../../controllers/SubAdminManagementController/userDataController.js";
-import { verifySubAdminToken } from "../../middlewares/subAdminMiddleware.js";
+import { verifySubAdminToken, checkModuleAccess, checkModuleEditPermission } from "../../middlewares/subAdminMiddleware.js";
 
 const router = express.Router();
 
-// 🔐 Protected routes - SubAdmin must be authenticated
-router.get("/users", verifySubAdminToken, getUserData);
+// 🔐 Protected routes - SubAdmin must be authenticated + have access to 'users' module
+router.get("/users", verifySubAdminToken, checkModuleAccess("users"), getUserData);
 
-// 🔐 Protected write operations - SubAdmin must be authenticated
-router.put("/users", verifySubAdminToken, updateUserData);
-router.delete("/users", verifySubAdminToken, deleteUserData);
+// 🔐 Protected write operations - SubAdmin must be authenticated + edit permission for 'users' module
+router.put("/users", verifySubAdminToken, checkModuleEditPermission("users"), updateUserData);
+router.delete("/users", verifySubAdminToken, checkModuleEditPermission("users"), deleteUserData);
 
 export default router;

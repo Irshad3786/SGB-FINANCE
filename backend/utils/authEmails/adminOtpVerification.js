@@ -24,7 +24,7 @@ const AdminOtpVerifyEmail = async (admin) => {
 
     // Prepare email using template
     const mailOptions = {
-      from: `"SGB FINANCE" <${process.env.EMAIL_USER}>`,
+      from: `"SGB VEHICLE FINANCE" <noreply@sgbvehiclefinance.com>`,
       to: admin.email,
       subject: "Verify Your Admin Account - SGB FINANCE",
       html: AdminOtpTemplate(admin, otp), // 👈 use template here

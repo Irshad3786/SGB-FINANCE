@@ -35,7 +35,7 @@ const UserOtpVerifyEmail = async (user) => {
 
     // Prepare email using template
     const mailOptions = {
-      from: `"SGB FINANCE" <${process.env.EMAIL_USER}>`,
+      from: `"SGB VEHICLE FINANCE" <noreply@sgbvehiclefinance.com>`,
       to: user.email,
       subject: "Verify Your Email - SGB FINANCE",
       html: UserOtpTemplate(user, otp),

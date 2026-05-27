@@ -46,7 +46,7 @@ const UserPasswordResetEmail = async (user) => {
     });
 
     await transport.sendMail({
-      from: `"SGB FINANCE" <${emailUser}>`,
+      from: `"SGB VEHICLE FINANCE" <noreply@sgbvehiclefinance.com>`,
       to: user.email,
       subject: "Reset Your SGB FINANCE Password",
       html: resetUserPasswordEmailHTML(displayName, resetLink),

@@ -40,7 +40,7 @@ const AdminPasswordResetEmail = async (user) => {
     });
 
     const mailOptions = {
-      from: `"SGB FINANCE" <${process.env.EMAIL_USER}>`,
+      from: `"SGB VEHICLE FINANCE" <noreply@sgbvehiclefinance.com>`,
       to: user.email,
       subject: "Reset Your SGB FINANCE Password",
       html: resetAdminPasswordEmailHTML(displayName, resetLink),

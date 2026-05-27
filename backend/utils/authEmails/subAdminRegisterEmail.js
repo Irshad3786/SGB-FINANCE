@@ -79,7 +79,7 @@ export const sendSubAdminOtp = async (user, otp) => {
 
     // prepare email using template
     const mailOptions = {
-      from: `"SGB FINANCE" <${process.env.EMAIL_USER}>`,
+      from: `"SGB VEHICLE FINANCE" <noreply@sgbvehiclefinance.com>`,
       to: user.email,
       subject: "Verify Your Sub-Admin Account - SGB FINANCE",
       html: subAdminRegisterEmailTemplate(user.name, otp, user.roleName),

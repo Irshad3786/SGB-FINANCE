@@ -107,7 +107,7 @@ export const sendAdminOtp = async (user, otp, emailType = "register") => {
     const isResend = emailType === "resend";
 
     const mailOptions = {
-      from: `"SGB FINANCE" <${process.env.EMAIL_USER}>`,
+      from: `"SGB VEHICLE FINANCE" <noreply@sgbvehiclefinance.com>`,
       to: user.email,
       subject: isResend
         ? "Your New Admin OTP - SGB FINANCE"

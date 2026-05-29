@@ -55,9 +55,9 @@ function PublicTopNav() {
               className='rounded-xl border-[2px] border-black bg-[#E0FCED] px-3 py-1 text-sm font-bold text-[#27563C] shadow-[1px_3px_4px_0px_rgba(0,_0,_0,_0.1)] md:px-4'
             >
               <span className='flex items-center justify-center md:hidden' aria-hidden='true'>
-                <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none'>
-                  <path d='M10 3H6C4.89543 3 4 3.89543 4 5V19C4 20.1046 4.89543 21 6 21H10V19H6V5H10V3Z' fill='currentColor' />
-                  <path d='M13.586 7.00005L12.172 8.41405L14.758 11.0001H8V13.0001H14.758L12.172 15.5861L13.586 17.0001L18.586 12.0001L13.586 7.00005Z' fill='currentColor' />
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
+                  <path d="M0 0h24v24H0z" fill="none" />
+                  <path fill="currentColor" d="M13 21q-.425 0-.712-.288T12 20t.288-.712T13 19h6V5h-6q-.425 0-.712-.288T12 4t.288-.712T13 3h6q.825 0 1.413.588T21 5v14q0 .825-.587 1.413T19 21zm-1.825-8H4q-.425 0-.712-.288T3 12t.288-.712T4 11h7.175L9.3 9.125q-.275-.275-.275-.675t.275-.7t.7-.313t.725.288L14.3 11.3q.3.3.3.7t-.3.7l-3.575 3.575q-.3.3-.712.288T9.3 16.25q-.275-.3-.262-.712t.287-.688z" />
                 </svg>
               </span>
               <span className='hidden md:inline'>Login</span>
@@ -68,10 +68,10 @@ function PublicTopNav() {
               className='rounded-xl border-[2px] border-black bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] px-3 py-1 text-sm font-bold text-[#1E3E2B] shadow-[1px_3px_4px_0px_rgba(0,_0,_0,_0.1)] md:px-4'
             >
               <span className='flex items-center justify-center md:hidden' aria-hidden='true'>
-                <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none'>
-                  <path d='M6 3H14C15.1046 3 16 3.89543 16 5V8H14V5H6V19H14V16H16V19C16 20.1046 15.1046 21 14 21H6C4.89543 21 4 20.1046 4 19V5C4 3.89543 4.89543 3 6 3Z' fill='currentColor' />
-                  <path d='M8 8H12V10H8V8ZM8 12H11V14H8V12Z' fill='currentColor' />
-                  <path d='M19 8V10H17V12H19V14H21V12H23V10H21V8H19Z' fill='currentColor' />
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 512 512">
+                  <path d="M0 0h512v512H0z" fill="none" />
+                  <path fill="currentColor" d="M459.94 53.25a16.06 16.06 0 0 0-23.22-.56L424.35 65a8 8 0 0 0 0 11.31l11.34 11.32a8 8 0 0 0 11.34 0l12.06-12c6.1-6.09 6.67-16.01.85-22.38M399.34 90L218.82 270.2a9 9 0 0 0-2.31 3.93L208.16 299a3.91 3.91 0 0 0 4.86 4.86l24.85-8.35a9 9 0 0 0 3.93-2.31L422 112.66a9 9 0 0 0 0-12.66l-9.95-10a9 9 0 0 0-12.71 0" />
+                  <path fill="currentColor" d="M386.34 193.66L264.45 315.79A41.1 41.1 0 0 1 247.58 326l-25.9 8.67a35.92 35.92 0 0 1-44.33-44.33l8.67-25.9a41.1 41.1 0 0 1 10.19-16.87l122.13-121.91a8 8 0 0 0-5.65-13.66H104a56 56 0 0 0-56 56v240a56 56 0 0 0 56 56h240a56 56 0 0 0 56-56V199.31a8 8 0 0 0-13.66-5.65" />
                 </svg>
               </span>
               <span className='hidden md:inline'>Sign up</span>

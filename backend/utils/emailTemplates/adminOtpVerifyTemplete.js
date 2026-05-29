@@ -28,7 +28,7 @@ const AdminOtpTemplate = (admin, otp) => {
         </p>
 
         <p style="color: #555555; font-size: 14px; line-height: 1.6;">
-          If you did not create this account or expect this email, please contact our support team immediately at <a href="mailto:support@sgbfinance.com" style="color: #0e6b53; text-decoration: none; font-weight: bold;">support@sgbfinance.com</a>
+          If you did not create this account or expect this email, please contact our support team immediately at <a href="mailto:support@sgbvehiclefinance.com" style="color: #0e6b53; text-decoration: none; font-weight: bold;">support@sgbvehiclefinance.com</a>
         </p>
       </div>
 

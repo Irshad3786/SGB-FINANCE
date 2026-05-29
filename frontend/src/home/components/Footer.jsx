@@ -64,8 +64,8 @@ function Footer() {
                   <h3 className="font-semibold text-lg mb-4">Contact Us</h3>
                   <ul className="space-y-3 text-sm text-gray-300">
                   <li>
-                    <a className="hover:text-white underline underline-offset-4 break-words break-all" href="mailto:support@sgbfinance.in">
-                    support@sgbfinance.in
+                    <a className="hover:text-white underline underline-offset-4 break-words break-all" href="mailto:support@sgbfinance.com">
+                    support@sgbfinance.com
                     </a>
                   </li>
                   <li>
@@ -78,7 +78,7 @@ function Footer() {
                 {/* Mail */}
                 <a
                   aria-label="Email"
-                  href="mailto:support@sgbfinance.in"
+                  href="mailto:support@sgbfinance.com"
                   className="inline-flex h-9 w-9 items-center justify-center rounded-md shrink-0"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 36 36" fill="none">

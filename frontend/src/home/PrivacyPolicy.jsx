@@ -67,7 +67,7 @@ function PrivacyPolicy() {
             <div>
               <h2 className='text-lg font-extrabold text-[#27563C]'>6. Contact</h2>
               <p className='mt-2'>
-                For privacy concerns, contact us at support@sgbfinance.in.
+                For privacy concerns, contact us at support@sgbfinance.com.
               </p>
             </div>
           </div>

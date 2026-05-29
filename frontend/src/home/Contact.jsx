@@ -161,7 +161,7 @@ function Contact() {
           <article className='rounded-2xl border border-black/10 bg-white/80 p-6 shadow-[1px_3px_4px_0px_rgba(0,_0,_0,_0.08)]'>
             <h2 className='text-xl font-extrabold text-[#27563C]'>Get In Touch</h2>
             <p className='pt-2 text-sm font-medium text-[#737373] md:text-base'>
-              Email: support@sgbfinance.in
+              Email: support@sgbfinance.com
             </p>
             <p className='pt-1 text-sm font-medium text-[#737373] md:text-base'>
               Phone: +91 9182278505

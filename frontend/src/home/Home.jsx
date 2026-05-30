@@ -466,10 +466,10 @@ function Home() {
 
       <div className='flex justify-center items-center h-fit flex-col'>
         <h1 className=' px-4 text-[3rem] leading-tight sm:text-[2.25rem] pt-12 md:pt-24 md:text-[2.75rem] lg:text-[3rem] xl:text-[3.5rem] font-extrabold text-[#27563C]'><span className='sm:pl-16'>Drive Your Dream,</span><br /> We Finance the Journey.</h1>
-        <h2 className='font-semibold text-[#737373]  px-4 text-[1.15rem] leading-relaxed md:text-xl'>Get fast, flexible, and affordable vehicle financing. <br />
+        <h2 className='font-semibold text-[#737373]  px-4 text-[1.25rem] leading-relaxed sm:text-[1.15rem] md:text-xl'>Get fast, flexible, and affordable vehicle financing. <br />
           <span className='sm:pl-4'>whether it’s your first ride or your next upgrade.</span></h2>
         <div className='pt-9'>
-          <button className='flex gap-2 justify-center rounded-lg items-center px-4 py-2 bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] font-bold shadow-[0px_3px_2px_1px_rgba(0,_0,_0,_0.7)]'>Get Started
+          <button className='flex gap-2 justify-center rounded-lg items-center px-5 py-3 text-base sm:px-4 sm:py-2 sm:text-sm bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] font-bold shadow-[0px_3px_2px_1px_rgba(0,_0,_0,_0.7)]'>Get Started
             <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 16 9"><path fill="currentColor" d="M12.5 5h-9c-.28 0-.5-.22-.5-.5s.22-.5.5-.5h9c.28 0 .5.22.5.5s-.22.5-.5.5" /><path fill="currentColor" d="M10 8.5a.47.47 0 0 1-.35-.15c-.2-.2-.2-.51 0-.71l3.15-3.15l-3.15-3.15c-.2-.2-.2-.51 0-.71s.51-.2.71 0l3.5 3.5c.2.2.2.51 0 .71l-3.5 3.5c-.1.1-.23.15-.35.15Z" /></svg>
           </button>
         </div>

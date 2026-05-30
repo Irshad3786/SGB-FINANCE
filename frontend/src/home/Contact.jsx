@@ -1,8 +1,11 @@
 import React, { useState } from 'react'
+import { Helmet } from 'react-helmet-async'
 import PublicTopNav from './components/PublicTopNav'
 import Footer from './components/Footer'
 import apiClient from '../api/axios'
 import { useToast } from '../components/ToastProvider'
+
+const baseUrl = 'https://sgbvehiclefinance.com'
 
 function Contact() {
   const [formType, setFormType] = useState('')
@@ -145,6 +148,28 @@ function Contact() {
 
   return (
     <div>
+      <Helmet>
+        <title>Contact SGB Vehicle Finance | Support & Loan Help</title>
+        <meta
+          name='description'
+          content='Contact SGB Vehicle Finance for loan guidance, application help, repayment support, and service queries. We are here to help.'
+        />
+        <link rel='canonical' href={`${baseUrl}/contact`} />
+        <meta property='og:title' content='Contact SGB Vehicle Finance | Support & Loan Help' />
+        <meta
+          property='og:description'
+          content='Contact SGB Vehicle Finance for loan guidance, application help, repayment support, and service queries. We are here to help.'
+        />
+        <meta property='og:url' content={`${baseUrl}/contact`} />
+        <meta property='og:image' content={`${baseUrl}/sgb.svg`} />
+        <meta name='twitter:card' content='summary' />
+        <meta name='twitter:title' content='Contact SGB Vehicle Finance | Support & Loan Help' />
+        <meta
+          name='twitter:description'
+          content='Contact SGB Vehicle Finance for loan guidance, application help, repayment support, and service queries. We are here to help.'
+        />
+        <meta name='twitter:image' content={`${baseUrl}/sgb.svg`} />
+      </Helmet>
       <PublicTopNav />
 
       <section className='mx-auto max-w-7xl px-4 pb-8 pt-14 sm:px-6 lg:px-8'>

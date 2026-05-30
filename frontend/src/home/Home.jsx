@@ -5,6 +5,7 @@ import Footer from './components/Footer'
 import { useNavigate } from 'react-router-dom'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { Helmet } from 'react-helmet-async'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -143,6 +144,8 @@ const stats = [
   { label: 'Bikes Financed', value: 3800, suffix: '+' },
   { label: 'Customer Satisfaction', value: 98, suffix: '%' },
 ]
+
+const baseUrl = 'https://sgbvehiclefinance.com'
 
 function Home() {
   const navigate = useNavigate()
@@ -363,6 +366,65 @@ function Home() {
 
   return (
     <div>
+      <Helmet>
+        <title>SGB Vehicle Finance | Two Wheeler Loans & Fast Approvals</title>
+        <meta
+          name='description'
+          content='SGB Vehicle Finance offers fast, flexible two-wheeler loans with transparent terms, low documentation, and quick approvals. Apply online today.'
+        />
+        <link rel='canonical' href={`${baseUrl}/`} />
+        <meta name='keywords' content='SGB finance, SGB vehicle finance, two wheeler loan, bike finance, vehicle loan' />
+        <meta property='og:type' content='website' />
+        <meta property='og:title' content='SGB Vehicle Finance | Two Wheeler Loans & Fast Approvals' />
+        <meta
+          property='og:description'
+          content='Fast, flexible two-wheeler loans with transparent terms, low documentation, and quick approvals. Apply online today.'
+        />
+        <meta property='og:url' content={`${baseUrl}/`} />
+        <meta property='og:image' content={`${baseUrl}/sgb.svg`} />
+        <meta name='twitter:card' content='summary' />
+        <meta name='twitter:title' content='SGB Vehicle Finance | Two Wheeler Loans & Fast Approvals' />
+        <meta
+          name='twitter:description'
+          content='Fast, flexible two-wheeler loans with transparent terms, low documentation, and quick approvals.'
+        />
+        <meta name='twitter:image' content={`${baseUrl}/sgb.svg`} />
+        <script type='application/ld+json'>
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'LocalBusiness',
+            name: 'SGB Vehicle Finance, Sumaya Good Will Bike Zone Consulting and Finance',
+            url: baseUrl,
+            image: `${baseUrl}/sgb.svg`,
+            telephone: ['+91 9182278505', '+91 9399922786'],
+            address: {
+              '@type': 'PostalAddress',
+              streetAddress: 'Santhi Theater Road, Opp Her Showrrom',
+              addressLocality: 'Chirala',
+              addressRegion: 'Andhra Pradesh',
+              postalCode: '523155',
+              addressCountry: 'IN',
+            },
+            areaServed: 'Andhra Pradesh',
+            openingHoursSpecification: [
+              {
+                '@type': 'OpeningHoursSpecification',
+                dayOfWeek: [
+                  'Monday',
+                  'Tuesday',
+                  'Wednesday',
+                  'Thursday',
+                  'Friday',
+                  'Saturday',
+                  'Sunday',
+                ],
+                opens: '09:00',
+                closes: '22:00',
+              },
+            ],
+          })}
+        </script>
+      </Helmet>
       <div className='md:px-8 md:pt-6'>
         <div className='w-full bg-[rgba(246,246,246,0.45)] shadow-[1px_3px_4px_0px_rgba(0,_0,_0,_0.1)] md:rounded-full'>
           <div className='flex items-center justify-between py-4 px-2 '>
@@ -469,7 +531,12 @@ function Home() {
         <h2 className='font-semibold text-[#737373]  px-4 text-[1.4rem] leading-relaxed sm:text-[1.15rem] md:text-xl'>Get fast, flexible, and affordable vehicle financing. <br />
           <span className='sm:pl-4'>whether it’s your first ride or your next upgrade.</span></h2>
         <div className='pt-9'>
-          <button className='flex gap-2 justify-center rounded-lg items-center px-5 py-3 text-base sm:px-4 sm:py-2 sm:text-sm bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] font-bold shadow-[0px_3px_2px_1px_rgba(0,_0,_0,_0.7)]'>Get Started
+          <button
+            type='button'
+            onClick={() => navigate('/signup')}
+            className='flex gap-2 justify-center rounded-lg items-center px-5 py-3 text-base sm:px-4 sm:py-2 sm:text-sm bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] font-bold shadow-[0px_3px_2px_1px_rgba(0,_0,_0,_0.7)]'
+          >
+            Get Started
             <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 16 9"><path fill="currentColor" d="M12.5 5h-9c-.28 0-.5-.22-.5-.5s.22-.5.5-.5h9c.28 0 .5.22.5.5s-.22.5-.5.5" /><path fill="currentColor" d="M10 8.5a.47.47 0 0 1-.35-.15c-.2-.2-.2-.51 0-.71l3.15-3.15l-3.15-3.15c-.2-.2-.2-.51 0-.71s.51-.2.71 0l3.5 3.5c.2.2.2.51 0 .71l-3.5 3.5c-.1.1-.23.15-.35.15Z" /></svg>
           </button>
         </div>

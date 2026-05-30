@@ -1,9 +1,12 @@
 import React, { useState } from 'react'
+import { Helmet } from 'react-helmet-async'
 import { useNavigate } from 'react-router-dom'
 import Logo from './components/Logo'
 import Footer from './components/Footer'
 import apiClient from '../api/axios'
 import { setAuthToken } from '../api/axios'
+
+const baseUrl = 'https://sgbvehiclefinance.com'
 
 function Login() {
   const [role, setRole] = useState('subadmin')
@@ -113,6 +116,11 @@ function Login() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
+      <Helmet>
+        <title>Login | SGB Vehicle Finance</title>
+        <meta name='robots' content='noindex, nofollow' />
+        <link rel='canonical' href={`${baseUrl}/login`} />
+      </Helmet>
       <header className="px-6 md:px-10 pt-6">
         <div className="max-w-7xl mx-auto">
           <Logo />

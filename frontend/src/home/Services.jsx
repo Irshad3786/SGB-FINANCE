@@ -1,4 +1,5 @@
 import React from 'react'
+import { Helmet } from 'react-helmet-async'
 import PublicTopNav from './components/PublicTopNav'
 import Footer from './components/Footer'
 
@@ -27,9 +28,33 @@ const flow = [
   'Receive finance and complete your vehicle purchase',
 ]
 
+const baseUrl = 'https://sgbvehiclefinance.com'
+
 function Services() {
   return (
     <div>
+      <Helmet>
+        <title>Two Wheeler Loan Services | SGB Vehicle Finance</title>
+        <meta
+          name='description'
+          content='Explore two-wheeler loan services from SGB Vehicle Finance, including refinance options, low interest plans, and quick approvals.'
+        />
+        <link rel='canonical' href={`${baseUrl}/services`} />
+        <meta property='og:title' content='Two Wheeler Loan Services | SGB Vehicle Finance' />
+        <meta
+          property='og:description'
+          content='Explore two-wheeler loan services from SGB Vehicle Finance, including refinance options, low interest plans, and quick approvals.'
+        />
+        <meta property='og:url' content={`${baseUrl}/services`} />
+        <meta property='og:image' content={`${baseUrl}/sgb.svg`} />
+        <meta name='twitter:card' content='summary' />
+        <meta name='twitter:title' content='Two Wheeler Loan Services | SGB Vehicle Finance' />
+        <meta
+          name='twitter:description'
+          content='Explore two-wheeler loan services from SGB Vehicle Finance, including refinance options, low interest plans, and quick approvals.'
+        />
+        <meta name='twitter:image' content={`${baseUrl}/sgb.svg`} />
+      </Helmet>
       <PublicTopNav />
 
       <section className='mx-auto max-w-7xl px-4 pb-8 pt-14 sm:px-6 lg:px-8'>

@@ -1,11 +1,35 @@
 import React from 'react'
+import { Helmet } from 'react-helmet-async'
 import { useNavigate } from 'react-router-dom'
 
 function Terms() {
   const navigate = useNavigate()
+  const baseUrl = 'https://sgbvehiclefinance.com'
 
   return (
     <section className='min-h-screen bg-[linear-gradient(180deg,#F7FFF9_0%,#FFFFFF_55%,#EFFCEE_100%)] px-4 py-10 sm:px-6 lg:px-8'>
+      <Helmet>
+        <title>Terms and Conditions | SGB Vehicle Finance</title>
+        <meta
+          name='description'
+          content='Review the SGB Vehicle Finance terms and conditions for using our services and applying for loans.'
+        />
+        <link rel='canonical' href={`${baseUrl}/terms`} />
+        <meta property='og:title' content='Terms and Conditions | SGB Vehicle Finance' />
+        <meta
+          property='og:description'
+          content='Review the SGB Vehicle Finance terms and conditions for using our services and applying for loans.'
+        />
+        <meta property='og:url' content={`${baseUrl}/terms`} />
+        <meta property='og:image' content={`${baseUrl}/sgb.svg`} />
+        <meta name='twitter:card' content='summary' />
+        <meta name='twitter:title' content='Terms and Conditions | SGB Vehicle Finance' />
+        <meta
+          name='twitter:description'
+          content='Review the SGB Vehicle Finance terms and conditions for using our services and applying for loans.'
+        />
+        <meta name='twitter:image' content={`${baseUrl}/sgb.svg`} />
+      </Helmet>
       <div className='mx-auto max-w-4xl'>
         <div className='rounded-3xl border border-black/10 bg-white/90 p-6 shadow-[0px_12px_30px_rgba(0,_0,_0,_0.08)] sm:p-8 md:p-10'>
           <div className='flex flex-wrap items-center justify-between gap-3'>

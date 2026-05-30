@@ -1,9 +1,11 @@
 import React, { useMemo, useRef, useState } from 'react'
+import { Helmet } from 'react-helmet-async'
 import { useReactToPrint } from 'react-to-print'
 import PublicTopNav from './components/PublicTopNav'
 import Footer from './components/Footer'
 
 const ALLOWED_MONTHS = [6, 10, 12, 15, 18, 24]
+const baseUrl = 'https://sgbvehiclefinance.com'
 
 function EmiCalculator() {
   const [financeAmount, setFinanceAmount] = useState('')
@@ -131,6 +133,28 @@ function EmiCalculator() {
 
   return (
     <div className='min-h-screen bg-white'>
+      <Helmet>
+        <title>EMI Calculator | SGB Vehicle Finance</title>
+        <meta
+          name='description'
+          content='Use the SGB Vehicle Finance EMI calculator to estimate monthly payments for your two-wheeler loan.'
+        />
+        <link rel='canonical' href={`${baseUrl}/emi-calculator`} />
+        <meta property='og:title' content='EMI Calculator | SGB Vehicle Finance' />
+        <meta
+          property='og:description'
+          content='Use the SGB Vehicle Finance EMI calculator to estimate monthly payments for your two-wheeler loan.'
+        />
+        <meta property='og:url' content={`${baseUrl}/emi-calculator`} />
+        <meta property='og:image' content={`${baseUrl}/sgb.svg`} />
+        <meta name='twitter:card' content='summary' />
+        <meta name='twitter:title' content='EMI Calculator | SGB Vehicle Finance' />
+        <meta
+          name='twitter:description'
+          content='Estimate monthly payments for your two-wheeler loan with our EMI calculator.'
+        />
+        <meta name='twitter:image' content={`${baseUrl}/sgb.svg`} />
+      </Helmet>
       <PublicTopNav />
 
       <section className='mx-auto max-w-4xl px-4 pb-16 pt-12 sm:px-6 lg:px-8'>

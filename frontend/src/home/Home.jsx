@@ -464,7 +464,7 @@ function Home() {
 
       {/* content one */}
 
-      <div className='flex justify-center items-center h-fit min-h-[80svh] sm:min-h-0 flex-col'>
+      <div className='flex justify-center items-center h-fit flex-col'>
         <h1 className=' px-4 text-[2.35rem] sm:text-[2.25rem] pt-12 md:pt-24 md:text-[2.75rem] lg:text-[3rem] xl:text-[3.5rem] font-extrabold text-[#27563C]'><span className='sm:pl-16'>Drive Your Dream,</span><br /> We Finance the Journey.</h1>
         <h2 className='font-semibold text-[#737373]  px-4 text-base md:text-xl'>Get fast, flexible, and affordable vehicle financing. <br />
           <span className='sm:pl-4'>whether it’s your first ride or your next upgrade.</span></h2>

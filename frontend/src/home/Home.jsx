@@ -465,8 +465,8 @@ function Home() {
       {/* content one */}
 
       <div className='flex justify-center items-center h-fit flex-col'>
-        <h1 className=' px-4 text-[2.35rem] sm:text-[2.25rem] pt-12 md:pt-24 md:text-[2.75rem] lg:text-[3rem] xl:text-[3.5rem] font-extrabold text-[#27563C]'><span className='sm:pl-16'>Drive Your Dream,</span><br /> We Finance the Journey.</h1>
-        <h2 className='font-semibold text-[#737373]  px-4 text-base md:text-xl'>Get fast, flexible, and affordable vehicle financing. <br />
+        <h1 className=' px-4 text-[2.7rem] leading-tight sm:text-[2.25rem] pt-12 md:pt-24 md:text-[2.75rem] lg:text-[3rem] xl:text-[3.5rem] font-extrabold text-[#27563C]'><span className='sm:pl-16'>Drive Your Dream,</span><br /> We Finance the Journey.</h1>
+        <h2 className='font-semibold text-[#737373]  px-4 text-[1.05rem] leading-relaxed md:text-xl'>Get fast, flexible, and affordable vehicle financing. <br />
           <span className='sm:pl-4'>whether it’s your first ride or your next upgrade.</span></h2>
         <div className='pt-9'>
           <button className='flex gap-2 justify-center rounded-lg items-center px-4 py-2 bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] font-bold shadow-[0px_3px_2px_1px_rgba(0,_0,_0,_0.7)]'>Get Started

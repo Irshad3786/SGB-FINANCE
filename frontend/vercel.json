@@ -1,37 +1,11 @@
 {
-  "framework": "vite",
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-
-  "redirects": [
+  "source": "/(.*)",
+  "has": [
     {
-      "source": "/(.*)",
-      "has": [
-        {
-          "type": "host",
-          "value": "sgbvehiclefinance.com"
-        }
-      ],
-      "destination": "https://www.sgbvehiclefinance.com/$1",
-      "permanent": true
-    },
-    {
-      "source": "/(.*)",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.sgbvehiclefinance.com"
-        }
-      ],
-      "destination": "https://www.sgbvehiclefinance.com/$1",
-      "permanent": true
+      "type": "host",
+      "value": "www.sgbvehiclefinance.com"
     }
   ],
-
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+  "destination": "https://www.sgbvehiclefinance.com/$1",
+  "permanent": true
 }

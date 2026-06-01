@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import sitemapPlugin from 'vite-plugin-sitemap'
 
-const siteUrl = 'https://sgbvehiclefinance.com'
+const siteUrl = 'https://www.sgbvehiclefinance.com'
 const publicRoutes = [
   '/',
   '/about',

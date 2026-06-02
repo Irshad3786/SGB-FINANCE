@@ -3,7 +3,7 @@ import "dotenv/config";
 const { app, configureCORS } = await import("./app.js");
 const { default: connectDB } = await import("./config/db.js");
 
-console.log("CI/CD check: backend works");
+console.log("CI/CD check: backend worksd");
 
 // ✅ Configure CORS after .env is loaded
 configureCORS();

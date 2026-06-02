@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+    paths:
+      - 'backend/**'
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -22,7 +25,7 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t irshad777/sgb-backend:latest .
+          docker build -t irshad777/sgb-backend:latest ./backend
 
       - name: Push Docker Image
         run: |
@@ -42,4 +45,3 @@ jobs:
             docker compose up -d --force-recreate
 
             docker image prune -f
-

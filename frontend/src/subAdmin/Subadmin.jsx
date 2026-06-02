@@ -12,7 +12,12 @@ function Subadmin() {
 
   const location = useLocation();
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window === 'undefined') {
+      return true
+    }
+    return window.matchMedia('(min-width: 768px)').matches
+  });
   const [topTitle, setTopTitle] = useState('Dashboard');
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [subAdminProfile, setSubAdminProfile] = useState(() => readStoredSubAdminProfile());

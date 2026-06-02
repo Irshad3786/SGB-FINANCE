@@ -64,7 +64,7 @@ function Footer() {
                   <h3 className="font-semibold text-lg mb-4">Contact Us</h3>
                   <ul className="space-y-3 text-sm text-gray-300">
                   <li>
-                    <a className="hover:text-white underline underline-offset-4 break-words break-all" href="mailto:support@sgbvehiclefinance.com">
+                    <a className="hover:text-white underline underline-offset-4 break-words sm:break-normal lg:whitespace-nowrap lg:text-[10px]" href="mailto:support@sgbvehiclefinance.com">
                     support@sgbvehiclefinance.com
                     </a>
                   </li>

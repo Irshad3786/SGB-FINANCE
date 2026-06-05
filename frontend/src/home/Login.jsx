@@ -5,6 +5,7 @@ import Logo from './components/Logo'
 import Footer from './components/Footer'
 import apiClient from '../api/axios'
 import { setAuthToken } from '../api/axios'
+import { useToast } from '../components/ToastProvider'
 
 const baseUrl = 'https://sgbvehiclefinance.com'
 
@@ -15,6 +16,7 @@ function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const { showToast } = useToast()
 
   function onChange(e) {
     const { name, value, type, checked } = e.target
@@ -105,10 +107,26 @@ function Login() {
         } else {
           navigate('/user')
         }
+      } else {
+        const message = response.data?.message || 'Login failed. Please try again.'
+        setError(message)
+        showToast({
+          type: 'error',
+          title: 'Login failed',
+          message,
+          duration: 0
+        })
       }
     } catch (err) {
       console.error('Login error:', err)
-      setError(err.response?.data?.message || 'Login failed. Please try again.')
+      const message = err.response?.data?.message || 'Login failed. Please try again.'
+      setError(message)
+      showToast({
+        type: 'error',
+        title: 'Login failed',
+        message,
+        duration: 0
+      })
     } finally {
       setLoading(false)
     }

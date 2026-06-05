@@ -6,6 +6,8 @@ function EditSubAdminModal({ isOpen, onClose, subAdmin, onSave }) {
     phone: '',
     roleName: '',
     status: 'active',
+    password: '',
+    confirmPassword: '',
     moduleAccess: {
       dashboard: { enabled: false, edit: false },
       vehicleStock: { enabled: false, edit: false },
@@ -128,6 +130,8 @@ function EditSubAdminModal({ isOpen, onClose, subAdmin, onSave }) {
         phone: subAdmin.phone || '',
         roleName: subAdmin.roleName || '',
         status: subAdmin.status || 'active',
+        password: '',
+        confirmPassword: '',
         moduleAccess
       })
       setErrors({})
@@ -189,6 +193,24 @@ function EditSubAdminModal({ isOpen, onClose, subAdmin, onSave }) {
       newErrors.roleName = 'Please select a role name'
     }
 
+    if (form.password || form.confirmPassword) {
+      const passwordRegex =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/
+
+      if (!form.password) {
+        newErrors.password = 'New password is required'
+      } else if (!passwordRegex.test(form.password)) {
+        newErrors.password =
+          'Password must be 8+ chars with uppercase, lowercase, number, special character'
+      }
+
+      if (!form.confirmPassword) {
+        newErrors.confirmPassword = 'Please confirm the new password'
+      } else if (form.password !== form.confirmPassword) {
+        newErrors.confirmPassword = 'Passwords do not match'
+      }
+    }
+
     return newErrors
   }
 
@@ -218,7 +240,9 @@ function EditSubAdminModal({ isOpen, onClose, subAdmin, onSave }) {
           phone: form.phone,
           roleName: form.roleName,
           status: form.status,
-          permissions
+          permissions,
+          password: form.password ? form.password : undefined,
+          confirmPassword: form.password ? form.confirmPassword : undefined
         })
         setErrors({})
         onClose()
@@ -329,6 +353,41 @@ function EditSubAdminModal({ isOpen, onClose, subAdmin, onSave }) {
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                 </select>
+              </div>
+            </div>
+
+            {/* Change Password */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              <div className="flex flex-col">
+                <label className="text-xs font-extrabold text-[#0e6b53] mb-2">
+                  New Password
+                </label>
+                <input
+                  name="password"
+                  type="password"
+                  value={form.password}
+                  onChange={onChange}
+                  className="px-4 py-2 rounded-md border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                  placeholder="Leave blank to keep"
+                />
+                {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-xs font-extrabold text-[#0e6b53] mb-2">
+                  Confirm Password
+                </label>
+                <input
+                  name="confirmPassword"
+                  type="password"
+                  value={form.confirmPassword}
+                  onChange={onChange}
+                  className="px-4 py-2 rounded-md border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#bff86a]"
+                  placeholder="Re-enter new password"
+                />
+                {errors.confirmPassword && (
+                  <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
+                )}
               </div>
             </div>
 

@@ -40,15 +40,22 @@ function SubAdminList() {
   }
 
   const handleSave = async (updatedSubAdmin) => {
+    const payload = {
+      name: updatedSubAdmin.name,
+      phone: updatedSubAdmin.phone,
+      roleName: updatedSubAdmin.roleName,
+      status: updatedSubAdmin.status,
+      permissions: updatedSubAdmin.permissions || []
+    }
+
+    if (updatedSubAdmin.password) {
+      payload.password = updatedSubAdmin.password
+      payload.confirmPassword = updatedSubAdmin.confirmPassword
+    }
+
     const response = await apiClient.put(
       `/api/admin/subadmins/${updatedSubAdmin._id}`,
-      {
-        name: updatedSubAdmin.name,
-        phone: updatedSubAdmin.phone,
-        roleName: updatedSubAdmin.roleName,
-        status: updatedSubAdmin.status,
-        permissions: updatedSubAdmin.permissions || []
-      }
+      payload
     )
 
     const savedSubAdmin = response.data?.data

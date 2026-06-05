@@ -36,7 +36,7 @@ const updateCreatedSubAdmin = async (req, res) => {
       });
     }
 
-    const { name, phone, roleName, status, permissions } = req.body;
+    const { name, phone, roleName, status, permissions, password, confirmPassword } = req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({
@@ -73,6 +73,33 @@ const updateCreatedSubAdmin = async (req, res) => {
       });
     }
 
+    if (password || confirmPassword) {
+      const passwordRegex =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+
+      if (!password) {
+        return res.status(400).json({
+          success: false,
+          message: "Password is required",
+        });
+      }
+
+      if (!passwordRegex.test(password)) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character",
+        });
+      }
+
+      if (password !== confirmPassword) {
+        return res.status(400).json({
+          success: false,
+          message: "Password and confirmPassword do not match",
+        });
+      }
+    }
+
     const phoneInUse = await SubAdmin.findOne({
       _id: { $ne: id },
       phone: String(phone),
@@ -85,30 +112,33 @@ const updateCreatedSubAdmin = async (req, res) => {
       });
     }
 
-    const updatePayload = {
-      name: String(name).trim(),
-      phone: String(phone).trim(),
-      roleName,
-      status,
-    };
+    const subAdmin = await SubAdmin.findById(id).select("+password");
 
-    if (permissions !== undefined) {
-      updatePayload.permissions = permissions;
-    }
-
-    const updatedSubAdmin = await SubAdmin.findByIdAndUpdate(id, updatePayload, {
-      new: true,
-      runValidators: true,
-    })
-      .select("name email phone roleName status permissions createdAt updatedAt")
-      .lean();
-
-    if (!updatedSubAdmin) {
+    if (!subAdmin) {
       return res.status(404).json({
         success: false,
         message: "Sub-admin not found",
       });
     }
+
+    subAdmin.name = String(name).trim();
+    subAdmin.phone = String(phone).trim();
+    subAdmin.roleName = roleName;
+    subAdmin.status = status;
+
+    if (permissions !== undefined) {
+      subAdmin.permissions = permissions;
+    }
+
+    if (password) {
+      subAdmin.password = password;
+    }
+
+    await subAdmin.save();
+
+    const updatedSubAdmin = await SubAdmin.findById(id)
+      .select("name email phone roleName status permissions createdAt updatedAt")
+      .lean();
 
     return res.status(200).json({
       success: true,

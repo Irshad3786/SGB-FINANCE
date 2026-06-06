@@ -32,16 +32,16 @@ jobs:
           docker push irshad777/sgb-backend:latest
 
       - name: Deploy To VPS
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SERVER_IP }}
           username: root
           password: ${{ secrets.SERVER_PASSWORD }}
+          timeout: 60s
+          command_timeout: 15m
+          debug: true
           script: |
             cd /root/app
-
             docker compose pull
-
             docker compose up -d --force-recreate
-
             docker image prune -f

@@ -191,29 +191,39 @@ const saveBuyerOrSeller = async (req, res) => {
     if (String(role).toLowerCase() === "seller") {
       const normalizedChassisNo = normalizeText(chassisNo);
       const normalizedVehicleNo = normalizeText(vehicleNo);
+      const replaceExisting = req.body.replaceExisting === true || String(req.body.replaceExisting).toLowerCase() === "true";
+
+      let existingSeller = null;
 
       if (normalizedChassisNo) {
-        const existingSeller = await Seller.findOne({ "vehicle.chassisNo": normalizedChassisNo })
-          .select("_id vehicle.chassisNo")
+        existingSeller = await Seller.findOne({ "vehicle.chassisNo": normalizedChassisNo })
+          .select("_id fullName phoneNo vehicle.vehicleName vehicle.vehicleNumber vehicle.chassisNo vehicle.model vehicle.bikePrice fullAddress")
           .lean();
-
-        if (existingSeller) {
-          return res.status(409).json({
-            success: false,
-            message: "Duplicate value found. Please use a unique Chassis No.",
-          });
-        }
       }
 
-      if (normalizedVehicleNo) {
-        const existingVehicleNo = await Seller.findOne({ "vehicle.vehicleNumber": normalizedVehicleNo })
-          .select("_id vehicle.vehicleNumber")
+      if (!existingSeller && normalizedVehicleNo) {
+        existingSeller = await Seller.findOne({ "vehicle.vehicleNumber": normalizedVehicleNo })
+          .select("_id fullName phoneNo vehicle.vehicleName vehicle.vehicleNumber vehicle.chassisNo vehicle.model vehicle.bikePrice fullAddress")
           .lean();
+      }
 
-        if (existingVehicleNo) {
+      if (existingSeller) {
+        if (!replaceExisting) {
           return res.status(409).json({
             success: false,
-            message: "Duplicate value found. Please use a unique Vehicle No.",
+            code: "VEHICLE_EXISTS",
+            message: "Duplicate value found. A seller record with this vehicle number or chassis number already exists.",
+            data: {
+              _id: existingSeller._id,
+              fullName: existingSeller.fullName,
+              phoneNo: existingSeller.phoneNo,
+              vehicleName: existingSeller.vehicle?.vehicleName,
+              vehicleNumber: existingSeller.vehicle?.vehicleNumber,
+              chassisNo: existingSeller.vehicle?.chassisNo,
+              model: existingSeller.vehicle?.model,
+              bikePrice: existingSeller.vehicle?.bikePrice,
+              fullAddress: existingSeller.fullAddress
+            }
           });
         }
       }
@@ -244,19 +254,28 @@ const saveBuyerOrSeller = async (req, res) => {
         referralPhoneNo: referralPhone,
       };
 
-      try {
-        savedRecord = await Seller.create(sellerPayload);
-      } catch (error) {
-        const isStaleAgreementIndexError =
-          error?.code === 11000 &&
-          (error?.message?.includes("agreementNo_1") || error?.keyPattern?.agreementNo);
+      if (existingSeller && replaceExisting) {
+        savedRecord = await Seller.findByIdAndUpdate(
+          existingSeller._id,
+          { $set: sellerPayload },
+          { new: true, runValidators: true }
+        );
+        wasUpdated = true;
+      } else {
+        try {
+          savedRecord = await Seller.create(sellerPayload);
+        } catch (error) {
+          const isStaleAgreementIndexError =
+            error?.code === 11000 &&
+            (error?.message?.includes("agreementNo_1") || error?.keyPattern?.agreementNo);
 
-        if (!isStaleAgreementIndexError) {
-          throw error;
+          if (!isStaleAgreementIndexError) {
+            throw error;
+          }
+
+          await Seller.collection.dropIndex("agreementNo_1").catch(() => null);
+          savedRecord = await Seller.create(sellerPayload);
         }
-
-        await Seller.collection.dropIndex("agreementNo_1").catch(() => null);
-        savedRecord = await Seller.create(sellerPayload);
       }
 
     } else {
@@ -350,21 +369,29 @@ const saveBuyerOrSeller = async (req, res) => {
 
         if (buyFilters.length > 0) {
           const matchedBuyerForBuy = await Buyer.findOne({ $or: buyFilters })
-            .select("_id name vehicle.vehicleNumber vehicle.chassisNo")
+            .select("_id name agreementNo vehicle.vehicleName vehicle.vehicleNumber vehicle.chassisNo")
             .lean();
 
           if (matchedBuyerForBuy) {
-            return res.status(409).json({
-              success: false,
-              code: "VEHICLE_DATA_EXISTS",
-              message: "This vehicle data already exists. Please use a different vehicle number or chassis number.",
-              data: {
-                id: matchedBuyerForBuy._id,
-                name: matchedBuyerForBuy.name,
-                vehicleNumber: matchedBuyerForBuy?.vehicle?.vehicleNumber,
-                chassisNo: matchedBuyerForBuy?.vehicle?.chassisNo,
-              },
-            });
+            const deleteExisting = req.body.deleteExisting === true || String(req.body.deleteExisting).toLowerCase() === "true";
+
+            if (!deleteExisting) {
+              return res.status(409).json({
+                success: false,
+                code: "VEHICLE_DATA_EXISTS",
+                message: "This vehicle data already exists in buyer records.",
+                data: {
+                  _id: matchedBuyerForBuy._id,
+                  name: matchedBuyerForBuy.name,
+                  agreementNo: matchedBuyerForBuy.agreementNo || "—",
+                  vehicleName: matchedBuyerForBuy.vehicle?.vehicleName || "—",
+                  vehicleNumber: matchedBuyerForBuy.vehicle?.vehicleNumber || "—",
+                  chassisNo: matchedBuyerForBuy.vehicle?.chassisNo || "—",
+                },
+              });
+            } else {
+              await Buyer.findByIdAndDelete(matchedBuyerForBuy._id);
+            }
           }
         }
       }

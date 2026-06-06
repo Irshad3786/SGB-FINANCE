@@ -10,6 +10,7 @@ import apiClient from '../../api/axios'
 import { uploadApplicationDocument } from '../../api/applicationUploads'
 import { useToast } from '../../components/ToastProvider'
 import Loader from '../../components/Loader'
+import SellerConfirmModal from '../components/SellerConfirmModal'
 import { readStoredSubAdminProfile, canEditModule } from '../utils/subAdminAccess'
 
 const INITIAL_SELL_FORM = {
@@ -61,6 +62,8 @@ function Sell() {
   const [mandalsByDistrict, setMandalsByDistrict] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [uploadingLabel, setUploadingLabel] = useState('')
+  const [showConfirmReplace, setShowConfirmReplace] = useState(false)
+  const [duplicateSellerData, setDuplicateSellerData] = useState(null)
   const invoiceRef = useRef(null)
 
   const inputBase = 'w-full pl-10 px-3 py-2 rounded-xl border border-transparent shadow-inner bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#bff86a] pr-4 text-sm'
@@ -153,6 +156,7 @@ function Sell() {
       soWoCo: form.soWoCo,
       occupation: form.occupation,
       phone: form.phone,
+      alternatePhone: form.alternatePhone,
       aadhaar: form.aadhaar,
       vehicleName: form.vehicleName || vehicle.vehicleName,
       vehicleNo: form.vehicleNo || vehicle.vehicleNumber,
@@ -267,8 +271,8 @@ function Sell() {
     }, {})
   }
 
-  async function onSubmit(e) {
-    e.preventDefault()
+  async function onSubmit(e, replaceExisting = false) {
+    if (e) e.preventDefault()
     if (!canEditAddEntry) {
       showToast({ type: 'error', title: 'Permission', message: 'You do not have permission to add entries' })
       return
@@ -333,6 +337,7 @@ function Sell() {
         role,
         ...form,
         ...uploadedKeys,
+        replaceExisting
       }
 
       const response = await apiClient.post('/api/subadmin/management/save-seller', payload)
@@ -348,11 +353,17 @@ function Sell() {
       setFiles(INITIAL_SELL_FILES)
     } catch (error) {
       console.error('seller save error:', error?.response?.data || error.message)
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: error?.response?.data?.message || 'Failed to save seller'
-      })
+      const errData = error?.response?.data
+      if (errData && errData.code === 'VEHICLE_EXISTS') {
+        setDuplicateSellerData(errData.data)
+        setShowConfirmReplace(true)
+      } else {
+        showToast({
+          type: 'error',
+          title: 'Error',
+          message: errData?.message || 'Failed to save seller'
+        })
+      }
     } finally {
       setIsSubmitting(false)
       setUploadingLabel('')
@@ -854,6 +865,18 @@ function Sell() {
           onPrint={handleInvoicePrint}
         />
       )}
+
+      <SellerConfirmModal
+        isOpen={showConfirmReplace}
+        onClose={() => {
+          setShowConfirmReplace(false)
+          setDuplicateSellerData(null)
+        }}
+        onConfirm={() => {
+          onSubmit(null, true)
+        }}
+        existingData={duplicateSellerData}
+      />
 
     </div>
   )

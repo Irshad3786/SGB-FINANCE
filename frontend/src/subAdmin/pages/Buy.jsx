@@ -11,6 +11,7 @@ import apiClient from '../../api/axios'
 import { uploadApplicationDocument } from '../../api/applicationUploads'
 import { useToast } from '../../components/ToastProvider'
 import Loader from '../../components/Loader'
+import BuyerConfirmModal from '../components/BuyerConfirmModal'
 import { readStoredSubAdminProfile, canEditModule } from '../utils/subAdminAccess'
 
 const INITIAL_BUY_FORM = {
@@ -85,6 +86,8 @@ function Buy() {
       const [isVehiclePrefillLoading, setIsVehiclePrefillLoading] = useState(false)
       const [isSubmitting, setIsSubmitting] = useState(false)
       const [uploadingLabel, setUploadingLabel] = useState('')
+      const [showConfirmDelete, setShowConfirmDelete] = useState(false)
+      const [duplicateBuyerData, setDuplicateBuyerData] = useState(null)
       const [districtOptions, setDistrictOptions] = useState(apDistricts)
       const [allMandalOptions, setAllMandalOptions] = useState(apMandals)
       const [mandalsByDistrict, setMandalsByDistrict] = useState({})
@@ -249,6 +252,7 @@ function Buy() {
           soWoCo: form.soWoCo,
           occupation: form.occupation,
           phone: form.phone,
+          alternatePhone: form.alternatePhone,
           aadhaar: form.aadhaar,
           vehicleName: form.vehicleName || vehicle.vehicleName,
           vehicleNo: form.vehicleNo || vehicle.vehicleNumber,
@@ -409,8 +413,8 @@ function Buy() {
         }, {})
       }
     
-      async function onSubmit(e) {
-        e.preventDefault()
+      async function onSubmit(e, deleteExisting = false) {
+        if (e) e.preventDefault()
         if (!canEditAddEntry) {
           showToast({ type: 'error', title: 'Permission', message: 'You do not have permission to add entries' })
           return
@@ -482,6 +486,7 @@ function Buy() {
             mode: 'buy',
             ...form,
             ...uploadedKeys,
+            deleteExisting
           }
 
           const response = await apiClient.post('/api/subadmin/management/save-buyer', payload)
@@ -501,11 +506,16 @@ function Buy() {
         } catch (error) {
           const errorData = error?.response?.data
           console.error('buyer save error:', errorData || error.message)
-          showToast({
-            type: 'error',
-            title: 'Error',
-            message: errorData?.message || 'Failed to save buyer'
-          })
+          if (errorData && errorData.code === 'VEHICLE_DATA_EXISTS') {
+            setDuplicateBuyerData(errorData.data)
+            setShowConfirmDelete(true)
+          } else {
+            showToast({
+              type: 'error',
+              title: 'Error',
+              message: errorData?.message || 'Failed to save buyer'
+            })
+          }
         } finally {
           setIsSubmitting(false)
           setUploadingLabel('')
@@ -1291,6 +1301,18 @@ function Buy() {
           onPrint={handleInvoicePrint}
         />
       )}
+
+      <BuyerConfirmModal
+        isOpen={showConfirmDelete}
+        onClose={() => {
+          setShowConfirmDelete(false)
+          setDuplicateBuyerData(null)
+        }}
+        onConfirm={() => {
+          onSubmit(null, true)
+        }}
+        existingData={duplicateBuyerData}
+      />
 
     </div>
   )

@@ -4,6 +4,7 @@ import { apDistricts, apMandals, fetchLocationLookup, normalizeKey } from "../co
 import apiClient from "../../api/axios";
 import { uploadApplicationDocument } from "../../api/applicationUploads";
 import { useToast } from "../../components/ToastProvider";
+import Loader from "../../components/Loader";
 import InvoicePreviewModal from "./InvoicePreviewModal";
 import { canEditModule, readStoredSubAdminProfile } from "../utils/subAdminAccess";
 
@@ -112,6 +113,8 @@ function RefinanceForm({ inputBase, labelClass }) {
   const [allMandalOptions, setAllMandalOptions] = useState(apMandals);
   const [mandalsByDistrict, setMandalsByDistrict] = useState({});
   const [isAutoFilling, setIsAutoFilling] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadingLabel, setUploadingLabel] = useState("");
   const lastPrefillHaRef = useRef("");
   const invoiceRef = useRef(null);
   const { showToast } = useToast();
@@ -328,6 +331,7 @@ function RefinanceForm({ inputBase, labelClass }) {
       soWoCo: form.soWoCo,
       occupation: form.occupation,
       phone: form.phone,
+      alternatePhone: form.alternatePhone,
       aadhaar: form.aadhaar,
       vehicleName: form.vehicleName || vehicle.vehicleName,
       vehicleNo: form.vehicleNo || vehicle.vehicleNumber,
@@ -469,24 +473,32 @@ function RefinanceForm({ inputBase, labelClass }) {
 
     const uploadTasks = [];
 
-    const pushUpload = (file, personType, documentName, payloadField) => {
+    const pushUpload = (file, personType, documentName, payloadField, label) => {
       if (!file) return;
       uploadTasks.push(
-        uploadApplicationDocument({
-          vehicleNumber,
-          personType,
-          documentName,
-          file,
-        }).then((result) => ({ payloadField, key: result?.data?.key }))
+        (async () => {
+          setUploadingLabel(label);
+          try {
+            const result = await uploadApplicationDocument({
+              vehicleNumber,
+              personType,
+              documentName,
+              file,
+            });
+            return { payloadField, key: result?.data?.key };
+          } finally {
+            setUploadingLabel("");
+          }
+        })()
       );
     };
 
-    pushUpload(files.profile, "buyer", "profile", "profile");
-    pushUpload(files.aadhaarFront, "buyer", "aadhaar-front", "aadharFront");
-    pushUpload(files.aadhaarBack, "buyer", "aadhaar-back", "aadharBack");
-    pushUpload(files.guarantorPhoto, "guarantor", "profile", "guarantorPhoto");
-    pushUpload(files.guarantorAadharFront, "guarantor", "aadhaar-front", "guarantorAadharFront");
-    pushUpload(files.guarantorAadharBack, "guarantor", "aadhaar-back", "guarantorAadharBack");
+    pushUpload(files.profile, "buyer", "profile", "profile", "Uploading buyer profile...");
+    pushUpload(files.aadhaarFront, "buyer", "aadhaar-front", "aadharFront", "Uploading Aadhaar front...");
+    pushUpload(files.aadhaarBack, "buyer", "aadhaar-back", "aadharBack", "Uploading Aadhaar back...");
+    pushUpload(files.guarantorPhoto, "guarantor", "profile", "guarantorPhoto", "Uploading guarantor photo...");
+    pushUpload(files.guarantorAadharFront, "guarantor", "aadhaar-front", "guarantorAadharFront", "Uploading guarantor Aadhaar front...");
+    pushUpload(files.guarantorAadharBack, "guarantor", "aadhaar-back", "guarantorAadharBack", "Uploading guarantor Aadhaar back...");
 
     const uploaded = await Promise.all(uploadTasks);
     return uploaded.reduce((acc, item) => {
@@ -506,6 +518,7 @@ function RefinanceForm({ inputBase, labelClass }) {
     }
 
     try {
+      setIsSubmitting(true);
       const textOnlyFields = [
         ["fullName", "Full name"],
         ["soWoCo", "S/O C/O W/O"],
@@ -592,11 +605,17 @@ function RefinanceForm({ inputBase, labelClass }) {
         title: "Error",
         message: error?.response?.data?.message || "Failed to save refinance",
       });
+    } finally {
+      setIsSubmitting(false);
+      setUploadingLabel("");
     }
   };
 
   return (
     <div className="w-full bg-[#E0FCED] rounded-2xl p-6 sm:p-8 space-y-3">
+      {(isSubmitting || uploadingLabel) && (
+        <Loader message={isSubmitting ? "Submitting refinance form..." : uploadingLabel} />
+      )}
       <div className="flex items-center gap-3 pb-2 border-b">
         <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">

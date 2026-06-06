@@ -541,6 +541,7 @@ function Users () {
       fullName: modalUser.seller || '',
       soWoCo: soWoCo,
       phone: modalUser.sellerPhone || modalUser.phoneNo || '',
+      alternatePhone: modalUser.sellerAlternatePhone || modalUser.alternatePhone || modalUser.alternatePhoneNo || '',
       aadhaar: modalUser.sellerAadhaar || modalUser.aadharNo || '',
       address: modalUser.sellerAddress || modalUser.fullAddress || '',
       district: district,
@@ -571,6 +572,7 @@ function Users () {
       fullName: modalUser.buyerName || modalUser.name || '',
       soWoCo: soWoCo,
       phone: modalUser.buyerPhone || modalUser.phoneNo || '',
+      alternatePhone: modalUser.buyerAlternatePhone || modalUser.alternatePhone || modalUser.alternatePhoneNo || '',
       aadhaar: modalUser.buyerAadhaar || modalUser.aadharNo || '',
       address: modalUser.buyerAddress || modalUser.fullAddress || '',
       district: district,
@@ -587,7 +589,7 @@ function Users () {
       emiMonths: modalUser.emiMonths || null,
       emiDate: formatDisplayDate(modalUser.emiDate),
       pendingAmount: modalUser.pendingAmount || null,
-      pendingDate: modalUser.pendingDate || '',
+      pendingDate: formatDisplayDate(modalUser.pendingDate),
     }
     setInvoice(invoiceData)
     setInvoiceMode('buyer')

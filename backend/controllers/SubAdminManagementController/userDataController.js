@@ -90,7 +90,7 @@ const getUserData = async (req, res) => {
       .lean();
 
     const buyers = await Buyer.find({})
-      .select("name sowoco occupation agreementNo phoneNo alternatePhoneNo aadharNo dateOfBirth district mandal fullAddress soldamount oldHAnumber vehicle finance guarantor referralName referralPhoneNo aadharFront aadharBack profile")
+      .select("name sowoco occupation agreementNo phoneNo alternatePhoneNo aadharNo dateOfBirth district mandal fullAddress soldamount oldHAnumber vehicle finance guarantor referralName referralPhoneNo aadharFront aadharBack profile dpPayment")
       .lean();
 
     const buyerByVehicleOrChassis = new Map();
@@ -186,6 +186,8 @@ const getUserData = async (req, res) => {
             matchedBuyer?.finance?.emiStartDate ??
             matchedBuyer?.finance?.emiDates?.[0]?.emiDate ??
             null,
+          pendingAmount: matchedBuyer?.dpPayment?.amount ?? null,
+          pendingDate: matchedBuyer?.dpPayment?.dueDate ?? null,
           agreementNo: matchedBuyer?.agreementNo || "",
           guarantorName: matchedBuyer?.guarantor?.fullName || "",
           guarantorPhone: matchedBuyer?.guarantor?.phoneNo || "",
@@ -263,6 +265,8 @@ const getUserData = async (req, res) => {
             buyer?.finance?.emiStartDate ??
             buyer?.finance?.emiDates?.[0]?.emiDate ??
             null,
+          pendingAmount: buyer?.dpPayment?.amount ?? null,
+          pendingDate: buyer?.dpPayment?.dueDate ?? null,
           agreementNo: buyer?.agreementNo || "",
           guarantorName: buyer?.guarantor?.fullName || "",
           guarantorPhone: buyer?.guarantor?.phoneNo || "",

@@ -112,6 +112,7 @@ const getStatementRows = (emiSchedule = [], paymentEntries = []) => {
 
     if (blankCarryRows > 0) {
       blankCarryRows -= 1
+      runningBalance += instAmount
       return {
         instNo: Number(schedule?.sno || idx + 1),
         instDate: schedule?.emiDate || '-',

@@ -1335,7 +1335,10 @@ function Collection() {
                         <div className="text-gray-600">Age : {financeModal.age || '-'}</div>
                         <div className="text-gray-600">Phone No: {financeModal.phoneNo || '-'}</div>
                         <div className="text-gray-600">Alternate Phone No: {financeModal.alternatePhoneNo || '-'}</div>
-                        <div className="text-gray-600">Address: {financeModal.address || '-'}</div>
+                        <div className="text-gray-600">Street / Locality: {financeModal.street || '-'}</div>
+                        <div className="text-gray-600">Mandal: {financeModal.mandal || '-'}</div>
+                        <div className="text-gray-600">District: {financeModal.district || '-'}</div>
+                        <div className="text-gray-600">Full Address: {financeModal.address || '-'}</div>
                       </div>
                     </div>
                     <div className="shrink-0 statement-print-hide">

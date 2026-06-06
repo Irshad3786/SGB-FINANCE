@@ -206,6 +206,7 @@ const mapBuyerToFinanceStatement = async (buyer) => {
 		emi: emiAmount,
 		age: resolveAge(buyer, [buyer?.dateOfBirth, buyer?.dob, buyer?.birthDate, buyer?.date_of_birth]),
 		address: resolvedAddress,
+		street: buyer?.street || "",
 		district: resolvedDistrict,
 		mandal: resolvedMandal,
 		agreementNo: buyer?.agreementNo || "",
@@ -289,7 +290,7 @@ export const getFinanceList = async (req, res) => {
 		const skip = (safePage - 1) * parsedLimit;
 
 		const buyers = await Buyer.find(query)
-			.select("name sowoco occupation agreementNo phoneNo alternatePhoneNo district mandal fullAddress dateOfBirth vehicle finance guarantor profile")
+			.select("name sowoco occupation agreementNo phoneNo alternatePhoneNo district mandal street fullAddress dateOfBirth vehicle finance guarantor profile")
 			.sort({ _id: -1 })
 			.skip(skip)
 			.limit(parsedLimit)
@@ -324,7 +325,7 @@ export const getFinanceStatement = async (req, res) => {
 		const { buyerId } = req.params;
 
 		const buyer = await Buyer.findById(buyerId)
-			.select("name sowoco occupation agreementNo phoneNo alternatePhoneNo district mandal fullAddress dateOfBirth vehicle finance guarantor profile")
+			.select("name sowoco occupation agreementNo phoneNo alternatePhoneNo district mandal street fullAddress dateOfBirth vehicle finance guarantor profile")
 			.lean();
 
 		if (!buyer) {

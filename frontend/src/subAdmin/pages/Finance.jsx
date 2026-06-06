@@ -580,7 +580,10 @@ function Finance() {
                       <div className="text-gray-600">Age : {modalData.age || '-'}</div>
                       <div className="text-gray-600">Phone No: {modalData.phoneNo || '-'}</div>
                       <div className="text-gray-600">Alternate Phone No: {modalData.alternatePhoneNo || '-'}</div>
-                      <div className="text-gray-600">Address: {modalData.address}</div>
+                      <div className="text-gray-600">Street / Locality: {modalData.street || '-'}</div>
+                      <div className="text-gray-600">Mandal: {modalData.mandal || '-'}</div>
+                      <div className="text-gray-600">District: {modalData.district || '-'}</div>
+                      <div className="text-gray-600">Full Address: {modalData.address || '-'}</div>
                     </div>
                   </div>
                   {/* Party Image - Right side */}

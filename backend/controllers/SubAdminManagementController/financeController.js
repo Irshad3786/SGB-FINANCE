@@ -354,7 +354,7 @@ export const getFinanceStatement = async (req, res) => {
 
 export const createEmiEntry = async (req, res) => {
 	try {
-		const { agreementNo, date, amount, bookNo = "", pageNo = "" } = req.body || {};
+		const { agreementNo, date, amount, bookNo = "", pageNo = "", isUpdate = false } = req.body || {};
 
 		const trimmedAgreementNo = normalizeText(agreementNo);
 		if (!trimmedAgreementNo) {
@@ -394,16 +394,74 @@ export const createEmiEntry = async (req, res) => {
 				.lean();
 
 			if (duplicateEntryBuyer) {
-				return res.status(409).json({
-					success: false,
-					message: `Book No ${trimmedBookNo} and Page No ${trimmedPageNo} already exist with Agreement No ${duplicateEntryBuyer.agreementNo} (${duplicateEntryBuyer.name || "Unknown"})`,
-					data: {
-						bookNo: trimmedBookNo,
-						pageNo: trimmedPageNo,
-						agreementNo: duplicateEntryBuyer.agreementNo || "",
-						name: duplicateEntryBuyer.name || "",
-					},
-				});
+				if (isUpdate && duplicateEntryBuyer.agreementNo === trimmedAgreementNo) {
+					// Update existing EMI receipt/entry for the same buyer
+					const buyer = await Buyer.findOne({ agreementNo: trimmedAgreementNo });
+					if (!buyer) {
+						return res.status(404).json({
+							success: false,
+							message: "Buyer not found for this agreement number",
+						});
+					}
+
+					const paymentEntry = (buyer.finance.paymentEntries || []).find(
+						(entry) => normalizeText(entry.bookNo) === trimmedBookNo && normalizeText(entry.pageNo) === trimmedPageNo
+					);
+
+					if (!paymentEntry) {
+						return res.status(404).json({
+							success: false,
+							message: "Payment entry not found in history for editing",
+						});
+					}
+
+					const oldAmount = Number(paymentEntry.amount || 0);
+					paymentEntry.amount = paidAmount;
+					paymentEntry.paidDate = paymentDate;
+
+					const targetEmi = (buyer.finance.emiDates || []).find(
+						(s) => normalizeText(s.bookNo) === trimmedBookNo && normalizeText(s.pageNo) === trimmedPageNo
+					);
+
+					if (targetEmi) {
+						targetEmi.paidAmount = Math.max(Number(targetEmi.paidAmount || 0) - oldAmount + paidAmount, 0);
+						targetEmi.paidDate = paymentDate;
+						const emiDueAmount = Number(targetEmi?.amount || 0);
+						targetEmi.paid = emiDueAmount > 0 ? targetEmi.paidAmount >= emiDueAmount : targetEmi.paidAmount > 0;
+					}
+
+					const emiProgress = calculateEmiProgress(buyer.finance.emiDates || []);
+					const allPaid = emiProgress.every((item) => Number(item?.pendingAmount || 0) <= 0);
+					buyer.finance.status = allPaid ? "paid" : "pending";
+
+					await buyer.save();
+
+					return res.status(200).json({
+						success: true,
+						message: "EMI entry updated successfully",
+						data: {
+							buyerId: String(buyer._id),
+							agreementNo: buyer.agreementNo,
+							emiNo: paymentEntry.emiNo,
+							paidDate: formatDisplayDate(paymentDate),
+							paidAmount: paidAmount,
+							bookNo: trimmedBookNo,
+							pageNo: trimmedPageNo,
+							entryType: "update",
+						},
+					});
+				} else {
+					return res.status(409).json({
+						success: false,
+						message: `Book No ${trimmedBookNo} and Page No ${trimmedPageNo} already exist with Agreement No ${duplicateEntryBuyer.agreementNo} (${duplicateEntryBuyer.name || "Unknown"})`,
+						data: {
+							bookNo: trimmedBookNo,
+							pageNo: trimmedPageNo,
+							agreementNo: duplicateEntryBuyer.agreementNo || "",
+							name: duplicateEntryBuyer.name || "",
+						},
+					});
+				}
 			}
 		}
 

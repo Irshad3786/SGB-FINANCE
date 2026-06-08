@@ -61,6 +61,7 @@ const mapFinanceRowToCollectionRow = (row, index) => {
     chassisNo: row?.chassisNo,
     vehicleModel: row?.vehicleModel,
     emiSchedule: row?.emiSchedule || [],
+    paymentEntries: row?.paymentEntries || [],
     totalPaid: row?.totalPaid,
     totalPending: row?.totalPending,
     bookNo: firstPendingSchedule?.bookNo || '',
@@ -236,6 +237,8 @@ function Collection() {
   const [savingEntry, setSavingEntry] = useState(false)
   const bookInputRef = useRef(null)
   const [editFieldsPrompt, setEditFieldsPrompt] = useState({ open: false, bookNo: '', pageNo: '', amount: '', date: '' })
+  const skipAutoPopulateRef = useRef(false)
+  const [lastPromptAgreementNo, setLastPromptAgreementNo] = useState('')
 
   useEffect(() => {
     let isMounted = true
@@ -568,7 +571,7 @@ function Collection() {
 
   const filteredAgreements = useMemo(() => {
     const query = emiEntryForm.agreementNo.trim().toLowerCase()
-    if (!query) return []
+    if (query.length <= 2) return []
     return financeData
       .filter(f => f.agreementNo && f.agreementNo.toLowerCase().includes(query))
       .slice(0, 6)
@@ -585,15 +588,19 @@ function Collection() {
     if (!bookNo || !pageNo) return null
 
     return financeData.find(item => {
-      const itemBookNo = String(item.bookNo || '').trim()
-      const itemPageNo = String(item.pageNo || '').trim()
-      return itemBookNo === bookNo && itemPageNo === pageNo
+      const hasInEmiSchedule = (item.emiSchedule || []).some(s =>
+        String(s.bookNo || '').trim() === bookNo && String(s.pageNo || '').trim() === pageNo
+      )
+      if (hasInEmiSchedule) return true
+
+      const hasInPaymentEntries = (item.paymentEntries || []).some(entry =>
+        String(entry.bookNo || '').trim() === bookNo && String(entry.pageNo || '').trim() === pageNo
+      )
+      return hasInPaymentEntries
     }) || null
   }, [emiEntryForm.bookNo, emiEntryForm.pageNo, financeData])
 
-  const hasDuplicateBookPageConflict = Boolean(
-    duplicateBookPageEntry && duplicateBookPageEntry.agreementNo !== emiEntryForm.agreementNo
-  )
+  const hasDuplicateBookPageConflict = Boolean(duplicateBookPageEntry)
 
   const handleEmiEntryChange = (field, value) => {
     setEmiEntryForm(prev => ({ ...prev, [field]: value }))
@@ -602,6 +609,125 @@ function Collection() {
   const focusEmiEditFields = () => {
     if (bookInputRef.current) {
       bookInputRef.current.focus()
+    }
+  }
+
+  const saveEmiEntryDirect = async (bookNo, pageNo, amount, date) => {
+    if (!canEditCollection) {
+      showToast({ type: 'error', title: 'Permission', message: 'You do not have permission to save EMI entries' })
+      return
+    }
+
+    const matched = lookupByBookPage(bookNo, pageNo)
+    const targetAgreementNo = matched ? matched.agreementNo : emiEntryForm.agreementNo
+
+    if (!targetAgreementNo || targetAgreementNo === 'HA') {
+      showToast({
+        type: 'error',
+        title: 'Validation',
+        message: 'Please select a valid Agreement No first or enter matching Book/Page',
+      })
+      return
+    }
+
+    if (!bookNo || !pageNo || !amount || !date) {
+      showToast({
+        type: 'error',
+        title: 'Validation',
+        message: 'Book No, Page No, amount and date are required',
+      })
+      return
+    }
+
+    const enteredAmount = Number(amount)
+    if (!Number.isFinite(enteredAmount) || enteredAmount <= 0) {
+      showToast({
+        type: 'error',
+        title: 'Validation',
+        message: 'Amount must be a valid number greater than 0',
+      })
+      return
+    }
+
+    // Only block if Book/Page is duplicate of a DIFFERENT client
+    if (matched && matched.agreementNo !== targetAgreementNo) {
+      showToast({
+        type: 'error',
+        title: 'Duplicate Book/Page',
+        message: `This Book/Page is already entered under a different Agreement No: ${matched.agreementNo}`,
+      })
+      return
+    }
+
+    const targetAgreement = financeData.find(f => f.agreementNo === targetAgreementNo)
+    const isUpdate = targetAgreement && (
+      (targetAgreement.emiSchedule || []).some(s =>
+        String(s.bookNo || '').trim() === String(bookNo).trim() &&
+        String(s.pageNo || '').trim() === String(pageNo).trim()
+      ) || (targetAgreement.paymentEntries || []).some(entry =>
+        String(entry.bookNo || '').trim() === String(bookNo).trim() &&
+        String(entry.pageNo || '').trim() === String(pageNo).trim()
+      )
+    )
+
+    const pendingAmount = Number(targetAgreement?.totalPending || 0)
+    if (!isUpdate && pendingAmount <= 0) {
+      showToast({
+        type: 'error',
+        title: 'No Pending EMI',
+        message: 'Total paid completed. No EMI will be added further.',
+      })
+      return
+    }
+
+    if (!isUpdate && enteredAmount > pendingAmount) {
+      showToast({
+        type: 'error',
+        title: 'Amount Exceeded',
+        message: `Entered amount exceeds pending amount (₹${toInr(pendingAmount)}).`,
+      })
+      return
+    }
+
+    try {
+      setSavingEntry(true)
+      await apiClient.post('/api/subadmin/management/finance/emi-entry', {
+        agreementNo: targetAgreementNo,
+        date,
+        amount: amount.toString(),
+        bookNo,
+        pageNo,
+        isUpdate: true,
+      })
+
+      await fetchCollectionData()
+
+      if (financeModal?.id) {
+        const statementResponse = await apiClient.get(`/api/subadmin/management/finance/${financeModal.id}`)
+        const statement = statementResponse?.data?.data
+        if (statement) {
+          setFinanceModal(statement)
+        }
+      }
+
+      showToast({
+        type: 'success',
+        title: 'Saved',
+        message: 'EMI entry saved successfully',
+      })
+
+      // Close the modals and reset form
+      setEditFieldsPrompt({ open: false, bookNo: '', pageNo: '', amount: '', date: '' })
+      setEmiEntryOpen(false)
+      setEmiEntryForm({ agreementNo: 'HA', bookNo: '', pageNo: '', amount: '', date: '' })
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error?.response?.data?.message || 'Failed to save EMI entry',
+      })
+    } finally {
+      setSavingEntry(false)
     }
   }
 
@@ -708,8 +834,18 @@ function Collection() {
     const b = (bookNo || '').trim()
     const p = (pageNo || '').trim()
     if (!b || !p) return null
-    const found = financeData.find(item => item.bookNo === b && item.pageNo === p)
-    return found ? { name: found.name, vehicle: found.vehicle } : null
+    const found = financeData.find(item => {
+      const hasInEmiSchedule = (item.emiSchedule || []).some(s =>
+        String(s.bookNo || '').trim() === b && String(s.pageNo || '').trim() === p
+      )
+      if (hasInEmiSchedule) return true
+
+      const hasInPaymentEntries = (item.paymentEntries || []).some(entry =>
+        String(entry.bookNo || '').trim() === b && String(entry.pageNo || '').trim() === p
+      )
+      return hasInPaymentEntries
+    })
+    return found ? { name: found.seller || found.name, vehicle: found.vehicle, agreementNo: found.agreementNo } : null
   }
 
   const handleWhatsAppConfirm = () => {
@@ -757,6 +893,90 @@ function Collection() {
     setFilters(prev => (prev.agent ? prev : { ...prev, agent: agentOptions[0] }))
   }, [agentOptions])
 
+  // Auto-populate EMI form fields based on selectedAgreement
+  useEffect(() => {
+    if (skipAutoPopulateRef.current) {
+      skipAutoPopulateRef.current = false
+      return
+    }
+
+    if (selectedAgreement) {
+      const next = selectedAgreement.emiSchedule?.find(s => !s.paidAmount || s.paidAmount === 0)
+      setEmiEntryForm(prev => ({
+        ...prev,
+        bookNo: selectedAgreement.bookNo || '',
+        pageNo: selectedAgreement.pageNo || '',
+        amount: (next?.emi ?? selectedAgreement.emi ?? '').toString(),
+        date: next?.emiDate ? toInputDate(next.emiDate) : todayInputDate()
+      }))
+    } else {
+      // Clear fields if agreement is HA or empty
+      setEmiEntryForm(prev => ({
+        ...prev,
+        bookNo: '',
+        pageNo: '',
+        amount: '',
+        date: todayInputDate()
+      }))
+    }
+  }, [selectedAgreement])
+
+  // Auto-populate Book & Page popup defaults when a matched record is found
+  useEffect(() => {
+    if (!editFieldsPrompt.open) {
+      setLastPromptAgreementNo('')
+      return
+    }
+    const matched = lookupByBookPage(editFieldsPrompt.bookNo, editFieldsPrompt.pageNo)
+    const matchedAggNo = matched?.agreementNo || ''
+    if (matchedAggNo !== lastPromptAgreementNo) {
+      setLastPromptAgreementNo(matchedAggNo)
+      if (matchedAggNo) {
+        const agreement = financeData.find(f => f.agreementNo === matchedAggNo)
+        if (agreement) {
+          const b = (editFieldsPrompt.bookNo || '').trim()
+          const p = (editFieldsPrompt.pageNo || '').trim()
+
+          const matchingSchedule = (agreement.emiSchedule || []).find(s =>
+            String(s.bookNo || '').trim() === b && String(s.pageNo || '').trim() === p
+          )
+
+          if (matchingSchedule) {
+            setEditFieldsPrompt(prev => ({
+              ...prev,
+              amount: String(matchingSchedule.paidAmount || matchingSchedule.emi || ''),
+              date: matchingSchedule.paidDate ? toInputDate(matchingSchedule.paidDate) : todayInputDate()
+            }))
+          } else {
+            const matchingPayment = (agreement.paymentEntries || []).find(entry =>
+              String(entry.bookNo || '').trim() === b && String(entry.pageNo || '').trim() === p
+            )
+            if (matchingPayment) {
+              setEditFieldsPrompt(prev => ({
+                ...prev,
+                amount: String(matchingPayment.amount || ''),
+                date: matchingPayment.paidDate ? toInputDate(matchingPayment.paidDate) : todayInputDate()
+              }))
+            } else {
+              const next = agreement.emiSchedule?.find(s => !s.paidAmount || s.paidAmount === 0)
+              setEditFieldsPrompt(prev => ({
+                ...prev,
+                amount: (next?.emi ?? agreement.emi ?? '').toString(),
+                date: next?.emiDate ? toInputDate(next.emiDate) : todayInputDate()
+              }))
+            }
+          }
+        }
+      } else {
+        setEditFieldsPrompt(prev => ({
+          ...prev,
+          amount: '',
+          date: todayInputDate()
+        }))
+      }
+    }
+  }, [editFieldsPrompt.bookNo, editFieldsPrompt.pageNo, editFieldsPrompt.open, financeData, lastPromptAgreementNo])
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'ArrowDown') {
@@ -767,11 +987,11 @@ function Collection() {
         setSelectedRowIndex(prev => (prev > 0 ? prev - 1 : prev))
       }
     }
-    
+
     if (tableContainerRef.current) {
       tableContainerRef.current.addEventListener('keydown', handleKeyDown)
     }
-    
+
     return () => {
       if (tableContainerRef.current) {
         tableContainerRef.current.removeEventListener('keydown', handleKeyDown)
@@ -817,8 +1037,8 @@ function Collection() {
         {/* All Users Button (inactive on Collection) */}
         <button onClick={() => navigate('/subadmin/finance')} className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-lg bg-white border-2 border-gray-300 font-semibold text-gray-800 shadow hover:shadow-md transition-shadow w-full sm:w-auto">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="w-5 h-5">
-            <path fill="#000" d="M21.987 18.73a2 2 0 0 1-.34.85a1.9 1.9 0 0 1-1.56.8h-1.651a.74.74 0 0 1-.6-.31a.76.76 0 0 1-.11-.67c.37-1.18.29-2.51-3.061-4.64a.77.77 0 0 1-.32-.85a.76.76 0 0 1 .72-.54a7.61 7.61 0 0 1 6.792 4.39a2 2 0 0 1 .13.97M19.486 7.7a4.43 4.43 0 0 1-4.421 4.42a.76.76 0 0 1-.65-1.13a6.16 6.16 0 0 0 0-6.53a.75.75 0 0 1 .61-1.18a4.3 4.3 0 0 1 3.13 1.34a4.46 4.46 0 0 1 1.291 3.12z"/>
-            <path fill="#000" d="M16.675 18.7a2.65 2.65 0 0 1-1.26 2.48c-.418.257-.9.392-1.39.39H4.652a2.63 2.63 0 0 1-1.39-.39A2.62 2.62 0 0 1 2.01 18.7a2.6 2.6 0 0 1 .5-1.35a8.8 8.8 0 0 1 6.812-3.51a8.78 8.78 0 0 1 6.842 3.5a2.7 2.7 0 0 1 .51 1.36M14.245 7.32a4.92 4.92 0 0 1-4.902 4.91a4.903 4.903 0 0 1-4.797-5.858a4.9 4.9 0 0 1 6.678-3.57a4.9 4.9 0 0 1 3.03 4.518z"/>
+            <path fill="#000" d="M21.987 18.73a2 2 0 0 1-.34.85a1.9 1.9 0 0 1-1.56.8h-1.651a.74.74 0 0 1-.6-.31a.76.76 0 0 1-.11-.67c.37-1.18.29-2.51-3.061-4.64a.77.77 0 0 1-.32-.85a.76.76 0 0 1 .72-.54a7.61 7.61 0 0 1 6.792 4.39a2 2 0 0 1 .13.97M19.486 7.7a4.43 4.43 0 0 1-4.421 4.42a.76.76 0 0 1-.65-1.13a6.16 6.16 0 0 0 0-6.53a.75.75 0 0 1 .61-1.18a4.3 4.3 0 0 1 3.13 1.34a4.46 4.46 0 0 1 1.291 3.12z" />
+            <path fill="#000" d="M16.675 18.7a2.65 2.65 0 0 1-1.26 2.48c-.418.257-.9.392-1.39.39H4.652a2.63 2.63 0 0 1-1.39-.39A2.62 2.62 0 0 1 2.01 18.7a2.6 2.6 0 0 1 .5-1.35a8.8 8.8 0 0 1 6.812-3.51a8.78 8.78 0 0 1 6.842 3.5a2.7 2.7 0 0 1 .51 1.36M14.245 7.32a4.92 4.92 0 0 1-4.902 4.91a4.903 4.903 0 0 1-4.797-5.858a4.9 4.9 0 0 1 6.678-3.57a4.9 4.9 0 0 1 3.03 4.518z" />
           </svg>
           <span>Users</span>
         </button>
@@ -826,21 +1046,21 @@ function Collection() {
         {/* Collection Button (active on Collection) */}
         <button disabled className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-lg bg-gradient-to-b from-[#B0FF1C] to-[#40FF00] font-semibold text-gray-900 shadow-lg cursor-default opacity-100 w-full sm:w-auto">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" className="w-5 h-5">
-            <path fill="#000" d="M0 13a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 16 13V6a1.5 1.5 0 0 0-1.5-1.5h-13A1.5 1.5 0 0 0 0 6zM2 3a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 0-1h-11A.5.5 0 0 0 2 3m2-2a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 0-1h-7A.5.5 0 0 0 4 1"/>
+            <path fill="#000" d="M0 13a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 16 13V6a1.5 1.5 0 0 0-1.5-1.5h-13A1.5 1.5 0 0 0 0 6zM2 3a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 0-1h-11A.5.5 0 0 0 2 3m2-2a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 0-1h-7A.5.5 0 0 0 4 1" />
           </svg>
           <span>Collection</span>
         </button>
       </div>
 
       {/* Quick controls */}
-      
+
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
           <button onClick={() => setShowFilters(s => !s)} aria-expanded={showFilters} className="flex items-center justify-center gap-2 px-4 py-2 border font-semibold rounded-lg shadow hover:shadow-md transition-shadow bg-white text-base w-full sm:w-auto">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="w-5 h-5">
-              <path fill="#a6a6a6" fillRule="evenodd" d="M5 3h14L8.816 13.184a2.7 2.7 0 0 0-.778-1.086c-.228-.198-.547-.377-1.183-.736l-2.913-1.64c-.949-.533-1.423-.8-1.682-1.23C2 8.061 2 7.541 2 6.503v-.69c0-1.326 0-1.99.44-2.402C2.878 3 3.585 3 5 3" clipRule="evenodd"/>
-              <path fill="#a6a6a6" d="M22 6.504v-.69c0-1.326 0-1.99-.44-2.402C21.122 3 20.415 3 19 3L8.815 13.184q.075.193.121.403c.064.285.064.619.064 1.286v2.67c0 .909 0 1.364.252 1.718c.252.355.7.53 1.594.88c1.879.734 2.818 1.101 3.486.683S15 19.452 15 17.542v-2.67c0-.666 0-1 .063-1.285a2.68 2.68 0 0 1 .9-1.49c.227-.197.545-.376 1.182-.735l2.913-1.64c.948-.533 1.423-.8 1.682-1.23c.26-.43.26-.95.26-1.988" opacity="0.5"/>
+              <path fill="#a6a6a6" fillRule="evenodd" d="M5 3h14L8.816 13.184a2.7 2.7 0 0 0-.778-1.086c-.228-.198-.547-.377-1.183-.736l-2.913-1.64c-.949-.533-1.423-.8-1.682-1.23C2 8.061 2 7.541 2 6.503v-.69c0-1.326 0-1.99.44-2.402C2.878 3 3.585 3 5 3" clipRule="evenodd" />
+              <path fill="#a6a6a6" d="M22 6.504v-.69c0-1.326 0-1.99-.44-2.402C21.122 3 20.415 3 19 3L8.815 13.184q.075.193.121.403c.064.285.064.619.064 1.286v2.67c0 .909 0 1.364.252 1.718c.252.355.7.53 1.594.88c1.879.734 2.818 1.101 3.486.683S15 19.452 15 17.542v-2.67c0-.666 0-1 .063-1.285a2.68 2.68 0 0 1 .9-1.49c.227-.197.545-.376 1.182-.735l2.913-1.64c.948-.533 1.423-.8 1.682-1.23c.26-.43.26-.95.26-1.988" opacity="0.5" />
             </svg>
             select filter
           </button>
@@ -851,7 +1071,7 @@ function Collection() {
             className="flex items-center justify-center gap-2 px-4 py-2 border font-semibold rounded-lg shadow hover:shadow-md transition-shadow bg-white text-base w-full sm:w-auto disabled:opacity-50"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-0.5 -0.5 24 24" className="w-5 h-5">
-              <path fill="#a6a6a6" d="m21.289.98l.59.59c.813.814.69 2.257-.277 3.223L9.435 16.96l-3.942 1.442c-.495.182-.977-.054-1.075-.525a.93.93 0 0 1 .045-.51l1.47-3.976L18.066 1.257c.967-.966 2.41-1.09 3.223-.276zM8.904 2.19a1 1 0 1 1 0 2h-4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4a1 1 0 0 1 2 0v4a4 4 0 0 1-4 4h-12a4 4 0 0 1-4-4v-12a4 4 0 0 1 4-4z"/>
+              <path fill="#a6a6a6" d="m21.289.98l.59.59c.813.814.69 2.257-.277 3.223L9.435 16.96l-3.942 1.442c-.495.182-.977-.054-1.075-.525a.93.93 0 0 1 .045-.51l1.47-3.976L18.066 1.257c.967-.966 2.41-1.09 3.223-.276zM8.904 2.19a1 1 0 1 1 0 2h-4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4a1 1 0 0 1 2 0v4a4 4 0 0 1-4 4h-12a4 4 0 0 1-4-4v-12a4 4 0 0 1 4-4z" />
             </svg>
             <span>EMI Entry</span>
           </button>
@@ -862,8 +1082,8 @@ function Collection() {
           <div className="relative">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" className="w-5 h-5">
-                <path fill="#a6a6a6" d="M9.5 16q-2.725 0-4.612-1.888T3 9.5t1.888-4.612T9.5 3t4.613 1.888T16 9.5q0 1.1-.35 2.075T14.7 13.3l5.6 5.6q.275.275.275.7t-.275.7t-.7.275t-.7-.275l-5.6-5.6q-.75.6-1.725.95T9.5 16m0-2q1.875 0 3.188-1.312T14 9.5t-1.312-3.187T9.5 5T6.313 6.313T5 9.5t1.313 3.188T9.5 14"/>
-               </svg>
+                <path fill="#a6a6a6" d="M9.5 16q-2.725 0-4.612-1.888T3 9.5t1.888-4.612T9.5 3t4.613 1.888T16 9.5q0 1.1-.35 2.075T14.7 13.3l5.6 5.6q.275.275.275.7t-.275.7t-.7.275t-.7-.275l-5.6-5.6q-.75.6-1.725.95T9.5 16m0-2q1.875 0 3.188-1.312T14 9.5t-1.312-3.187T9.5 5T6.313 6.313T5 9.5t1.313 3.188T9.5 14" />
+              </svg>
             </div>
             <input
               id="collection-search"
@@ -883,11 +1103,11 @@ function Collection() {
         <div className="mt-2 mb-14 md:mt-0 w-full md:w-fit bg-[#f0f0fa] rounded-lg p-3 shadow flex flex-col md:flex-row md:items-center gap-3">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs text-gray-700 w-full md:w-auto">
             <span className="shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 16 16"><path fill="#a6a6a6" d="M5.75 7.5a.75.75 0 1 0 0 1.5a.75.75 0 0 0 0-1.5m1.5.75A.75.75 0 0 1 8 7.5h2.25a.75.75 0 0 1 0 1.5H8a.75.75 0 0 1-.75-.75M5.75 9.5a.75.75 0 0 0 0 1.5H8a.75.75 0 0 0 0-1.5z"/><path fill="#a6a6a6" fill-rule="evenodd" d="M4.75 1a.75.75 0 0 0-.75.75V3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2V1.75a.75.75 0 0 0-1.5 0V3h-5V1.75A.75.75 0 0 0 4.75 1M3.5 7a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1z" clip-rule="evenodd"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 16 16"><path fill="#a6a6a6" d="M5.75 7.5a.75.75 0 1 0 0 1.5a.75.75 0 0 0 0-1.5m1.5.75A.75.75 0 0 1 8 7.5h2.25a.75.75 0 0 1 0 1.5H8a.75.75 0 0 1-.75-.75M5.75 9.5a.75.75 0 0 0 0 1.5H8a.75.75 0 0 0 0-1.5z" /><path fill="#a6a6a6" fill-rule="evenodd" d="M4.75 1a.75.75 0 0 0-.75.75V3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2V1.75a.75.75 0 0 0-1.5 0V3h-5V1.75A.75.75 0 0 0 4.75 1M3.5 7a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1z" clip-rule="evenodd" /></svg>
             </span>
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full">
               <label className="text-[12px] text-gray-500">Select Agent</label>
-              <select value={filters.agent} onChange={(e)=> setFilters(f=>({...f, agent: e.target.value}))} className="text-xs border rounded px-2 py-1">
+              <select value={filters.agent} onChange={(e) => setFilters(f => ({ ...f, agent: e.target.value }))} className="text-xs border rounded px-2 py-1">
                 {agentOptions.map(agent => (
                   <option key={agent} value={agent}>{agent}</option>
                 ))}
@@ -897,11 +1117,11 @@ function Collection() {
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs text-gray-700 w-full md:w-auto">
             <span className="shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M15 16.69V13h1.5v2.82l2.44 1.41l-.75 1.3zM19.5 3.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2L7.5 3.5L6 2L4.5 3.5L3 2v20l1.5-1.5L6 22l1.5-1.5L9 22l1.58-1.58c.14.19.3.36.47.53A7.001 7.001 0 0 0 21 11.1V2zM11.1 11c-.6.57-1.07 1.25-1.43 2H6v-2zm-2.03 4c-.07.33-.07.66-.07 1s0 .67.07 1H6v-2zM18 9H6V7h12zm2.85 7c0 .64-.12 1.27-.35 1.86c-.26.58-.62 1.14-1.07 1.57c-.43.45-.99.81-1.57 1.07c-.59.23-1.22.35-1.86.35c-2.68 0-4.85-2.17-4.85-4.85c0-1.29.51-2.5 1.42-3.43c.93-.91 2.14-1.42 3.43-1.42c2.67 0 4.85 2.17 4.85 4.85"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M15 16.69V13h1.5v2.82l2.44 1.41l-.75 1.3zM19.5 3.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2L7.5 3.5L6 2L4.5 3.5L3 2v20l1.5-1.5L6 22l1.5-1.5L9 22l1.58-1.58c.14.19.3.36.47.53A7.001 7.001 0 0 0 21 11.1V2zM11.1 11c-.6.57-1.07 1.25-1.43 2H6v-2zm-2.03 4c-.07.33-.07.66-.07 1s0 .67.07 1H6v-2zM18 9H6V7h12zm2.85 7c0 .64-.12 1.27-.35 1.86c-.26.58-.62 1.14-1.07 1.57c-.43.45-.99.81-1.57 1.07c-.59.23-1.22.35-1.86.35c-2.68 0-4.85-2.17-4.85-4.85c0-1.29.51-2.5 1.42-3.43c.93-.91 2.14-1.42 3.43-1.42c2.67 0 4.85 2.17 4.85 4.85" /></svg>
             </span>
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full">
               <label className="text-[12px] text-gray-500">Commentary date</label>
-              <input type="date" value={filters.date} onChange={(e)=> setFilters(f=>({...f, date: e.target.value}))} className="text-xs border rounded px-2 py-1 w-full sm:w-auto" />
+              <input type="date" value={filters.date} onChange={(e) => setFilters(f => ({ ...f, date: e.target.value }))} className="text-xs border rounded px-2 py-1 w-full sm:w-auto" />
             </div>
           </div>
 
@@ -971,8 +1191,8 @@ function Collection() {
         >
           {savingQuickEntry ? (
             <svg className="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
             </svg>
           ) : (
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -989,7 +1209,7 @@ function Collection() {
           className="flex items-center justify-center gap-2 bg-[#ff7a19] text-white font-semibold px-5 py-3 rounded-full shadow hover:shadow-md w-full md:w-auto"
         >
           <span>{resettingCollection ? 'resetting...' : 'reset collection'}</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21"><g fill="none" fill-rule="evenodd" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"><path d="M3.578 6.487A8 8 0 1 1 2.5 10.5"/><path d="M7.5 6.5h-4v-4"/></g></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21"><g fill="none" fill-rule="evenodd" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"><path d="M3.578 6.487A8 8 0 1 1 2.5 10.5" /><path d="M7.5 6.5h-4v-4" /></g></svg>
         </button>
       </div>
 
@@ -1021,14 +1241,12 @@ function Collection() {
             </thead>
             <tbody>
               {filteredData.map((row, idx) => (
-                <tr key={idx} onClick={() => setSelectedRowIndex(idx)} className={`border transition-all cursor-pointer ${
-                  selectedRowIndex === idx ? 'border-2 border-orange-600' : 'border border-gray-200'
-                } ${
-                  row.status === 'pending' ? 'bg-red-100' :
-                  row.status === 'paid' ? 'bg-green-50' :
-                  row.status === 'mark' ? 'bg-gray-200' :
-                  'bg-white'
-                }`}>
+                <tr key={idx} onClick={() => setSelectedRowIndex(idx)} className={`border transition-all cursor-pointer ${selectedRowIndex === idx ? 'border-2 border-orange-600' : 'border border-gray-200'
+                  } ${row.status === 'pending' ? 'bg-red-100' :
+                    row.status === 'paid' ? 'bg-green-50' :
+                      row.status === 'mark' ? 'bg-gray-200' :
+                        'bg-white'
+                  }`}>
                   <td className="py-1.5 px-1 font-semibold whitespace-nowrap">{row.ha}</td>
                   <td className="py-1.5 px-1 whitespace-nowrap truncate max-w-[100px] text-[12px]">{row.name}</td>
                   <td className="py-1.5 px-1 whitespace-nowrap text-[12px]">{row.vehicle}</td>
@@ -1065,12 +1283,11 @@ function Collection() {
                     <select
                       value={row.status}
                       onChange={(e) => handleCellChange(row.collectionEntryId, 'status', e.target.value)}
-                      className={`w-20 px-2 py-1 text-[10px] border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#bff86a] font-medium ${
-                        row.status === 'paid' ? 'bg-green-50 text-green-700' : 
-                        row.status === 'pending' ? 'bg-red-50 text-red-700' :
-                        row.status === 'mark' ? 'bg-gray-200 text-gray-700' :
-                        'bg-white text-gray-700'
-                      }`}
+                      className={`w-20 px-2 py-1 text-[10px] border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#bff86a] font-medium ${row.status === 'paid' ? 'bg-green-50 text-green-700' :
+                          row.status === 'pending' ? 'bg-red-50 text-red-700' :
+                            row.status === 'mark' ? 'bg-gray-200 text-gray-700' :
+                              'bg-white text-gray-700'
+                        }`}
                     >
                       <option value="none">None</option>
                       <option value="paid">Paid</option>
@@ -1096,7 +1313,7 @@ function Collection() {
                         title="EMI Entry"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="-0.5 -0.5 24 24" className="w-5 h-5">
-                          <path fill="currentColor" d="m21.289.98l.59.59c.813.814.69 2.257-.277 3.223L9.435 16.96l-3.942 1.442c-.495.182-.977-.054-1.075-.525a.93.93 0 0 1 .045-.51l1.47-3.976L18.066 1.257c.967-.966 2.41-1.09 3.223-.276zM8.904 2.19a1 1 0 1 1 0 2h-4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4a1 1 0 0 1 2 0v4a4 4 0 0 1-4 4h-12a4 4 0 0 1-4-4v-12a4 4 0 0 1 4-4z"/>
+                          <path fill="currentColor" d="m21.289.98l.59.59c.813.814.69 2.257-.277 3.223L9.435 16.96l-3.942 1.442c-.495.182-.977-.054-1.075-.525a.93.93 0 0 1 .045-.51l1.47-3.976L18.066 1.257c.967-.966 2.41-1.09 3.223-.276zM8.904 2.19a1 1 0 1 1 0 2h-4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4a1 1 0 0 1 2 0v4a4 4 0 0 1-4 4h-12a4 4 0 0 1-4-4v-12a4 4 0 0 1 4-4z" />
                         </svg>
                       </button>
                       <button
@@ -1119,7 +1336,7 @@ function Collection() {
                         className="p-1 text-blue-600 hover:bg-blue-50 rounded"
                         title="View Finance Details"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="currentColor"/><path fill="currentColor" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="currentColor" /><path fill="currentColor" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5" /></svg>
                       </button>
                       <button
                         onClick={() => handleWhatsAppClick(row.name)}
@@ -1127,7 +1344,7 @@ function Collection() {
                         title="Send WhatsApp message"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-                          <path fill="currentColor" d="M8 0a8 8 0 1 1-4.075 14.886L.658 15.974a.5.5 0 0 1-.632-.632l1.089-3.266A8 8 0 0 1 8 0M5.214 4.004a.7.7 0 0 0-.526.266C4.508 4.481 4 4.995 4 6.037c0 1.044.705 2.054.804 2.196c.098.138 1.388 2.28 3.363 3.2q.55.255 1.12.446c.472.16.902.139 1.242.085c.379-.06 1.164-.513 1.329-1.01c.163-.493.163-.918.113-1.007c-.049-.088-.18-.142-.378-.25c-.196-.105-1.165-.618-1.345-.687c-.18-.073-.312-.106-.443.105c-.132.213-.507.691-.623.832c-.113.139-.23.159-.425.053c-.198-.105-.831-.33-1.584-1.054c-.585-.561-.98-1.258-1.094-1.469c-.116-.213-.013-.326.085-.433c.09-.094.198-.246.296-.371c.097-.122.132-.21.198-.353c.064-.141.031-.266-.018-.371s-.443-1.152-.607-1.577c-.16-.413-.323-.355-.443-.363c-.114-.005-.245-.005-.376-.005"/>
+                          <path fill="currentColor" d="M8 0a8 8 0 1 1-4.075 14.886L.658 15.974a.5.5 0 0 1-.632-.632l1.089-3.266A8 8 0 0 1 8 0M5.214 4.004a.7.7 0 0 0-.526.266C4.508 4.481 4 4.995 4 6.037c0 1.044.705 2.054.804 2.196c.098.138 1.388 2.28 3.363 3.2q.55.255 1.12.446c.472.16.902.139 1.242.085c.379-.06 1.164-.513 1.329-1.01c.163-.493.163-.918.113-1.007c-.049-.088-.18-.142-.378-.25c-.196-.105-1.165-.618-1.345-.687c-.18-.073-.312-.106-.443.105c-.132.213-.507.691-.623.832c-.113.139-.23.159-.425.053c-.198-.105-.831-.33-1.584-1.054c-.585-.561-.98-1.258-1.094-1.469c-.116-.213-.013-.326.085-.433c.09-.094.198-.246.296-.371c.097-.122.132-.21.198-.353c.064-.141.031-.266-.018-.371s-.443-1.152-.607-1.577c-.16-.413-.323-.355-.443-.363c-.114-.005-.245-.005-.376-.005" />
                         </svg>
                       </button>
                       <button
@@ -1139,7 +1356,7 @@ function Collection() {
                         title="Delete row"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
-                          <path fill="currentColor" d="M9 3h6l1 2h4v2h-1v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7H4V5h4zm0 6v9h2V9zm4 0v9h2V9zM9.618 5h4.764l-.5-1h-3.764z"/>
+                          <path fill="currentColor" d="M9 3h6l1 2h4v2h-1v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7H4V5h4zm0 6v9h2V9zm4 0v9h2V9zM9.618 5h4.764l-.5-1h-3.764z" />
                         </svg>
                       </button>
                     </div>
@@ -1153,25 +1370,22 @@ function Collection() {
         {/* Mobile cards */}
         <div className="block md:hidden space-y-2 w-full">
           {filteredData.map((row, idx) => (
-            <div key={idx} onClick={() => setSelectedRowIndex(idx)} className={`rounded-lg p-2 sm:p-3 transition-all cursor-pointer overflow-hidden ${
-              selectedRowIndex === idx ? 'border-2 border-orange-600' : 'border border-gray-300'
-            } ${
-              row.status === 'pending' ? 'bg-red-100' : 
-              row.status === 'paid' ? 'bg-green-50' :
-              row.status === 'mark' ? 'bg-gray-200' :
-              'bg-white'
-            }`}>
+            <div key={idx} onClick={() => setSelectedRowIndex(idx)} className={`rounded-lg p-2 sm:p-3 transition-all cursor-pointer overflow-hidden ${selectedRowIndex === idx ? 'border-2 border-orange-600' : 'border border-gray-300'
+              } ${row.status === 'pending' ? 'bg-red-100' :
+                row.status === 'paid' ? 'bg-green-50' :
+                  row.status === 'mark' ? 'bg-gray-200' :
+                    'bg-white'
+              }`}>
               <div className="flex items-center justify-between mb-3">
                 <div className="text-xs font-semibold">Agreement No: {row.ha}</div>
                 <select
                   value={row.status}
                   onChange={(e) => handleCellChange(row.collectionEntryId, 'status', e.target.value)}
-                  className={`px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#bff86a] font-medium ${
-                    row.status === 'paid' ? 'bg-green-50 text-green-700' :
-                    row.status === 'pending' ? 'bg-red-50 text-red-700' :
-                    row.status === 'mark' ? 'bg-gray-200 text-gray-700' :
-                    'bg-white text-gray-700'
-                  }`}
+                  className={`px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#bff86a] font-medium ${row.status === 'paid' ? 'bg-green-50 text-green-700' :
+                      row.status === 'pending' ? 'bg-red-50 text-red-700' :
+                        row.status === 'mark' ? 'bg-gray-200 text-gray-700' :
+                          'bg-white text-gray-700'
+                    }`}
                 >
                   <option value="none">None</option>
                   <option value="paid">✓ Paid</option>
@@ -1232,7 +1446,7 @@ function Collection() {
                   title="EMI Entry"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="-0.5 -0.5 24 24" className="w-5 h-5">
-                    <path fill="currentColor" d="m21.289.98l.59.59c.813.814.69 2.257-.277 3.223L9.435 16.96l-3.942 1.442c-.495.182-.977-.054-1.075-.525a.93.93 0 0 1 .045-.51l1.47-3.976L18.066 1.257c.967-.966 2.41-1.09 3.223-.276zM8.904 2.19a1 1 0 1 1 0 2h-4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4a1 1 0 0 1 2 0v4a4 4 0 0 1-4 4h-12a4 4 0 0 1-4-4v-12a4 4 0 0 1 4-4z"/>
+                    <path fill="currentColor" d="m21.289.98l.59.59c.813.814.69 2.257-.277 3.223L9.435 16.96l-3.942 1.442c-.495.182-.977-.054-1.075-.525a.93.93 0 0 1 .045-.51l1.47-3.976L18.066 1.257c.967-.966 2.41-1.09 3.223-.276zM8.904 2.19a1 1 0 1 1 0 2h-4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4a1 1 0 0 1 2 0v4a4 4 0 0 1-4 4h-12a4 4 0 0 1-4-4v-12a4 4 0 0 1 4-4z" />
                   </svg>
                 </button>
                 <button
@@ -1255,7 +1469,7 @@ function Collection() {
                   className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                   title="View Finance Details"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="currentColor"/><path fill="currentColor" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="currentColor" /><path fill="currentColor" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68M16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5" /></svg>
                 </button>
                 <button
                   onClick={() => handleWhatsAppClick(row.name)}
@@ -1263,7 +1477,7 @@ function Collection() {
                   title="Send WhatsApp message"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16">
-                    <path fill="currentColor" d="M8 0a8 8 0 1 1-4.075 14.886L.658 15.974a.5.5 0 0 1-.632-.632l1.089-3.266A8 8 0 0 1 8 0M5.214 4.004a.7.7 0 0 0-.526.266C4.508 4.481 4 4.995 4 6.037c0 1.044.705 2.054.804 2.196c.098.138 1.388 2.28 3.363 3.2q.55.255 1.12.446c.472.16.902.139 1.242.085c.379-.06 1.164-.513 1.329-1.01c.163-.493.163-.918.113-1.007c-.049-.088-.18-.142-.378-.25c-.196-.105-1.165-.618-1.345-.687c-.18-.073-.312-.106-.443.105c-.132.213-.507.691-.623.832c-.113.139-.23.159-.425.053c-.198-.105-.831-.33-1.584-1.054c-.585-.561-.98-1.258-1.094-1.469c-.116-.213-.013-.326.085-.433c.09-.094.198-.246.296-.371c.097-.122.132-.21.198-.353c.064-.141.031-.266-.018-.371s-.443-1.152-.607-1.577c-.16-.413-.323-.355-.443-.363c-.114-.005-.245-.005-.376-.005"/>
+                    <path fill="currentColor" d="M8 0a8 8 0 1 1-4.075 14.886L.658 15.974a.5.5 0 0 1-.632-.632l1.089-3.266A8 8 0 0 1 8 0M5.214 4.004a.7.7 0 0 0-.526.266C4.508 4.481 4 4.995 4 6.037c0 1.044.705 2.054.804 2.196c.098.138 1.388 2.28 3.363 3.2q.55.255 1.12.446c.472.16.902.139 1.242.085c.379-.06 1.164-.513 1.329-1.01c.163-.493.163-.918.113-1.007c-.049-.088-.18-.142-.378-.25c-.196-.105-1.165-.618-1.345-.687c-.18-.073-.312-.106-.443.105c-.132.213-.507.691-.623.832c-.113.139-.23.159-.425.053c-.198-.105-.831-.33-1.584-1.054c-.585-.561-.98-1.258-1.094-1.469c-.116-.213-.013-.326.085-.433c.09-.094.198-.246.296-.371c.097-.122.132-.21.198-.353c.064-.141.031-.266-.018-.371s-.443-1.152-.607-1.577c-.16-.413-.323-.355-.443-.363c-.114-.005-.245-.005-.376-.005" />
                   </svg>
                 </button>
                 <button
@@ -1275,7 +1489,7 @@ function Collection() {
                   title="Delete row"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M9 3h6l1 2h4v2h-1v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7H4V5h4zm0 6v9h2V9zm4 0v9h2V9zM9.618 5h4.764l-.5-1h-3.764z"/>
+                    <path fill="currentColor" d="M9 3h6l1 2h4v2h-1v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7H4V5h4zm0 6v9h2V9zm4 0v9h2V9zM9.618 5h4.764l-.5-1h-3.764z" />
                   </svg>
                 </button>
               </div>
@@ -1347,7 +1561,7 @@ function Collection() {
                           <img src={financeDocUrls.partyPhotoUrl} alt="Party" className="w-28 h-28 rounded-lg object-cover mb-2" />
                         ) : (
                           <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-2">
-                            <span className="text-xs text-gray-500 text-center">Party<br/>Img</span>
+                            <span className="text-xs text-gray-500 text-center">Party<br />Img</span>
                           </div>
                         )}
                         <span className="text-xs text-gray-600 font-semibold">Party</span>
@@ -1379,7 +1593,7 @@ function Collection() {
                           <img src={financeDocUrls.guarantorPhotoUrl} alt="Guarantor" className="w-28 h-28 rounded-lg object-cover mb-2" />
                         ) : (
                           <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-2">
-                            <span className="text-xs text-gray-500 text-center">Guarantor<br/>Img</span>
+                            <span className="text-xs text-gray-500 text-center">Guarantor<br />Img</span>
                           </div>
                         )}
                         <span className="text-xs text-gray-600 font-semibold">Guarantor</span>
@@ -1506,90 +1720,84 @@ function Collection() {
               ✕
             </button>
 
-            {editFieldsPrompt.open && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/20">
-                <div className="w-full mx-4 max-w-sm bg-white rounded-xl p-4 shadow-lg border border-gray-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm font-bold text-gray-900">Edit via Book & Page</div>
-                    <button onClick={() => setEditFieldsPrompt({ open: false, bookNo: '', pageNo: '', amount: '', date: '' })} className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-xs font-bold">✕</button>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <label className="block text-xs font-semibold text-gray-700">
-                      Book No
-                      <input
-                        type="text"
-                        value={editFieldsPrompt.bookNo}
-                        onChange={(e) => setEditFieldsPrompt(prev => ({ ...prev, bookNo: e.target.value }))}
-                        className="mt-1 w-full rounded-lg border px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#bff86a] border-gray-300"
-                        placeholder="e.g. 12"
-                      />
-                    </label>
-                    <label className="block text-xs font-semibold text-gray-700">
-                      Page No
-                      <input
-                        type="text"
-                        value={editFieldsPrompt.pageNo}
-                        onChange={(e) => setEditFieldsPrompt(prev => ({ ...prev, pageNo: e.target.value }))}
-                        className="mt-1 w-full rounded-lg border px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#bff86a] border-gray-300"
-                        placeholder="e.g. 45"
-                      />
-                    </label>
-                  </div>
-                  <div className="mt-3 rounded-lg border border-green-200 bg-green-50 p-3">
+            {editFieldsPrompt.open && (() => {
+              const matched = lookupByBookPage(editFieldsPrompt.bookNo, editFieldsPrompt.pageNo)
+              return (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/20">
+                  <div className="w-full mx-4 max-w-sm bg-white rounded-xl p-4 shadow-lg border border-gray-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm font-bold text-gray-900">Edit via Book & Page</div>
+                      <button onClick={() => setEditFieldsPrompt({ open: false, bookNo: '', pageNo: '', amount: '', date: '' })} className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-xs font-bold">✕</button>
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <div className="text-[11px] font-medium text-gray-700">Name</div>
-                        <div className="text-xs font-semibold text-gray-900">{lookupByBookPage(editFieldsPrompt.bookNo, editFieldsPrompt.pageNo)?.name || '—'}</div>
-                      </div>
-                      <div>
-                        <div className="text-[11px] font-medium text-gray-700">Vehicle No</div>
-                        <div className="text-xs font-semibold text-gray-900">{lookupByBookPage(editFieldsPrompt.bookNo, editFieldsPrompt.pageNo)?.vehicle || '—'}</div>
+                      <label className="block text-xs font-semibold text-gray-700">
+                        Book No
+                        <input
+                          type="text"
+                          value={editFieldsPrompt.bookNo}
+                          onChange={(e) => setEditFieldsPrompt(prev => ({ ...prev, bookNo: e.target.value }))}
+                          className="mt-1 w-full rounded-lg border px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#bff86a] border-gray-300"
+                          placeholder="e.g. 12"
+                        />
+                      </label>
+                      <label className="block text-xs font-semibold text-gray-700">
+                        Page No
+                        <input
+                          type="text"
+                          value={editFieldsPrompt.pageNo}
+                          onChange={(e) => setEditFieldsPrompt(prev => ({ ...prev, pageNo: e.target.value }))}
+                          className="mt-1 w-full rounded-lg border px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#bff86a] border-gray-300"
+                          placeholder="e.g. 45"
+                        />
+                      </label>
+                    </div>
+                    <div className="mt-3 rounded-lg border border-green-200 bg-green-50 p-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <div className="text-[11px] font-medium text-gray-700">Name</div>
+                          <div className="text-xs font-semibold text-gray-900">{matched?.name || '—'}</div>
+                        </div>
+                        <div>
+                          <div className="text-[11px] font-medium text-gray-700">Vehicle No</div>
+                          <div className="text-xs font-semibold text-gray-900">{matched?.vehicle || '—'}</div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <label className="block text-xs font-semibold text-gray-700">
-                      Amount
-                      <input
-                        type="number"
-                        value={editFieldsPrompt.amount}
-                        onChange={(e) => setEditFieldsPrompt(prev => ({ ...prev, amount: e.target.value }))}
-                        className="mt-1 w-full rounded-lg border px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#bff86a] border-gray-300"
-                        placeholder="Enter amount"
-                      />
-                    </label>
-                    <label className="block text-xs font-semibold text-gray-700">
-                      Date
-                      <input
-                        type="date"
-                        value={editFieldsPrompt.date}
-                        onChange={(e) => setEditFieldsPrompt(prev => ({ ...prev, date: e.target.value }))}
-                        className="mt-1 w-full rounded-lg border px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#bff86a] border-gray-300"
-                      />
-                    </label>
-                  </div>
-                  <div className="mt-3 flex justify-end gap-2">
-                    <button onClick={() => setEditFieldsPrompt({ open: false, bookNo: '', pageNo: '', amount: '', date: '' })} className="px-3 py-1.5 rounded-lg border border-gray-200 text-[11px] font-semibold text-gray-700 hover:bg-gray-100">Cancel</button>
-                    <button
-                      onClick={() => {
-                        setEmiEntryForm(prev => ({
-                          ...prev,
-                          bookNo: editFieldsPrompt.bookNo,
-                          pageNo: editFieldsPrompt.pageNo,
-                          amount: editFieldsPrompt.amount,
-                          date: editFieldsPrompt.date
-                        }))
-                        setEditFieldsPrompt({ open: false, bookNo: '', pageNo: '', amount: '', date: '' })
-                        setTimeout(() => { if (bookInputRef.current) bookInputRef.current.focus() }, 0)
-                      }}
-                      className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-[#B0FF1C] to-[#40FF00] text-[11px] font-semibold text-gray-900 shadow hover:shadow-md"
-                    >
-                      Save
-                    </button>
+                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <label className="block text-xs font-semibold text-gray-700">
+                        Amount
+                        <input
+                          type="number"
+                          value={editFieldsPrompt.amount}
+                          onChange={(e) => setEditFieldsPrompt(prev => ({ ...prev, amount: e.target.value }))}
+                          className="mt-1 w-full rounded-lg border px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#bff86a] border-gray-300"
+                          placeholder="Enter amount"
+                        />
+                      </label>
+                      <label className="block text-xs font-semibold text-gray-700">
+                        Date
+                        <input
+                          type="date"
+                          value={editFieldsPrompt.date}
+                          onChange={(e) => setEditFieldsPrompt(prev => ({ ...prev, date: e.target.value }))}
+                          className="mt-1 w-full rounded-lg border px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#bff86a] border-gray-300"
+                        />
+                      </label>
+                    </div>
+                    <div className="mt-3 flex justify-end gap-2">
+                      <button onClick={() => setEditFieldsPrompt({ open: false, bookNo: '', pageNo: '', amount: '', date: '' })} className="px-3 py-1.5 rounded-lg border border-gray-200 text-[11px] font-semibold text-gray-700 hover:bg-gray-100">Cancel</button>
+                      <button
+                        onClick={() => saveEmiEntryDirect(editFieldsPrompt.bookNo, editFieldsPrompt.pageNo, editFieldsPrompt.amount, editFieldsPrompt.date)}
+                        disabled={savingEntry}
+                        className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-[#B0FF1C] to-[#40FF00] text-[11px] font-semibold text-gray-900 shadow hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {savingEntry ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
 
             <div className="flex items-center justify-start gap-3 pr-12 mb-4">
               <h3 className="text-xl font-bold text-gray-900">EMI Entry</h3>
@@ -1703,11 +1911,6 @@ function Collection() {
                 </label>
               </div>
 
-              {hasDuplicateBookPageConflict && (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                  Book No {emiEntryForm.bookNo} and Page No {emiEntryForm.pageNo} already exist with Agreement No {duplicateBookPageEntry.agreementNo} ({duplicateBookPageEntry.name || duplicateBookPageEntry.seller || 'Unknown'}).
-                </div>
-              )}
 
               <label className="block text-xs font-semibold text-gray-700">
                 Amount

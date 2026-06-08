@@ -192,6 +192,9 @@ const getUserData = async (req, res) => {
           guarantorName: matchedBuyer?.guarantor?.fullName || "",
           guarantorPhone: matchedBuyer?.guarantor?.phoneNo || "",
           guarantorAadhaar: matchedBuyer?.guarantor?.aadharNo || "",
+          guarantorStreet: matchedBuyer?.guarantor?.street || "",
+          guarantorMandal: matchedBuyer?.guarantor?.mandal || "",
+          guarantorDistrict: matchedBuyer?.guarantor?.district || "",
           guarantorAddress: matchedBuyer?.guarantor?.address || "",
           referenceName: matchedBuyer?.referralName || seller?.referralName || "",
           referencePhone: matchedBuyer?.referralPhoneNo || seller?.referralPhoneNo || "",
@@ -271,6 +274,9 @@ const getUserData = async (req, res) => {
           guarantorName: buyer?.guarantor?.fullName || "",
           guarantorPhone: buyer?.guarantor?.phoneNo || "",
           guarantorAadhaar: buyer?.guarantor?.aadharNo || "",
+          guarantorStreet: buyer?.guarantor?.street || "",
+          guarantorMandal: buyer?.guarantor?.mandal || "",
+          guarantorDistrict: buyer?.guarantor?.district || "",
           guarantorAddress: buyer?.guarantor?.address || "",
           referenceName: buyer?.referralName || "",
           referencePhone: buyer?.referralPhoneNo || "",
@@ -498,6 +504,7 @@ const updateUserData = async (req, res) => {
       model,
       chassis,
       seller,
+      sellerSoWoCo,
       sellerOccupation,
       sellerPhone,
       sellerAlternatePhone,
@@ -511,6 +518,7 @@ const updateUserData = async (req, res) => {
       sellerAadhaarFrontUrl,
       sellerAadhaarBackUrl,
       buyerName,
+      buyerSoWoCo,
       buyerOccupation,
       buyerPhone,
       buyerAlternatePhone,
@@ -531,6 +539,9 @@ const updateUserData = async (req, res) => {
       guarantorName,
       guarantorPhone,
       guarantorAadhaar,
+      guarantorStreet,
+      guarantorMandal,
+      guarantorDistrict,
       guarantorAddress,
       guarantorPhotoUrl,
       guarantorAadhaarFrontUrl,
@@ -608,6 +619,7 @@ const updateUserData = async (req, res) => {
       emiAmount !== undefined || emiMonths !== undefined || emiDate !== undefined;
 
     setIfProvided(sellerSet, "fullName", seller);
+    setIfProvided(sellerSet, "sowoco", sellerSoWoCo);
     setIfProvided(sellerSet, "occupation", sellerOccupation);
     setIfProvided(sellerSet, "phoneNo", sellerPhone);
     setIfProvided(sellerSet, "alternatePhoneNo", sellerAlternatePhone);
@@ -628,6 +640,7 @@ const updateUserData = async (req, res) => {
     setIfProvided(sellerSet, "aadharBack", sellerAadhaarBackUrl);
 
     setIfProvided(buyerSet, "name", buyerName);
+    setIfProvided(buyerSet, "sowoco", buyerSoWoCo);
     setIfProvided(buyerSet, "occupation", buyerOccupation);
     setIfProvided(buyerSet, "phoneNo", buyerPhone);
     setIfProvided(buyerSet, "alternatePhoneNo", buyerAlternatePhone);
@@ -654,6 +667,9 @@ const updateUserData = async (req, res) => {
     setIfProvided(buyerSet, "guarantor.fullName", guarantorName);
     setIfProvided(buyerSet, "guarantor.phoneNo", guarantorPhone);
     setIfProvided(buyerSet, "guarantor.aadharNo", guarantorAadhaar);
+    setIfProvided(buyerSet, "guarantor.street", guarantorStreet);
+    setIfProvided(buyerSet, "guarantor.mandal", guarantorMandal);
+    setIfProvided(buyerSet, "guarantor.district", guarantorDistrict);
     setIfProvided(buyerSet, "guarantor.address", guarantorAddress);
     setIfProvided(buyerSet, "guarantor.guarantorPhoto", guarantorPhotoUrl);
     setIfProvided(buyerSet, "guarantor.aadharFront", guarantorAadhaarFrontUrl);

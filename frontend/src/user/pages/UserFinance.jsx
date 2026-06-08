@@ -180,27 +180,27 @@ function UserFinance() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-gray-100">
-                        <th className="px-4 py-3 text-left font-semibold">INST.NO</th>
-                        <th className="px-4 py-3 text-left font-semibold">INST.DATE</th>
-                        <th className="px-4 py-3 text-right font-semibold">INST.AMOUNT</th>
-                        <th className="px-4 py-3 text-left font-semibold">PAID DATE</th>
-                        <th className="px-4 py-3 text-right font-semibold">PAID AMT.</th>
-                        <th className="px-4 py-3 text-right font-semibold">BALANCE</th>
-                        <th className="px-4 py-3 text-left font-semibold">RECEIPT NO.</th>
+                        <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">INST.NO</th>
+                        <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">INST.DATE</th>
+                        <th className="px-4 py-3 text-right font-semibold whitespace-nowrap">INST.AMOUNT</th>
+                        <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">PAID DATE</th>
+                        <th className="px-4 py-3 text-right font-semibold whitespace-nowrap">PAID AMT.</th>
+                        <th className="px-4 py-3 text-right font-semibold whitespace-nowrap">BALANCE</th>
+                        <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">RECEIPT NO.</th>
                       </tr>
                     </thead>
                     <tbody>
                       {statementRows.map((row, idx) => (
                         <tr key={idx} className="border-b hover:bg-gray-50">
-                          <td className="px-4 py-3">{row.sno}</td>
-                          <td className="px-4 py-3">{row.emiDate}</td>
-                          <td className="px-4 py-3 text-right font-semibold">₹ {toInr(row.emiAmt)}</td>
-                          <td className="px-4 py-3">{row.paidDate}</td>
-                          <td className="px-4 py-3 text-right text-green-600 font-semibold">₹ {toInr(row.paidAmt)}</td>
-                          <td className={`px-4 py-3 text-right font-semibold ${getBalanceClass(row.balance)}`}>
+                          <td className="px-4 py-3 whitespace-nowrap">{row.sno}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">{row.emiDate}</td>
+                          <td className="px-4 py-3 text-right font-semibold whitespace-nowrap">₹ {toInr(row.emiAmt)}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">{row.paidDate}</td>
+                          <td className="px-4 py-3 text-right text-green-600 font-semibold whitespace-nowrap">₹ {toInr(row.paidAmt)}</td>
+                          <td className={`px-4 py-3 text-right font-semibold whitespace-nowrap ${getBalanceClass(row.balance)}`}>
                             {formatBalance(row.balance)}
                           </td>
-                          <td className="px-4 py-3">{row.bookNo}/{row.pageNo}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">{row.bookNo}/{row.pageNo}</td>
                         </tr>
                       ))}
                     </tbody>

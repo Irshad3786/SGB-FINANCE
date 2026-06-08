@@ -528,8 +528,8 @@ function Users () {
 
   // Invoice functions
   const buildSellerInvoice = () => {
-    // Map from different possible field names (sowoco from model, sellerSoWoCo from form, etc.)
-    const soWoCo = modalUser.sellerSoWoCo || modalUser.sowoco || modalUser.soWoCo || ''
+    // Map from different possible field names (sellerSoWoCo from backend)
+    const soWoCo = modalUser.sellerSoWoCo || ''
     const district = modalUser.sellerDistrict || modalUser.sellerData?.district || modalUser.district || ''
     const mandal = modalUser.sellerMandal || modalUser.sellerData?.mandal || modalUser.mandal || ''
     
@@ -956,7 +956,7 @@ function Users () {
                       <h5 className="text-sm font-semibold mb-2">Customer Details</h5>
                       <div className="text-sm text-gray-700 space-y-1">
                         <div><strong>Name:</strong> {modalUser.seller || '-'}</div>
-                        <div><strong>S/O C/O W/O:</strong> {modalUser.sowoco || modalUser.sellerSoWoCo || modalUser.soWoCo || '-'}</div>
+                        <div><strong>S/O C/O W/O:</strong> {modalUser.sellerSoWoCo || '-'}</div>
                         <div><strong>Occupation:</strong> {modalUser.sellerOccupation || '-'}</div>
                         <div><strong>DOB:</strong> {formatDisplayDate(modalUser.sellerDob)}</div>
                         <div><strong>Phone:</strong> {modalUser.sellerPhone || '-'}</div>
@@ -1109,6 +1109,9 @@ function Users () {
                             ) : null}
                           </div>
                         </div>
+                        <div><strong>Street / Locality:</strong> <div className="text-xs text-gray-600">{modalUser.guarantorStreet || '-'}</div></div>
+                        <div><strong>Mandal:</strong> <div className="text-xs text-gray-600">{modalUser.guarantorMandal || '-'}</div></div>
+                        <div><strong>District:</strong> <div className="text-xs text-gray-600">{modalUser.guarantorDistrict || '-'}</div></div>
                         <div><strong>Address:</strong> <div className="text-xs text-gray-600">{modalUser.guarantorAddress || '-'}</div></div>
                       </div>
                     </div>

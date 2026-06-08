@@ -167,7 +167,7 @@ const mapBuyerToFinanceStatement = async (buyer) => {
 	const resolvedGuarantorDistrict = guarantor?.district || "";
 	const resolvedGuarantorMandal = guarantor?.mandal || "";
 	const resolvedGuarantorAddressParts = [
-		guarantor?.address || "",
+		guarantor?.address || guarantor?.street || "",
 		resolvedGuarantorMandal,
 		resolvedGuarantorDistrict,
 	]
@@ -228,6 +228,7 @@ const mapBuyerToFinanceStatement = async (buyer) => {
 		guarantorPhoneNo: guarantor?.phoneNo || "",
 		guarantorAlternatePhoneNo: guarantor?.alternatePhoneNo || "",
 		guarantorAddress: resolvedGuarantorAddress,
+		guarantorStreet: guarantor?.street || "",
 		guarantorDistrict: resolvedGuarantorDistrict,
 		guarantorMandal: resolvedGuarantorMandal,
 		partyPhoto: partyPhotoUrl,

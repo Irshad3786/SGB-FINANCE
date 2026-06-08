@@ -616,6 +616,9 @@ function Finance() {
                       <div className="text-gray-600">Age : {modalData.guarantorAge || '-'}</div>
                       <div className="text-gray-600">Phone No: {modalData.guarantorPhoneNo || '-'}</div>
                       <div className="text-gray-600">Alternate Phone No: {modalData.guarantorAlternatePhoneNo || '-'}</div>
+                      <div className="text-gray-600">Street / Locality: {modalData.guarantorStreet || '-'}</div>
+                      <div className="text-gray-600">Mandal: {modalData.guarantorMandal || '-'}</div>
+                      <div className="text-gray-600">District: {modalData.guarantorDistrict || '-'}</div>
                       <div className="text-gray-600">Address: {modalData.guarantorAddress || '-'}</div>
                     </div>
                   </div>
@@ -654,7 +657,7 @@ function Finance() {
                   </div>
                   <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm">
                     <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">CHASSIS NO</div>
-                    <div className="text-xs sm:text-sm font-bold text-gray-900">{modalData.chassisNo}</div>
+                    <div className="text-[10px] sm:text-xs md:text-sm font-bold text-gray-900 break-all">{modalData.chassisNo}</div>
                   </div>
                   <div className="bg-white rounded-lg p-2 sm:p-4 shadow-sm">
                     <div className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1 sm:mb-2">MODEL</div>
@@ -695,29 +698,29 @@ function Finance() {
                     <table className="w-full statement-table">
                       <thead>
                         <tr className="bg-gray-800 text-white">
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">INST.NO</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">INST.DATE</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">INST.AMOUNT</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">PAID DATE</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">PAID AMT.</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">BALANCE</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">RECEIPT NO.</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">MISSING DAYS</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold whitespace-nowrap">INST.NO</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold whitespace-nowrap">INST.DATE</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold whitespace-nowrap">INST.AMOUNT</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold whitespace-nowrap">PAID DATE</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold whitespace-nowrap">PAID AMT.</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold whitespace-nowrap">BALANCE</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold whitespace-nowrap">RECEIPT NO.</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold whitespace-nowrap">MISSING DAYS</th>
                         </tr>
                       </thead>
                       <tbody>
                         {statementRowsWithMissing.map((schedule, idx) => (
                           <tr key={`${schedule.instNo}-${idx}`} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 font-semibold text-gray-900 text-xs sm:text-sm">{schedule.instNo}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-700 text-xs sm:text-sm">{schedule.instDate}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-700 text-xs sm:text-sm">{schedule.instAmount === '' ? '' : `₹ ${toInr(schedule.instAmount)}`}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-700 text-xs sm:text-sm">{schedule.paidDate}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-700 text-xs sm:text-sm">{schedule.paidAmt === null ? '-' : `₹ ${toInr(schedule.paidAmt)}`}</td>
-                            <td className={`px-2 sm:px-4 py-2 sm:py-3 font-semibold text-xs sm:text-sm ${getBalanceClass(schedule.displayBalance ?? schedule.balance)}`}>
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 font-semibold text-gray-900 text-xs sm:text-sm whitespace-nowrap">{schedule.instNo}</td>
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-700 text-xs sm:text-sm whitespace-nowrap">{schedule.instDate}</td>
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-700 text-xs sm:text-sm whitespace-nowrap">{schedule.instAmount === '' ? '' : `₹ ${toInr(schedule.instAmount)}`}</td>
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-700 text-xs sm:text-sm whitespace-nowrap">{schedule.paidDate}</td>
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-700 text-xs sm:text-sm whitespace-nowrap">{schedule.paidAmt === null ? '-' : `₹ ${toInr(schedule.paidAmt)}`}</td>
+                            <td className={`px-2 sm:px-4 py-2 sm:py-3 font-semibold text-xs sm:text-sm whitespace-nowrap ${getBalanceClass(schedule.displayBalance ?? schedule.balance)}`}>
                               {schedule.displayBalance === null ? '-' : formatBalance(schedule.displayBalance)}
                             </td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-700 text-xs sm:text-sm">{schedule.receiptNo}</td>
-                            <td className={`px-2 sm:px-4 py-2 sm:py-3 font-semibold text-xs sm:text-sm ${schedule.missingDays > 0 ? 'text-red-600' : 'text-green-600'}`}>{schedule.missingDays}</td>
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-700 text-xs sm:text-sm whitespace-nowrap">{schedule.receiptNo}</td>
+                            <td className={`px-2 sm:px-4 py-2 sm:py-3 font-semibold text-xs sm:text-sm whitespace-nowrap ${schedule.missingDays > 0 ? 'text-red-600' : 'text-green-600'}`}>{schedule.missingDays}</td>
                           </tr>
                         ))}
                       </tbody>

@@ -72,6 +72,7 @@ const buyerSchema = new mongoose.Schema({
         aadharBack: String,
         district: String,
         mandal: String,
+        street: String,
         address: String,
         guarantorPhoto: String
     },

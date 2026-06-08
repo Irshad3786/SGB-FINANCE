@@ -70,6 +70,7 @@ const INITIAL_REFINANCE_FORM = {
   guarantorCustomDistrict: "",
   guarantorMandal: "",
   guarantorCustomMandal: "",
+  guarantorStreet: "",
   guarantorAddress: "",
   referralName: "",
   referralPhone: "",
@@ -282,6 +283,7 @@ function RefinanceForm({ inputBase, labelClass }) {
           guarantorCustomDistrict: resolvedGuarantorDistrict.customDistrict,
           guarantorMandal: resolvedGuarantorMandal.mandal,
           guarantorCustomMandal: resolvedGuarantorMandal.customMandal,
+          guarantorStreet: guarantor?.street || "",
           guarantorAddress: guarantor?.address || "",
           referralName: buyer?.referralName || "",
           referralPhone: buyer?.referralPhoneNo || "",
@@ -1365,6 +1367,20 @@ function RefinanceForm({ inputBase, labelClass }) {
               <option key={m} value={m} />
             ))}
           </datalist>
+
+          <label className={baseLabel}>Guarantor street / locality</label>
+          <div className="relative">
+            <input
+              name="guarantorStreet"
+              value={form.guarantorStreet}
+              onChange={onChange}
+              placeholder="Enter street or locality"
+              className={baseInput}
+            />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#a6a6a6" d="M12 11.5A2.5 2.5 0 0 1 9.5 9A2.5 2.5 0 0 1 12 6.5A2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/></svg>
+            </div>
+          </div>
 
           <label className={baseLabel}>Guarantor aadhaar no</label>
           <div className="relative">

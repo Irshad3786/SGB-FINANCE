@@ -70,6 +70,9 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
     guarantorName: source?.guarantorName ?? '',
     guarantorPhone: source?.guarantorPhone ?? '',
     guarantorAadhaar: source?.guarantorAadhaar ?? '',
+    guarantorStreet: source?.guarantorStreet ?? '',
+    guarantorMandal: source?.guarantorMandal ?? '',
+    guarantorDistrict: source?.guarantorDistrict ?? '',
     guarantorAddress: source?.guarantorAddress ?? '',
     // files always reset; previews come from URLs below
     sellerProfile: null,
@@ -715,6 +718,18 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
           <div>
             <label className="text-xs text-gray-600">Aadhaar</label>
             <input name="guarantorAadhaar" value={form.guarantorAadhaar || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-600">Street / Locality</label>
+            <input name="guarantorStreet" value={form.guarantorStreet || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-600">Mandal</label>
+            <input name="guarantorMandal" value={form.guarantorMandal || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-600">District</label>
+            <input name="guarantorDistrict" value={form.guarantorDistrict || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
           </div>
           <div>
             <label className="text-xs text-gray-600">Address</label>

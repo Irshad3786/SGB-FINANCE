@@ -1367,6 +1367,9 @@ function Collection() {
                         <div className="text-gray-600">Age : {financeModal.guarantorAge || '-'}</div>
                         <div className="text-gray-600">Phone No: {financeModal.guarantorPhoneNo || '-'}</div>
                         <div className="text-gray-600">Alternate Phone No: {financeModal.guarantorAlternatePhoneNo || '-'}</div>
+                        <div className="text-gray-600">Street / Locality: {financeModal.guarantorStreet || '-'}</div>
+                        <div className="text-gray-600">Mandal: {financeModal.guarantorMandal || '-'}</div>
+                        <div className="text-gray-600">District: {financeModal.guarantorDistrict || '-'}</div>
                         <div className="text-gray-600">Address: {financeModal.guarantorAddress || '-'}</div>
                       </div>
                     </div>
@@ -1399,7 +1402,7 @@ function Collection() {
                   </div>
                   <div className="bg-white rounded-lg p-4 shadow-sm">
                     <div className="text-xs text-gray-500 font-semibold mb-2">CHASSIS NO</div>
-                    <div className="text-sm font-bold text-gray-900">{financeModal.chassisNo}</div>
+                    <div className="text-xs sm:text-sm font-bold text-gray-900 break-all">{financeModal.chassisNo}</div>
                   </div>
                   <div className="bg-white rounded-lg p-4 shadow-sm">
                     <div className="text-xs text-gray-500 font-semibold mb-2">MODEL</div>
@@ -1437,27 +1440,27 @@ function Collection() {
                     <table className="w-full text-sm statement-table">
                       <thead>
                         <tr className="bg-gray-800 text-white">
-                          <th className="px-4 py-3 text-left font-semibold">INST.NO</th>
-                          <th className="px-4 py-3 text-left font-semibold">INST.DATE</th>
-                          <th className="px-4 py-3 text-left font-semibold">INST.AMOUNT</th>
-                          <th className="px-4 py-3 text-left font-semibold">PAID DATE</th>
-                          <th className="px-4 py-3 text-left font-semibold">PAID AMT.</th>
-                          <th className="px-4 py-3 text-left font-semibold">BALANCE</th>
-                          <th className="px-4 py-3 text-left font-semibold">RECEIPT NO.</th>
+                          <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">INST.NO</th>
+                          <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">INST.DATE</th>
+                          <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">INST.AMOUNT</th>
+                          <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">PAID DATE</th>
+                          <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">PAID AMT.</th>
+                          <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">BALANCE</th>
+                          <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">RECEIPT NO.</th>
                         </tr>
                       </thead>
                       <tbody>
                         {statementRows.map((schedule, idx) => (
                           <tr key={`${schedule.instNo}-${idx}`} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                            <td className="px-4 py-3 font-semibold text-gray-900">{schedule.instNo}</td>
-                            <td className="px-4 py-3 text-gray-700">{schedule.instDate}</td>
-                            <td className="px-4 py-3 text-gray-700">{schedule.instAmount === '' ? '' : `₹ ${toInr(schedule.instAmount)}`}</td>
-                            <td className="px-4 py-3 text-gray-700">{schedule.paidDate}</td>
-                            <td className="px-4 py-3 text-gray-700">{schedule.paidAmt === null ? '-' : `₹ ${toInr(schedule.paidAmt)}`}</td>
-                            <td className={`px-4 py-3 font-semibold ${getBalanceClass(schedule.displayBalance ?? schedule.balance)}`}>
+                            <td className="px-4 py-3 font-semibold text-gray-900 whitespace-nowrap">{schedule.instNo}</td>
+                            <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{schedule.instDate}</td>
+                            <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{schedule.instAmount === '' ? '' : `₹ ${toInr(schedule.instAmount)}`}</td>
+                            <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{schedule.paidDate}</td>
+                            <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{schedule.paidAmt === null ? '-' : `₹ ${toInr(schedule.paidAmt)}`}</td>
+                            <td className={`px-4 py-3 font-semibold whitespace-nowrap ${getBalanceClass(schedule.displayBalance ?? schedule.balance)}`}>
                               {schedule.displayBalance === null ? '-' : formatBalance(schedule.displayBalance)}
                             </td>
-                            <td className="px-4 py-3 text-gray-700">{schedule.receiptNo}</td>
+                            <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{schedule.receiptNo}</td>
                           </tr>
                         ))}
                       </tbody>

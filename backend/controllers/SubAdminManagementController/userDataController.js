@@ -3,6 +3,7 @@ import Seller from "../../models/sellerModel.js";
 import mongoose from "mongoose";
 import { isValidApplicationObjectKey } from "../../utils/s3Keys.js";
 import { deleteObjectFromS3 } from "../../utils/s3Upload.js";
+import { capitalizeObjectStrings } from "../../utils/capitalizeMigration.js";
 
 const normalizeKey = (value) => {
   if (value === undefined || value === null) return "";
@@ -86,11 +87,11 @@ const getUserData = async (req, res) => {
     const shouldApplyDateRange = Boolean(fromDate && toDate);
 
     const sellers = await Seller.find({})
-      .select("fullName sowoco occupation phoneNo alternatePhoneNo aadharNo dateOfBirth district mandal fullAddress vehicle referralName referralPhoneNo aadharFront aadharBack profile")
+      .select("fullName sowoco occupation phoneNo alternatePhoneNo aadharNo dateOfBirth district mandal street fullAddress vehicle referralName referralPhoneNo aadharFront aadharBack profile")
       .lean();
 
     const buyers = await Buyer.find({})
-      .select("name sowoco occupation agreementNo phoneNo alternatePhoneNo aadharNo dateOfBirth district mandal fullAddress soldamount oldHAnumber vehicle finance guarantor referralName referralPhoneNo aadharFront aadharBack profile dpPayment")
+      .select("name sowoco occupation agreementNo phoneNo alternatePhoneNo aadharNo dateOfBirth district mandal street fullAddress soldamount oldHAnumber vehicle finance guarantor referralName referralPhoneNo aadharFront aadharBack profile dpPayment")
       .lean();
 
     const buyerByVehicleOrChassis = new Map();
@@ -154,6 +155,8 @@ const getUserData = async (req, res) => {
           buyerAadhaar: matchedBuyer?.aadharNo || "",
           sellerAddress: seller?.fullAddress || "",
           buyerAddress: matchedBuyer?.fullAddress || "",
+          sellerStreet: seller?.street || "",
+          buyerStreet: matchedBuyer?.street || "",
           sellerDistrict: seller?.district || "",
           sellerMandal: seller?.mandal || "",
           buyerDistrict: matchedBuyer?.district || "",
@@ -236,6 +239,8 @@ const getUserData = async (req, res) => {
           buyerAadhaar: buyer?.aadharNo || "",
           sellerAddress: "",
           buyerAddress: buyer?.fullAddress || "",
+          sellerStreet: "",
+          buyerStreet: buyer?.street || "",
           sellerDistrict: "",
           sellerMandal: "",
           buyerDistrict: buyer?.district || "",
@@ -488,6 +493,7 @@ const REMOVABLE_IMAGE_FIELDS = [
 
 const updateUserData = async (req, res) => {
   try {
+    req.body = capitalizeObjectStrings(req.body);
     if (!canEditModule(req?.subAdmin?.permissions, "users")) {
       return res.status(403).json({
         success: false,
@@ -546,6 +552,12 @@ const updateUserData = async (req, res) => {
       guarantorPhotoUrl,
       guarantorAadhaarFrontUrl,
       guarantorAadhaarBackUrl,
+      sellerDistrict,
+      sellerMandal,
+      buyerDistrict,
+      buyerMandal,
+      sellerStreet,
+      buyerStreet,
     } = req.body || {};
 
     if (!sellerId && !buyerId) {
@@ -626,6 +638,9 @@ const updateUserData = async (req, res) => {
     setIfProvided(sellerSet, "aadharNo", sellerAadhaar);
     setIfProvided(sellerSet, "dateOfBirth", sellerDob, toNullableDate);
     setIfProvided(sellerSet, "fullAddress", sellerAddress);
+    setIfProvided(sellerSet, "district", sellerDistrict);
+    setIfProvided(sellerSet, "mandal", sellerMandal);
+    setIfProvided(sellerSet, "street", sellerStreet);
     setIfProvided(sellerSet, "referralName", sellerReferenceName);
     setIfProvided(sellerSet, "referralPhoneNo", sellerReferencePhone);
     setIfProvided(sellerSet, "vehicle.vehicleName", vehicleName);
@@ -647,6 +662,9 @@ const updateUserData = async (req, res) => {
     setIfProvided(buyerSet, "aadharNo", buyerAadhaar);
     setIfProvided(buyerSet, "dateOfBirth", buyerDob, toNullableDate);
     setIfProvided(buyerSet, "fullAddress", buyerAddress);
+    setIfProvided(buyerSet, "district", buyerDistrict);
+    setIfProvided(buyerSet, "mandal", buyerMandal);
+    setIfProvided(buyerSet, "street", buyerStreet);
     setIfProvided(buyerSet, "referralName", buyerReferenceName);
     setIfProvided(buyerSet, "referralPhoneNo", buyerReferencePhone);
     setIfProvided(buyerSet, "soldamount", buyAmount, toNullableNumber);

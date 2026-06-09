@@ -40,23 +40,29 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
     seller: source?.seller ?? '',
     sellerSoWoCo: source?.sellerSoWoCo ?? '',
     sellerOccupation: source?.sellerOccupation ?? '',
-    sellerPhone: source?.phone ?? source?.sellerPhone ?? '',
+    sellerPhone: source?.sellerPhone ?? '',
     sellerAlternatePhone: source?.sellerAlternatePhone ?? '',
-    sellerAadhaar: source?.aadhaar ?? source?.sellerAadhaar ?? '',
-    sellerDob: toDateInputValue(source?.sellerDob ?? source?.dob ?? ''),
-    sellerAddress: source?.address ?? source?.sellerAddress ?? '',
-    sellerReferenceName: source?.referenceName ?? source?.sellerReferenceName ?? '',
-    sellerReferencePhone: source?.referencePhone ?? source?.sellerReferencePhone ?? '',
+    sellerAadhaar: source?.sellerAadhaar ?? '',
+    sellerDob: toDateInputValue(source?.sellerDob ?? ''),
+    sellerAddress: source?.sellerAddress ?? '',
+    sellerDistrict: source?.sellerDistrict ?? '',
+    sellerMandal: source?.sellerMandal ?? '',
+    sellerStreet: source?.sellerStreet ?? '',
+    sellerReferenceName: source?.sellerReferenceName ?? '',
+    sellerReferencePhone: source?.sellerReferencePhone ?? '',
     soldAmount: source?.soldAmount ?? '',
     // buyer
     buyerName: source?.buyerName ?? '',
     buyerSoWoCo: source?.buyerSoWoCo ?? '',
     buyerOccupation: source?.buyerOccupation ?? '',
-    buyerPhone: source?.buyerPhone ?? source?.phone ?? '',
+    buyerPhone: source?.buyerPhone ?? '',
     buyerAlternatePhone: source?.buyerAlternatePhone ?? '',
-    buyerAadhaar: source?.buyerAadhaar ?? source?.aadhaar ?? '',
-    buyerDob: toDateInputValue(source?.buyerDob ?? source?.dob ?? ''),
-    buyerAddress: source?.buyerAddress ?? source?.address ?? '',
+    buyerAadhaar: source?.buyerAadhaar ?? '',
+    buyerDob: toDateInputValue(source?.buyerDob ?? ''),
+    buyerAddress: source?.buyerAddress ?? '',
+    buyerDistrict: source?.buyerDistrict ?? '',
+    buyerMandal: source?.buyerMandal ?? '',
+    buyerStreet: source?.buyerStreet ?? '',
     buyerReferenceName: source?.buyerReferenceName ?? '',
     buyerReferencePhone: source?.buyerReferencePhone ?? '',
     buyAmount: source?.buyAmount ?? '',
@@ -166,7 +172,25 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
 
   function onChange(e) {
     const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
+    const phoneFields = ['sellerPhone', 'sellerAlternatePhone', 'sellerReferencePhone', 'buyerPhone', 'buyerAlternatePhone', 'buyerReferencePhone', 'guarantorPhone', 'guarantorAlternatePhone']
+    const aadhaarFields = ['sellerAadhaar', 'buyerAadhaar', 'guarantorAadhaar']
+    const numericFields = ['model', 'soldAmount', 'buyAmount', 'financeAmount', 'emiAmount', 'emiMonths']
+    const dateFields = ['sellerDob', 'buyerDob', 'emiDate', 'guarantorDob', 'pendingDate']
+    
+    const isExcluded = [...phoneFields, ...aadhaarFields, ...numericFields, ...dateFields].includes(name)
+    
+    let processedValue = value
+    if (!isExcluded && typeof value === 'string') {
+      processedValue = value.toUpperCase()
+    } else if (phoneFields.includes(name)) {
+      processedValue = value.replace(/\D/g, '').slice(0, 10)
+    } else if (aadhaarFields.includes(name)) {
+      processedValue = value.replace(/\D/g, '').slice(0, 12)
+    } else if (numericFields.includes(name)) {
+      processedValue = value.replace(/\D/g, '')
+    }
+
+    setForm(prev => ({ ...prev, [name]: processedValue }))
   }
 
   function onFileChange(key, e) {
@@ -606,6 +630,20 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
+                <label className="text-xs text-gray-600">District</label>
+                <input name="sellerDistrict" value={form.sellerDistrict || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-600">Mandal</label>
+                <input name="sellerMandal" value={form.sellerMandal || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-gray-600">Street / Locality</label>
+              <input name="sellerStreet" value={form.sellerStreet || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
                 <label className="text-xs text-gray-600">Referral Name</label>
                 <input name="sellerReferenceName" value={form.sellerReferenceName || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
               </div>
@@ -656,6 +694,20 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
             <div>
               <label className="text-xs text-gray-600">Address</label>
               <textarea name="buyerAddress" value={form.buyerAddress || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm h-20" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-gray-600">District</label>
+                <input name="buyerDistrict" value={form.buyerDistrict || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-600">Mandal</label>
+                <input name="buyerMandal" value={form.buyerMandal || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-gray-600">Street / Locality</label>
+              <input name="buyerStreet" value={form.buyerStreet || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>

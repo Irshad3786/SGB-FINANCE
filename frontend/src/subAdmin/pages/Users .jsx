@@ -987,6 +987,9 @@ function Users () {
                             ) : null}
                           </div>
                         </div>
+                        <div><strong>District:</strong> {modalUser.sellerDistrict || '-'}</div>
+                        <div><strong>Mandal:</strong> {modalUser.sellerMandal || '-'}</div>
+                        <div><strong>Street / Locality:</strong> {modalUser.sellerStreet || '-'}</div>
                         <div><strong>Address:</strong> <div className="text-xs text-gray-600">{modalUser.sellerAddress || '-'}</div></div>
                         <div><strong>Buy Amount:</strong> {modalUser.soldAmount}</div>
                       </div>
@@ -1059,6 +1062,9 @@ function Users () {
                             ) : null}
                           </div>
                         </div>
+                        <div><strong>District:</strong> {modalUser.buyerDistrict || '-'}</div>
+                        <div><strong>Mandal:</strong> {modalUser.buyerMandal || '-'}</div>
+                        <div><strong>Street / Locality:</strong> {modalUser.buyerStreet || '-'}</div>
                         <div><strong>Address:</strong> <div className="text-xs text-gray-600">{modalUser.buyerAddress || '-'}</div></div>
                         <div><strong>Sold Amount:</strong> {modalUser.buyAmount || '-'}</div>
                         {/* vehicle details shown above in Vehicle Details */}

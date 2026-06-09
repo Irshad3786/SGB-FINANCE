@@ -12,7 +12,13 @@ const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB, then start Express server
 connectDB()
-  .then(() => {
+  .then(async () => {
+    try {
+      const { runCapitalizeMigration } = await import("./utils/capitalizeMigration.js");
+      await runCapitalizeMigration();
+    } catch (migErr) {
+      console.error("❌ Failed to run capitalization migration:", migErr);
+    }
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on :${PORT}`);
     });

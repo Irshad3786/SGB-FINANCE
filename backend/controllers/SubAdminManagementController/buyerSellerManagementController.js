@@ -2,6 +2,7 @@ import Buyer from "../../models/buyerModel.js";
 import Seller from "../../models/sellerModel.js";
 import mongoose from "mongoose";
 import { isValidApplicationObjectKey } from "../../utils/s3Keys.js";
+import { capitalizeObjectStrings } from "../../utils/capitalizeMigration.js";
 
 const toNumber = (value) => {
   if (value === undefined || value === null || value === "") return undefined;
@@ -85,6 +86,7 @@ const buildEmiSchedule = ({ emiAmount, months, emiStartDate }) => {
 
 const saveBuyerOrSeller = async (req, res) => {
   try {
+    req.body = capitalizeObjectStrings(req.body);
     const {
       role,
       fullName,

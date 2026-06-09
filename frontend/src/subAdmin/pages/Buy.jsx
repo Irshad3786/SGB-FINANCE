@@ -281,7 +281,7 @@ function Buy() {
         const numericOnlyFields = ['model', 'saleAmount', 'pendingAmount', 'financeAmount', 'emiMonths', 'emiAmount']
 
         if (textOnlyFields.includes(name)) {
-          setForm(prev => ({ ...prev, [name]: sanitizeTextOnly(value) }))
+          setForm(prev => ({ ...prev, [name]: sanitizeTextOnly(value).toUpperCase() }))
           return
         }
 
@@ -303,7 +303,13 @@ function Buy() {
         }
 
         if (name === 'vehicleNo') {
-          setForm(prev => ({ ...prev, [name]: value.slice(0, 10) }))
+          setForm(prev => ({ ...prev, [name]: value.slice(0, 10).toUpperCase() }))
+          return
+        }
+
+        const excludeFromUpper = ['dob', 'guarantorDob', 'pendingDate', 'emiDate', 'emiStartDate', 'isFinanced']
+        if (!excludeFromUpper.includes(name)) {
+          setForm(prev => ({ ...prev, [name]: value.toUpperCase() }))
           return
         }
 

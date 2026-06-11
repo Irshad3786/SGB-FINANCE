@@ -30,7 +30,15 @@ function Sidebar({toggle, onNavigate, permissions = []}) {
         </div>
       </div>
  
-      <nav className="space-y-3 flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide pb-5" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      <nav
+        onClick={(e) => {
+          if (e.target.closest('a') && window.innerWidth < 768) {
+            toggle(false)
+          }
+        }}
+        className="space-y-3 flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide pb-5"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
         {canSee('dashboard') && (
         <NavLink
           to="/subadmin/dashboard"

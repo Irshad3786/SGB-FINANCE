@@ -732,9 +732,9 @@ function Users () {
               </tr>
             </thead>
             <tbody>
-              {users.map(u => (
+              {users.map((u, index) => (
                 <tr key={u.id} className="border-b last:border-b-0">
-                  <td className="py-3 px-3 text-xs">{u.id}</td>
+                  <td className="py-3 px-3 text-xs">{(pagination.page - 1) * pagination.limit + index + 1}</td>
                   <td className="py-3 px-3 text-xs">{u.seller}</td>
                   <td className="py-3 px-3 text-xs">{u.buyerName || '-'}</td>
                   <td className="py-3 px-3 text-xs">{u.vehicle}</td>
@@ -778,11 +778,11 @@ function Users () {
 
         {/* Mobile cards */}
         <div className="block md:hidden space-y-3">
-          {users.map(u => (
+          {users.map((u, index) => (
             <div key={u.id} className="bg-white rounded-lg shadow p-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="text-xs font-semibold">{u.id}. {u.seller}</div>
+                  <div className="text-xs font-semibold">{(pagination.page - 1) * pagination.limit + index + 1}. {u.seller}</div>
                 </div>
                 <div className="flex items-center gap-2">
                   {u.status === 'completed' ? (

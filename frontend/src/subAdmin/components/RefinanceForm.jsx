@@ -515,6 +515,12 @@ function RefinanceForm({ inputBase, labelClass }) {
     }, {});
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') {
+      e.preventDefault();
+    }
+  };
+
   const onSubmit = async () => {
     if (!canEditRefinance) {
       showToast({
@@ -620,7 +626,7 @@ function RefinanceForm({ inputBase, labelClass }) {
   };
 
   return (
-    <div className="w-full bg-[#E0FCED] rounded-2xl p-6 sm:p-8 space-y-3">
+    <div onKeyDown={handleKeyDown} className="w-full bg-[#E0FCED] rounded-2xl p-6 sm:p-8 space-y-3">
       {(isSubmitting || uploadingLabel) && (
         <Loader message={isSubmitting ? "Submitting refinance form..." : uploadingLabel} />
       )}

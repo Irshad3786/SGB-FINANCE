@@ -277,6 +277,12 @@ function Sell() {
     }, {})
   }
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') {
+      e.preventDefault()
+    }
+  }
+
   async function onSubmit(e, replaceExisting = false) {
     if (e) e.preventDefault()
     if (!canEditAddEntry) {
@@ -384,6 +390,7 @@ function Sell() {
       {(isSubmitting || uploadingLabel) && <Loader message={isSubmitting ? 'Submitting seller form...' : uploadingLabel} />}
       <form
         onSubmit={onSubmit}
+        onKeyDown={handleKeyDown}
         className="relative w-[100%]  max-w-lg bg-[#E0FCED] rounded-2xl p-6  sm:p-8 shadow-lg"
       >
         <h2 className="text-center text-2xl font-bold text-[#27563C] mb-6">Add User Details</h2>

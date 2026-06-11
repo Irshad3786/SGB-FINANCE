@@ -7,6 +7,32 @@ const formatMoney = (value) => {
   return amount.toLocaleString('en-IN')
 }
 
+const formatDate = (value) => {
+  if (!value || value === '-') return '-'
+  const trimmed = String(value).trim()
+
+  // Match YYYY-MM-DD
+  const matchYmd = trimmed.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/)
+  if (matchYmd) {
+    const [_, year, month, day] = matchYmd
+    return `${day.padStart(2, '0')}-${month.padStart(2, '0')}-${year}`
+  }
+
+  // Match DD-MM-YYYY
+  const matchDmy = trimmed.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/)
+  if (matchDmy) {
+    return trimmed.replace(/\//g, '-')
+  }
+
+  const dateObj = new Date(trimmed)
+  if (Number.isNaN(dateObj.getTime())) return value
+
+  const day = String(dateObj.getDate()).padStart(2, '0')
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0')
+  const year = dateObj.getFullYear()
+  return `${day}-${month}-${year}`
+}
+
 const PrintInvoice = forwardRef(function PrintInvoice({ invoice }, ref) {
   if (!invoice) return null
 
@@ -65,7 +91,7 @@ const PrintInvoice = forwardRef(function PrintInvoice({ invoice }, ref) {
           <div style={{ fontSize: '24px', fontWeight: 700, lineHeight: 1 }}>INVOICE</div>
           <div style={{ fontSize: '12px', color: '#334155', marginTop: '4px' }}>Type: {invoice.typeLabel || '-'}</div>
           <div style={{ fontSize: '12px', color: '#334155' }}>No: {invoice.invoiceNo || '-'}</div>
-          <div style={{ fontSize: '12px', color: '#334155' }}>Date: {invoice.date || '-'}</div>
+          <div style={{ fontSize: '12px', color: '#334155' }}>Date: {formatDate(invoice.date) || '-'}</div>
         </div>
       </div>
 
@@ -125,7 +151,7 @@ const PrintInvoice = forwardRef(function PrintInvoice({ invoice }, ref) {
               </tr>
               <tr>
                 <td style={{ border: '1px solid #cbd5e1', padding: '7px 10px', fontSize: '12px' }}>EMI Date</td>
-                <td style={{ border: '1px solid #cbd5e1', padding: '7px 10px', fontSize: '12px' }}>{invoice.emiDate || '-'}</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: '7px 10px', fontSize: '12px' }}>{formatDate(invoice.emiDate) || '-'}</td>
               </tr>
               {invoice.mode === 'refinance' && invoice.oldHaNumber && invoice.oldHaNumber !== '-' && (
                 <tr>
@@ -143,7 +169,7 @@ const PrintInvoice = forwardRef(function PrintInvoice({ invoice }, ref) {
               </tr>
               <tr>
                 <td style={{ border: '1px solid #cbd5e1', padding: '7px 10px', fontSize: '12px' }}>Pending Date</td>
-                <td style={{ border: '1px solid #cbd5e1', padding: '7px 10px', fontSize: '12px' }}>{invoice.pendingDate || '-'}</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: '7px 10px', fontSize: '12px' }}>{formatDate(invoice.pendingDate) || '-'}</td>
               </tr>
             </>
           )}

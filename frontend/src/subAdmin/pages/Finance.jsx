@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useReactToPrint } from 'react-to-print'
 import apiClient from '../../api/axios'
 import { useToast } from '../../components/ToastProvider'
+import Loader from '../../components/Loader'
 
 const defaultPagination = {
   page: 1,
@@ -372,6 +373,7 @@ function Finance() {
 
   return (
     <div className="px-4 sm:px-6 py-4 max-w-full overflow-x-hidden bg-white">
+      {openingStatementId && <Loader message="Fetching finance statement..." />}
       <style>{`
         .no-scrollbar::-webkit-scrollbar{display:none;}
         .no-scrollbar{-ms-overflow-style:none; scrollbar-width:none;}

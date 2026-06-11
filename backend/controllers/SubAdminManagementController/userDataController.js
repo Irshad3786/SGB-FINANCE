@@ -292,6 +292,15 @@ const getUserData = async (req, res) => {
       });
 
     const records = [...sellerRecords, ...unmatchedBuyerRecords]
+      .sort((a, b) => {
+        const timeA = a.createdAtDate ? new Date(a.createdAtDate).getTime() : 0;
+        const timeB = b.createdAtDate ? new Date(b.createdAtDate).getTime() : 0;
+        return timeB - timeA;
+      })
+      .map((record, index) => {
+        record.id = index + 1;
+        return record;
+      })
       .filter((record) => {
         if (normalizedStatus && normalizedStatus !== "all") {
           const recordStatus = normalizeStatusValue(record.status);

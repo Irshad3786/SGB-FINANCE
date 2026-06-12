@@ -38,6 +38,23 @@ const PrintInvoice = forwardRef(function PrintInvoice({ invoice }, ref) {
 
   const hasFinance = invoice.mode === 'buyer' || invoice.mode === 'refinance'
 
+  const parseNumber = (val) => {
+    if (val === undefined || val === null || val === '-') return NaN
+    const cleaned = String(val).replace(/,/g, '').trim()
+    return Number(cleaned)
+  }
+
+  const saleAmt = parseNumber(invoice.saleAmount)
+  const financeAmt = parseNumber(invoice.financeAmount)
+  const pendingAmt = parseNumber(invoice.pendingAmount)
+
+  const isFinanceSelected = !Number.isNaN(financeAmt) && financeAmt > 0
+  const validPendingAmt = !Number.isNaN(pendingAmt) && pendingAmt > 0 ? pendingAmt : 0
+
+  const paidAmt = isFinanceSelected && !Number.isNaN(saleAmt) 
+    ? saleAmt - financeAmt - validPendingAmt 
+    : null
+
   const displayPhone = () => {
     const main = invoice.phone && invoice.phone !== '-' ? invoice.phone : '';
     const alt = invoice.alternatePhone && invoice.alternatePhone !== '-' 
@@ -143,6 +160,12 @@ const PrintInvoice = forwardRef(function PrintInvoice({ invoice }, ref) {
                 <td style={{ border: '1px solid #cbd5e1', padding: '7px 10px', fontSize: '12px' }}>Finance Amount</td>
                 <td style={{ border: '1px solid #cbd5e1', padding: '7px 10px', fontSize: '12px' }}>Rs. {formatMoney(invoice.financeAmount)}</td>
               </tr>
+              {isFinanceSelected && paidAmt !== null && (
+                <tr>
+                  <td style={{ border: '1px solid #cbd5e1', padding: '7px 10px', fontSize: '12px' }}>Paid Amount</td>
+                  <td style={{ border: '1px solid #cbd5e1', padding: '7px 10px', fontSize: '12px' }}>Rs. {formatMoney(paidAmt)}</td>
+                </tr>
+              )}
               <tr>
                 <td style={{ border: '1px solid #cbd5e1', padding: '7px 10px', fontSize: '12px' }}>EMI (Amount x Months)</td>
                 <td style={{ border: '1px solid #cbd5e1', padding: '7px 10px', fontSize: '12px' }}>

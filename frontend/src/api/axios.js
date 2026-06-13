@@ -56,6 +56,9 @@ export const setRefreshToken = (token) => {
   _refreshToken = token || null;
 };
 
+export const getAuthToken = () => accessToken;
+export const getUserType = () => userType;
+
 if (accessToken) {
   apiClient.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 }
@@ -91,11 +94,24 @@ apiClient.interceptors.response.use(
 
       try {
         // Determine refresh endpoint based on user type
-        const currentUserType = userType;
-        let refreshEndpoint = '';
-
-        console.log('Attempting refresh for user type:', currentUserType);
+        let currentUserType = userType;
         
+        // If userType is not set in-memory, infer it from the request URL or current page path
+        if (!currentUserType) {
+          const reqUrl = originalRequest.url || '';
+          const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+          
+          if (reqUrl.includes('/api/subadmin') || currentPath.startsWith('/subadmin')) {
+            currentUserType = 'subadmin';
+          } else if (reqUrl.includes('/api/admin') || currentPath.startsWith('/admin')) {
+            currentUserType = 'admin';
+          } else if (reqUrl.includes('/api/user') || currentPath.startsWith('/user')) {
+            currentUserType = 'user';
+          }
+        }
+
+        let refreshEndpoint = '';
+        console.log('Attempting refresh for user type:', currentUserType);
         
         if (currentUserType === 'subadmin') {
           refreshEndpoint = '/api/subadmin/refresh-SubAdmin-Token';
@@ -134,6 +150,9 @@ apiClient.interceptors.response.use(
         // Refresh token failed - redirect to login
         processQueue(refreshError, null);
 
+        // Capture userType before clearing it
+        const priorUserType = userType;
+
         // Clear auth state
         setAuthToken(null, null);
         setRefreshToken(null);
@@ -141,8 +160,7 @@ apiClient.interceptors.response.use(
 
         // Redirect to login page
         if (typeof window !== 'undefined') {
-          const currentAuthType = userType;
-          const loginPath = currentAuthType === 'admin' ? '/admin-signin' : '/login';
+          const loginPath = priorUserType === 'admin' ? '/admin-signin' : '/login';
           window.location.href = loginPath;
         }
 

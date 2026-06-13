@@ -5,6 +5,19 @@ import UserPasswordResetEmail from "../utils/authEmails/sendUserResetPasswordEma
 import UserOtpVerifyEmail from "../utils/authEmails/userOtpVerification.js";
 import { getSignedImageUrl } from "../utils/s3Upload.js";
 
+const recentlyRotatedTokens = new Map();
+
+// Periodically clean up expired tokens from the cache
+setInterval(() => {
+	const now = Date.now();
+	for (const [token, data] of recentlyRotatedTokens.entries()) {
+		if (now > data.expiresAt) {
+			recentlyRotatedTokens.delete(token);
+		}
+	}
+}, 60000);
+
+
 const generateAccessAndRefreshToken = async (userId) => {
 	try {
 		const user = await User.findById(userId);
@@ -257,6 +270,28 @@ const refreshUserToken = async (req, res) => {
 		}
 
 		if (user.refreshToken !== incomingRefreshToken) {
+			// Check if this token was recently rotated (within grace period)
+			const rotatedData = recentlyRotatedTokens.get(incomingRefreshToken);
+			if (rotatedData && Date.now() < rotatedData.expiresAt) {
+				console.log("[refreshUserToken] Grace period hit. Returning cached tokens.");
+				const isProd = process.env.NODE_ENV === "production";
+				const options = {
+					httpOnly: true,
+					secure: isProd,
+					sameSite: isProd ? "None" : "Lax",
+					maxAge: 7 * 24 * 60 * 60 * 1000,
+				};
+				return res
+					.status(200)
+					.cookie("refreshToken", rotatedData.refreshToken, options)
+					.json({
+						success: true,
+						message: "New access and refresh tokens issued (cached)",
+						accessToken: rotatedData.accessToken,
+						refreshToken: rotatedData.refreshToken,
+					});
+			}
+
 			return res.status(403).json({
 				success: false,
 				message: "Refresh token has already been used or is invalid",
@@ -265,6 +300,13 @@ const refreshUserToken = async (req, res) => {
 
 		const { accessToken, refreshToken } =
 			await generateAccessAndRefreshToken(user._id);
+
+		// Save recently rotated token with 15s grace period
+		recentlyRotatedTokens.set(incomingRefreshToken, {
+			accessToken,
+			refreshToken,
+			expiresAt: Date.now() + 15000,
+		});
 
 		const isProd = process.env.NODE_ENV === "production";
 		const options = {

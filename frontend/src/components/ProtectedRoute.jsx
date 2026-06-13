@@ -14,6 +14,8 @@ const ProtectedRoute = ({
   const [isVerified, setIsVerified] = useState(requiredUserType !== 'user');
   const [verificationLoading, setVerificationLoading] = useState(requiredUserType === 'user');
 
+  console.log('[ProtectedRoute] render:', { requiredUserType, isAuthenticated, hasToken: !!accessToken, userType, isLoading, isVerified, verificationLoading });
+
   useEffect(() => {
     let isActive = true;
 

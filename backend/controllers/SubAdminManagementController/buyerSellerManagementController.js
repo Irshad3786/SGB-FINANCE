@@ -488,10 +488,19 @@ const saveBuyerOrSeller = async (req, res) => {
           : {}),
       };
 
+      if (resolvedMode === "buy" && !resolvedIsFinanced) {
+        delete buyerPayload.agreementNo;
+        delete buyerPayload.finance;
+      }
+
       if (targetBuyerIdForUpdate) {
+        const updateQuery = { $set: buyerPayload };
+        if (resolvedMode === "buy" && !resolvedIsFinanced) {
+          updateQuery.$unset = { agreementNo: "", finance: "" };
+        }
         savedRecord = await Buyer.findByIdAndUpdate(
           targetBuyerIdForUpdate,
-          { $set: buyerPayload },
+          updateQuery,
           { new: true, runValidators: true }
         );
         wasUpdated = true;

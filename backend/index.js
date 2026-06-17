@@ -16,8 +16,12 @@ connectDB()
     try {
       const { runCapitalizeMigration } = await import("./utils/capitalizeMigration.js");
       await runCapitalizeMigration();
+
+      // Drop stale non-sparse agreementNo index on Buyer collection so it can be recreated as sparse
+      const { default: Buyer } = await import("./models/buyerModel.js");
+      await Buyer.collection.dropIndex("agreementNo_1").catch(() => null);
     } catch (migErr) {
-      console.error("❌ Failed to run capitalization migration:", migErr);
+      console.error("❌ Failed to run startup migrations/indices adjustments:", migErr);
     }
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on :${PORT}`);

@@ -513,6 +513,7 @@ const updateUserData = async (req, res) => {
     const {
       sellerId,
       buyerId,
+      isFinanced,
       vehicleName,
       vehicleNumber,
       vehicle,
@@ -710,8 +711,20 @@ const updateUserData = async (req, res) => {
       );
     }
 
-    if (buyerId && Object.keys(buyerSet).length > 0) {
-      if (shouldSyncEmiSchedule) {
+    const isFinancedFalse = isFinanced === false || String(isFinanced).toLowerCase() === "false";
+
+    if (buyerId && (Object.keys(buyerSet).length > 0 || isFinancedFalse)) {
+      if (isFinancedFalse) {
+        delete buyerSet["finance.financeAmount"];
+        delete buyerSet["finance.emiAmount"];
+        delete buyerSet["finance.months"];
+        delete buyerSet["finance.emiDate"];
+        delete buyerSet["finance.emiStartDate"];
+        delete buyerSet["finance.emiDates"];
+        delete buyerSet["agreementNo"];
+      }
+
+      if (shouldSyncEmiSchedule && !isFinancedFalse) {
         const existingBuyer = await Buyer.findById(buyerId)
           .select("finance.emiAmount finance.months finance.emiDate finance.emiStartDate finance.emiDates")
           .lean();
@@ -745,8 +758,13 @@ const updateUserData = async (req, res) => {
         }
       }
 
+      const updateQuery = { $set: buyerSet };
+      if (isFinancedFalse) {
+        updateQuery.$unset = { agreementNo: "", finance: "" };
+      }
+
       operations.push(
-        Buyer.findByIdAndUpdate(buyerId, { $set: buyerSet }, { new: true }).lean()
+        Buyer.findByIdAndUpdate(buyerId, updateQuery, { new: true }).lean()
       );
     }
 

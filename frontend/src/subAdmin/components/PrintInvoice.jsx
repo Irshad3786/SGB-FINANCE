@@ -36,8 +36,6 @@ const formatDate = (value) => {
 const PrintInvoice = forwardRef(function PrintInvoice({ invoice }, ref) {
   if (!invoice) return null
 
-  const hasFinance = invoice.mode === 'buyer' || invoice.mode === 'refinance'
-
   const parseNumber = (val) => {
     if (val === undefined || val === null || val === '-') return NaN
     const cleaned = String(val).replace(/,/g, '').trim()
@@ -49,6 +47,7 @@ const PrintInvoice = forwardRef(function PrintInvoice({ invoice }, ref) {
   const pendingAmt = parseNumber(invoice.pendingAmount)
 
   const isFinanceSelected = !Number.isNaN(financeAmt) && financeAmt > 0
+  const hasFinance = invoice.mode === 'refinance' || (invoice.mode === 'buyer' && isFinanceSelected)
   const validPendingAmt = !Number.isNaN(pendingAmt) && pendingAmt > 0 ? pendingAmt : 0
 
   const paidAmt = isFinanceSelected && !Number.isNaN(saleAmt) 

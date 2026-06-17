@@ -72,6 +72,7 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
     emiMonths: source?.emiMonths ?? '',
     emiDate: toDateInputValue(source?.emiDate ?? ''),
     agreementNo: source?.agreementNo ?? '',
+    isFinanced: Boolean(source?.financeAmount || source?.agreementNo),
     // guarantor
     guarantorName: source?.guarantorName ?? '',
     guarantorPhone: source?.guarantorPhone ?? '',
@@ -219,6 +220,14 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
     // Prepare payload: include only meaningful fields so backend doesn't clear
     // unchanged values. Keep File instances for uploads; drop empty strings and nulls.
     const raw = { ...form, id: form.id ?? user?.id }
+    if (raw.isFinanced === false) {
+      raw.agreementNo = null
+      raw.financeAmount = null
+      raw.emiAmount = null
+      raw.emiMonths = null
+      raw.emiDate = null
+    }
+
     const out = {}
     Object.keys(raw).forEach((k) => {
       const v = raw[k]
@@ -227,8 +236,8 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
         out[k] = v
         return
       }
-      // include non-empty primitives only
-      if (v !== '' && v !== null && v !== undefined) {
+      // include non-empty primitives and explicit nulls
+      if (v === null || (v !== '' && v !== undefined)) {
         out[k] = v
       }
     })
@@ -729,30 +738,42 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
 
       {/* Buyer Finance (separate) */}
       <div className="mt-4 bg-white rounded-xl p-4 shadow">
-        <h5 className="text-sm font-semibold mb-2">Buyer Finance Details</h5>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          <div>
-            <label className="text-xs text-gray-600">Agreement No</label>
-            <input name="agreementNo" value={form.agreementNo || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" placeholder="e.g., AG-001" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-600">Finance Amount</label>
-            <input name="financeAmount" value={form.financeAmount || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-600">EMI Amount</label>
-            <input name="emiAmount" value={form.emiAmount || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-600">EMI Months</label>
-            <input name="emiMonths" value={form.emiMonths || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-600">EMI Start Date</label>
-            <input name="emiDate" type="date" value={form.emiDate || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
-          </div>
+        <div className="flex items-center gap-2 mb-2">
+          <input
+            id="isFinancedEdit"
+            type="checkbox"
+            name="isFinanced"
+            className="w-4 h-4"
+            checked={form.isFinanced || false}
+            onChange={(e) => setForm(prev => ({ ...prev, isFinanced: e.target.checked }))}
+          />
+          <label htmlFor="isFinancedEdit" className="text-sm font-semibold text-[#27563C]">is financed ?</label>
         </div>
+
+        {form.isFinanced && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mt-2">
+            <div>
+              <label className="text-xs text-gray-600">Agreement No</label>
+              <input name="agreementNo" value={form.agreementNo || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" placeholder="e.g., AG-001" />
+            </div>
+            <div>
+              <label className="text-xs text-gray-600">Finance Amount</label>
+              <input name="financeAmount" value={form.financeAmount || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
+            </div>
+            <div>
+              <label className="text-xs text-gray-600">EMI Amount</label>
+              <input name="emiAmount" value={form.emiAmount || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
+            </div>
+            <div>
+              <label className="text-xs text-gray-600">EMI Months</label>
+              <input name="emiMonths" value={form.emiMonths || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
+            </div>
+            <div>
+              <label className="text-xs text-gray-600">EMI Start Date</label>
+              <input name="emiDate" type="date" value={form.emiDate || ''} onChange={onChange} className="w-full mt-1 px-3 py-2 rounded border text-sm" />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Guarantor */}

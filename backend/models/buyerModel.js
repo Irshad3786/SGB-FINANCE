@@ -27,7 +27,7 @@ const buyerSchema = new mongoose.Schema({
         enum: ["refinance", "buy"],
         default: "buy"
     },
-    agreementNo: { type: String, unique: true },
+    agreementNo: { type: String, unique: true, sparse: true },
     phoneNo: String,
     alternatePhoneNo: String,
     aadharNo: String,

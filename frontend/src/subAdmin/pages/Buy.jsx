@@ -244,6 +244,7 @@ function Buy() {
         const saved = responseData?.data || {}
         const vehicle = saved?.vehicle || {}
         const finance = saved?.finance || {}
+        const isFinanced = form.isFinanced
         return {
           mode: 'buyer',
           typeLabel: 'Buyer Invoice',
@@ -263,11 +264,11 @@ function Buy() {
           address: form.address,
           district: form.district === 'Other' ? form.customDistrict : form.district,
           mandal: form.mandal === 'Other' ? form.customMandal : form.mandal,
-          agreementNo: form.agreementNo || saved?.agreementNo || '-',
-          financeAmount: form.financeAmount || finance.financeAmount || '-',
-          emiAmount: form.emiAmount || finance.emiAmount || '-',
-          emiMonths: form.emiMonths || finance.months || '-',
-          emiDate: form.emiDate || '-',
+          agreementNo: isFinanced ? (form.agreementNo || saved?.agreementNo || '-') : '',
+          financeAmount: isFinanced ? (form.financeAmount || finance.financeAmount || '-') : '',
+          emiAmount: isFinanced ? (form.emiAmount || finance.emiAmount || '-') : '',
+          emiMonths: isFinanced ? (form.emiMonths || finance.months || '-') : '',
+          emiDate: isFinanced ? (form.emiDate || '-') : '',
           pendingAmount: form.pendingAmount || '-',
           pendingDate: form.pendingDate || '-',
         }
@@ -494,10 +495,19 @@ function Buy() {
 
           const uploadedKeys = await uploadSelectedDocuments()
 
+          const formToSend = { ...form }
+          if (!formToSend.isFinanced) {
+            formToSend.agreementNo = ''
+            formToSend.financeAmount = ''
+            formToSend.emiAmount = ''
+            formToSend.emiMonths = ''
+            formToSend.emiDate = ''
+          }
+
           const payload = {
             role,
             mode: 'buy',
-            ...form,
+            ...formToSend,
             ...uploadedKeys,
             deleteExisting
           }

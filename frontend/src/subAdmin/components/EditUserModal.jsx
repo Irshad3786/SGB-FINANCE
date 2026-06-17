@@ -73,6 +73,8 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
     emiDate: toDateInputValue(source?.emiDate ?? ''),
     agreementNo: source?.agreementNo ?? '',
     isFinanced: Boolean(source?.financeAmount || source?.agreementNo),
+    pendingAmount: source?.pendingAmount ?? '',
+    pendingDate: toDateInputValue(source?.pendingDate ?? ''),
     // guarantor
     guarantorName: source?.guarantorName ?? '',
     guarantorPhone: source?.guarantorPhone ?? '',
@@ -175,7 +177,7 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
     const { name, value } = e.target
     const phoneFields = ['sellerPhone', 'sellerAlternatePhone', 'sellerReferencePhone', 'buyerPhone', 'buyerAlternatePhone', 'buyerReferencePhone', 'guarantorPhone', 'guarantorAlternatePhone']
     const aadhaarFields = ['sellerAadhaar', 'buyerAadhaar', 'guarantorAadhaar']
-    const numericFields = ['model', 'soldAmount', 'buyAmount', 'financeAmount', 'emiAmount', 'emiMonths']
+    const numericFields = ['model', 'soldAmount', 'buyAmount', 'financeAmount', 'emiAmount', 'emiMonths', 'pendingAmount']
     const dateFields = ['sellerDob', 'buyerDob', 'emiDate', 'guarantorDob', 'pendingDate']
     
     const isExcluded = [...phoneFields, ...aadhaarFields, ...numericFields, ...dateFields].includes(name)
@@ -774,6 +776,33 @@ export default function EditUserModal({ user, onSave, onClose, isSubmitting = fa
             </div>
           </div>
         )}
+      </div>
+
+      {/* Down Payment (DP) Details */}
+      <div className="mt-4 bg-white rounded-xl p-4 shadow">
+        <h5 className="text-sm font-semibold mb-2 text-[#27563C]">Down Payment (DP) Details</h5>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs text-gray-600">DP Amount</label>
+            <input 
+              name="pendingAmount" 
+              value={form.pendingAmount || ''} 
+              onChange={onChange} 
+              className="w-full mt-1 px-3 py-2 rounded border text-sm" 
+              placeholder="Enter DP amount"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-600">DP Due Date</label>
+            <input 
+              name="pendingDate" 
+              type="date" 
+              value={form.pendingDate || ''} 
+              onChange={onChange} 
+              className="w-full mt-1 px-3 py-2 rounded border text-sm" 
+            />
+          </div>
+        </div>
       </div>
 
       {/* Guarantor */}

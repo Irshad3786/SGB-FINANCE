@@ -568,6 +568,8 @@ const updateUserData = async (req, res) => {
       buyerMandal,
       sellerStreet,
       buyerStreet,
+      pendingAmount,
+      pendingDate,
     } = req.body || {};
 
     if (!sellerId && !buyerId) {
@@ -686,6 +688,8 @@ const updateUserData = async (req, res) => {
     setIfProvided(buyerSet, "profile", buyerProfileUrl);
     setIfProvided(buyerSet, "aadharFront", buyerAadhaarFrontUrl);
     setIfProvided(buyerSet, "aadharBack", buyerAadhaarBackUrl);
+    setIfProvided(buyerSet, "dpPayment.amount", pendingAmount, toNullableNumber);
+    setIfProvided(buyerSet, "dpPayment.dueDate", pendingDate, toNullableDate);
     setIfProvided(buyerSet, "finance.financeAmount", financeAmount, toNullableNumber);
     setIfProvided(buyerSet, "finance.emiAmount", emiAmount, toNullableNumber);
     setIfProvided(buyerSet, "finance.months", emiMonths, toNullableNumber);

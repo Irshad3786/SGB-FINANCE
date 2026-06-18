@@ -1,6 +1,6 @@
 import multer from "multer";
 
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const ALLOWED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp"]);
 
@@ -34,7 +34,7 @@ export const uploadSingleApplicationFile = (fieldName = "file") => (req, res, ne
       if (err.code === "LIMIT_FILE_SIZE") {
         return res.status(400).json({
           success: false,
-          message: "File too large. Max size is 5MB.",
+          message: "File too large. Max size is 10MB.",
           code: "FILE_TOO_LARGE",
         });
       }
